@@ -1,0 +1,136 @@
+[project]
+name = "simple"
+version = "0.1.0"
+description = "SIMPLE: SIMulation-based Policy Learning & Evaluation"
+readme = "README.md"
+requires-python = "==3.10.*"
+dependencies = [
+    "dm-control==1.0.21",
+    "isaacsim[all,extscache]==4.5.0",
+    "mujoco==3.3.6",
+    "nvidia-curobo",
+    "openpi-client",
+    "python-fcl>=0.7.0.8",
+    "rich>=13.9.4",
+    "torch==2.7.0",
+    "torchvision==0.22.0",
+    "transforms3d>=0.4.2",
+    "trimesh>=4.7.1",
+    "typer-slim>=0.17.3",
+    "gymnasium>0.29.1",
+    "python-dotenv>=0.9.9",
+    "numpy==1.26.4"
+]
+
+[project.optional-dependencies]
+rlds = [
+    "dm-env>=1.6",
+    "envlogger[tfds]>=1.2",
+    "rlds[tensorflow]>=0.1.8",
+    "tensorflow==2.15.0",
+    "protobuf<=3.20.3",
+]
+lerobot = [
+    "lerobot"
+]
+isaacsim_extra = [
+    "warp-lang==1.7.0"
+]
+active_perception = [
+    "openai"
+]
+full = [
+    "dm-env>=1.6",
+    "envlogger[tfds]>=1.2",
+    "rlds[tensorflow]>=0.1.8",
+    "tensorflow==2.15.0",
+    "protobuf<=3.20.3",
+    "warp-lang==1.7.0",
+    "openai",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+simple = ["resources/*"]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu128"
+
+[[tool.uv.index]]
+url = "https://pypi.nvidia.com/"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.1",
+    "ruff>=0.12.7",
+    "huggingface_hub[cli]>=0.18.3",
+]
+docs = [
+    "furo>=2025.7.19",
+    "myst-parser>=4.0.1",
+    "sphinx>=7.3.7",
+    "sphinx-autobuild>=2024.10.3",
+    "sphinx-autodoc-typehints>=2.3.0",
+    "sphinx-copybutton>=0.5.2",
+    "sphinxemoji>=0.2.0",
+]
+rlds = [
+    "dm-env>=1.6",
+    "envlogger[tfds]>=1.2",
+    "rlds[tensorflow]>=0.1.8",
+    "tensorflow==2.15.0",
+    "protobuf<=3.20.3",
+]
+lerobot = [
+    "lerobot"
+]
+curobo = [
+    "nvidia-curobo[isaacsim]"
+]
+
+isaacsim-hotfix = [
+    "warp-lang==1.7.0"
+]
+active_perception = [
+    "openai"
+]
+
+sonic = [
+    "gear_sonic[sim,teleop]",
+    "unitree-sdk2py",
+    "xrobotoolkit-sdk",
+    "decoupled-wbc[full]",
+]
+
+[tool.uv]
+default-groups = ["curobo", "lerobot", "isaacsim-hotfix"]
+index-strategy = "unsafe-best-match"
+
+[tool.uv.sources]
+evdev = { path = "third_party/evdev" }
+simple = {path = ".", editable = true }
+nvidia-curobo = {path = "third_party/curobo", editable = true }
+openpi-client = {path = "third_party/openpi-client", editable = true }
+gear_sonic = {path = "third_party/gear_sonic", editable = true }
+unitree-sdk2py = {path = "third_party/unitree_sdk2_python", editable = true }
+xrobotoolkit-sdk = {path = "third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64", editable = true }
+decoupled-wbc = {path = "third_party/decoupled_wbc", editable = true }
+lerobot = {git = "https://github.com/songlin/lerobot.git", rev = "09929d8057b044b53aecaf5c6d7eb71f99e8beb9"}
+
+[project.scripts]
+eval = "simple.cli.eval:typer_main"
+datagen = "simple.cli.datagen:typer_main"
+replay = "simple.cli.replay:typer_main"
+plan = "simple.cli.plan:typer_main"
+control = "simple.cli.control:typer_main"
+render = "simple.cli.render:typer_main"
+teleop-decoupled-wbc = "simple.cli.teleop_decoupled_wbc:typer_main"
+render-decoupled-wbc = "simple.cli.render_decoupled_wbc:typer_main"
+replay-decoupled-wbc = "simple.cli.replay_decoupled_wbc:typer_main"
+eval-decoupled-wbc = "simple.cli.eval_decoupled_wbc:typer_main"

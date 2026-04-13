@@ -1,0 +1,98 @@
+# -----------------------
+# Python cache & build artifacts
+# -----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Python-generated files
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# -----------------------
+# Environment & secrets
+# -----------------------
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+
+# -----------------------
+# Test & coverage outputs
+# -----------------------
+.coverage
+coverage.xml
+htmlcov/
+pytest_cache/
+
+# -----------------------
+# OS junk files
+# -----------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------
+# NVIDIA / Isaac Sim heavy caches
+# (Uncomment if using Isaac Sim / Omniverse to avoid bloating repo)
+# ~/.cache/ov/
+# ~/.nvidia-omniverse/
+# ~/.local/share/ov/
+*.etli
+
+# -----------------------
+# data settings
+# -----------------------
+data/*
+!data/README.md
+!data/_download.py
+!.env.sample
+
+# Sphinx build artifacts
+docs/build/
+docs/source/api/
+
+# cuRobo build artifacts
+third_party/curobo/build/
+third_party/curobo/.eggs/
+third_party/curobo/*.egg-info/
+third_party/curobo/__pycache__/
+!third_party
+
+typings/*
+output/*
+src/simple/resources/robots/*
+cache/*
+src/simple_old/*
+videos
+InternVLA/*
+hfm-finetune-simple-sim/*
+hfm.pre.fast.egodex.2512241941.ckpt200k/*
+control_*_debug_ctrl_err.pkl
+third_party/BODex/
+third_party/Ego_Humanoid_Manipulation_Benchmark/
+third_party/IsaacLab/
+third_party/lerobot/
+third_party/pyroki/
+third_party/unitree_sim_isaaclab/
+.nix-bootstrap.stamp
+.nix-compat/
+.cuda-compat/
+.nix-cuda-overlay/
+.nix-curobo.stamp
+artifacts/
+notes.md
+playgrounds/
+.nix-cache/
+.test-output/
+typings
+MUJOCO_LOG.TXT
+.claude/*
+.venv-nix/
+.direnv
+.runtime-state/

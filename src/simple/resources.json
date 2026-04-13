@@ -1,0 +1,8 @@
+{
+    "asset.graspnet1b": {
+        "type": "asset",
+        "url": "",
+        "description": "GraspNet-1B dataset for grasping tasks",
+        "sha256": ""
+    }
+}

@@ -1,0 +1,72 @@
+name: simple
+
+x-default-isaacsim-volumes: &default-isaacsim-volumes
+  - type: bind
+    source: ${DATA_DIR}
+    target: /workspace/SIMPLE/data
+  - type: bind
+    source: /tmp/.X11-unix
+    target: /tmp/.X11-unix
+  - type: bind
+    source: ${PWD}/.uv-cache
+    target: /workspace/.uv-cache
+
+services:
+  isaac-sim: &isaac-sim
+    # user: ${MY_UID}:${MY_GID}
+    image: simple:${DATE:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+      args:
+        - TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+        - TIMEZONE=${TIMEZONE}
+    network_mode: "host"
+    x-bake:
+      platforms:
+        - linux/amd64
+        - linux/arm64
+    # privileged: true # conflicts with runtime: nvidia
+    runtime: nvidia
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - OMNI_KIT_ACCEPT_EULA=Y
+      - MUJOCO_GL=egl
+      - NVIDIA_VISIBLE_DEVICES=${GPUs:-0}  # which GPUs to expose
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes: *default-isaacsim-volumes
+    shm_size: "16gb"
+    mem_limit: "0"          # 0 = unlimited
+    memswap_limit: "0"
+
+    stdin_open: true # docker run -i
+    tty: true  # Keeps the container running interactively
+
+  sim:
+    <<: *isaac-sim
+    entrypoint: /bin/bash
+    command: []
+
+  datagen:
+    <<: *isaac-sim
+    entrypoint: ["uv", "run", "--no-sync", "datagen"]
+    command: []
+
+  replay:
+    <<: *isaac-sim
+    command: uv run replay --headless
+
+  eval:
+    <<: *isaac-sim
+    entrypoint: ["uv", "run", "--no-sync", "eval"]
+    command: [] 
+
+  gpu-test:
+    image: simple:${DATE:-latest}
+    command: /workspace/SIMPLE/.venv/bin/python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.device_count())"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${GPUs:-0}  # which GPUs to expose
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    runtime: nvidia
+

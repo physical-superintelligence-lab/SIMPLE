@@ -1,0 +1,18 @@
+{
+    "stubPath": "typings",
+    "extraPaths": [
+        "third_party/unitree_sdk2_python"
+    ],
+    "exclude":[
+        ".venv",
+        "__pycache__",
+        "docs",
+        "data",
+        "build",
+        "docs",
+        "third_party",
+        "output",
+    ],
+    // "typeCheckingMode": "strict",
+    // "reportGeneralTypeIssues": "none"
+}

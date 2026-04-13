@@ -1,0 +1,1229 @@
+{
+    "uid": "aloha_tabletop_find_n_grasp",
+    "label": "Aloha Tabletop Find and Grasp Task",
+    "description": "A task where the Aloha robot must first actively search the target and then grasp it on a tabletop.",
+    "metadata": {
+        "physics_dt": 0.002,
+        "render_hz": 30,
+        "dr_level": 0,
+        "version": 1.0,
+        "split": "train"
+    },
+    "robot_cfg": {
+        "uid": "aloha"
+    },
+    "sensor_cfgs": {
+        "front_stereo": {
+            "uid": "Realsense_D415",
+            "mount": "eye_on_base",
+            "width": 640,
+            "height": 360,
+            "fov": 1.2440706908215582,
+            "near": 0.2,
+            "far": 5,
+            "focal_length": 1.88,
+            "pose": {
+                "distance": 1.35,
+                "polar": 1.0471975511965976,
+                "azimuth": 0.0
+            },
+            "baseline": 0.055
+        },
+        "wrist": {
+            "uid": "Logitech_C930e",
+            "mount": "eye_in_hand",
+            "width": 480,
+            "height": 270,
+            "fov": 1.5707963267948966,
+            "near": 0.1,
+            "far": 5,
+            "focal_length": 0.94,
+            "pose": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "quaternion": [
+                    0.5,
+                    0.5,
+                    -0.5,
+                    0.5
+                ]
+            }
+        },
+        "wrist_left": {
+            "uid": "Logitech_C930e",
+            "mount": "eye_in_hand",
+            "width": 480,
+            "height": 270,
+            "fov": 1.5707963267948966,
+            "near": 0.1,
+            "far": 5,
+            "focal_length": 0.94,
+            "pose": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "quaternion": [
+                    0.5,
+                    0.5,
+                    -0.5,
+                    0.5
+                ]
+            }
+        },
+        "side_left": {
+            "uid": "Realsense_D415_mono",
+            "mount": "eye_on_base",
+            "width": 640,
+            "height": 360,
+            "fov": 1.2440706908215582,
+            "near": 0.2,
+            "far": 5,
+            "focal_length": 1.88,
+            "pose": {
+                "position": [
+                    0.35,
+                    0.9,
+                    0.675
+                ],
+                "eulers": [
+                    0.0,
+                    0.5235987755982988,
+                    -1.5707963267948966
+                ]
+            }
+        }
+    },
+    "dr_cfgs": {
+        "language": {
+            "randmizer_class": "simple.dr.language.LanguageDR",
+            "instructions": [
+                "Pick up {}."
+            ]
+        },
+        "target": {
+            "randmizer_class": "simple.dr.target.TargetDR",
+            "asset_id": "graspnet1b:13"
+        },
+        "distractors": {
+            "randmizer_class": "simple.dr.distractor.DistractorDR",
+            "res_id": "graspnet1b",
+            "number_of_distractors": 3,
+            "allow_duplicates": false,
+            "include": [
+                "0",
+                "1"
+            ],
+            "exclude": [
+                "13"
+            ]
+        },
+        "spatial": {
+            "randmizer_class": "simple.dr.spatial.SpatialDR",
+            "robot_region": null,
+            "target_region": {
+                "low": [
+                    -0.1,
+                    -0.1
+                ],
+                "high": [
+                    0.1,
+                    0.1
+                ]
+            },
+            "distractors_region": {
+                "low": [
+                    -0.3,
+                    -0.3
+                ],
+                "high": [
+                    0.3,
+                    0.3
+                ]
+            },
+            "rand_stable_pose": true,
+            "collide_threshold": 0.005,
+            "spatial_mode": "random",
+            "fixed_stable_pose_idx": 0,
+            "target_stable_indices": null,
+            "target_rotate_z": {
+                "low": 0.0,
+                "high": 6.283185307179586
+            }
+        },
+        "camera": {
+            "randmizer_class": "simple.dr.camera.CameraDR",
+            "cam_id": "aloha_camera"
+        },
+        "scene": {
+            "randmizer_class": "simple.dr.scene.TabletopSceneDR",
+            "scene_mode": "random",
+            "table_size": null,
+            "table_position": null,
+            "table_height": null,
+            "rotation_z": null,
+            "room_choices": [
+                "hssd:scene3"
+            ],
+            "scene_manager": "hssd"
+        },
+        "lighting": {
+            "randmizer_class": "simple.dr.lighting.LightingDR",
+            "light_mode": "random",
+            "light_num": [
+                2,
+                3
+            ],
+            "light_color_temperature": {
+                "low": 6001,
+                "high": 8001
+            },
+            "light_intensity": {
+                "low": 80000.0,
+                "high": 100000.0
+            },
+            "light_radius": {
+                "low": 0.08,
+                "high": 0.12
+            },
+            "light_length": {
+                "low": 0.51,
+                "high": 2.1
+            },
+            "light_spacing": {
+                "low": [
+                    1.0,
+                    1.0
+                ],
+                "high": [
+                    2.5,
+                    2.5
+                ]
+            },
+            "light_position": {
+                "low": [
+                    -1.1,
+                    -1.1,
+                    2.1
+                ],
+                "high": [
+                    1.1,
+                    1.1,
+                    4.1
+                ]
+            },
+            "light_eulers": {
+                "low": [
+                    0,
+                    0,
+                    -1.5707963267948966
+                ],
+                "high": [
+                    0,
+                    0,
+                    1.5707963267948966
+                ]
+            }
+        },
+        "material": {
+            "randmizer_class": "simple.dr.material.MaterialDR",
+            "material_mode": "rand_all"
+        }
+    },
+    "dr_state_dict": {
+        "language": "Pick up {}.",
+        "target": {
+            "res_id": "graspnet1b",
+            "uid": "13",
+            "label": "lemon",
+            "name": "lemon",
+            "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/013_ruled.usd",
+            "description": "todo"
+        },
+        "distractors": {
+            "0": {
+                "res_id": "graspnet1b",
+                "uid": "0",
+                "label": "cracker_box",
+                "name": "cracker box",
+                "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/000_ruled.usd",
+                "description": "todo"
+            },
+            "1": {
+                "res_id": "graspnet1b",
+                "uid": "1",
+                "label": "sugar_box",
+                "name": "sugar box",
+                "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/001_ruled.usd",
+                "description": "todo"
+            },
+            "14": {
+                "res_id": "graspnet1b",
+                "uid": "14",
+                "label": "peach",
+                "name": "peach",
+                "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/014_ruled.usd",
+                "description": "todo"
+            }
+        },
+        "spatial": {
+            "aloha": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "quaternion": [
+                    1.0,
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "13": {
+                "position": [
+                    0.0644187405705452,
+                    0.07244151085615158,
+                    0.028974588960409164
+                ],
+                "quaternion": [
+                    0.7793411704996418,
+                    -0.06635771055039337,
+                    -0.6175659336195398,
+                    0.08268199227996911
+                ]
+            },
+            "0": {
+                "position": [
+                    0.12564143538475037,
+                    0.2144441306591034,
+                    0.03784414753317833
+                ],
+                "quaternion": [
+                    0.7011834629996713,
+                    -0.04308405520495986,
+                    -0.7106447208593375,
+                    -0.038335311628302025
+                ]
+            },
+            "1": {
+                "position": [
+                    0.2565854787826538,
+                    -0.0708676278591156,
+                    0.022657178342342377
+                ],
+                "quaternion": [
+                    0.4956605560710281,
+                    0.4872242785503168,
+                    -0.5043212233334757,
+                    0.5124385028878189
+                ]
+            },
+            "14": {
+                "position": [
+                    -0.2906201481819153,
+                    0.21943210065364838,
+                    0.025653282180428505
+                ],
+                "quaternion": [
+                    0.31555852812985524,
+                    -0.07095799918814141,
+                    0.902991584562531,
+                    0.28283206304269126
+                ]
+            }
+        },
+        "camera": null,
+        "scene": {
+            "uid": "hssd:scene3",
+            "conf": {
+                "uid": "scene3",
+                "data_dir": "scenes/hssd",
+                "name": "102344280",
+                "default_prim_path": "/World/scene",
+                "scale": 0.01,
+                "hide_ceilings": true,
+                "hide_walls": false,
+                "center_offset_limit_up": [
+                    0.1,
+                    0.0,
+                    0.0
+                ],
+                "center_offset_limit_down": [
+                    0.4,
+                    0.0,
+                    0.0
+                ],
+                "center_orientation_limit_up": [
+                    90,
+                    0,
+                    -15
+                ],
+                "center_orientation_limit_down": [
+                    90,
+                    0,
+                    15
+                ],
+                "table_size": [
+                    1.67640007,
+                    0.86360033,
+                    0.91466378
+                ],
+                "surface": {
+                    "category": "kitchentable",
+                    "prim_path": "/World/furniture/d68aaf2484eec4c754d3b6e07adc09293d8b36de"
+                }
+            },
+            "name": "102344280",
+            "data_dir": "scenes/hssd/102344280",
+            "center_offset": [
+                0.25,
+                0.0,
+                0.0
+            ],
+            "center_orientation": [
+                90.0,
+                0.0,
+                0.0
+            ],
+            "table": {
+                "uid": "box",
+                "size": [
+                    1.67640007,
+                    0.86360033,
+                    0.1
+                ],
+                "pose": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.86466378
+                    ],
+                    "quaternion": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "material": {
+                    "path": "data/vMaterials_2/Fabric/Cotton_Roughly_Woven.mdl",
+                    "name": "Fabric_Cotton_Roughly_Woven_Dark_Red"
+                }
+            }
+        },
+        "lighting": {
+            "Light_0_0": {
+                "uid": "Light_0_0",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        -1.3081003024575972,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            "Light_0_1": {
+                "uid": "Light_0_1",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        0.0,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            "Light_0_2": {
+                "uid": "Light_0_2",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        1.3081003024575972,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            "Light_1_0": {
+                "uid": "Light_1_0",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        -1.3081003024575972,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            "Light_1_1": {
+                "uid": "Light_1_1",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        0.0,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            "Light_1_2": {
+                "uid": "Light_1_2",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        1.3081003024575972,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            }
+        },
+        "material": {
+            "table_material": {
+                "path": "data/vMaterials_2/Fabric/Cotton_Roughly_Woven.mdl",
+                "name": "Fabric_Cotton_Roughly_Woven_Dark_Red"
+            },
+            "ground_material": {
+                "path": "data/vMaterials_2/Metal/Titanium_Brushed.mdl",
+                "name": "Titanium_Brushed_Medium_Light_Brushing"
+            },
+            "robot_shader_params": {
+                "reflection_roughness_constant": 0.6199034202700243,
+                "metallic_constant": 0.3355627834825875,
+                "specular_level": 0.7407393110980427
+            },
+            "object_shader_params": [
+                {
+                    "reflection_roughness_constant": 0.0015480613231675378,
+                    "metallic_constant": 0.5599433264331145,
+                    "specular_level": 0.6769405996903297
+                },
+                {
+                    "reflection_roughness_constant": 0.768816428201918,
+                    "metallic_constant": 0.10308701573969259,
+                    "specular_level": 0.39706446694835107
+                },
+                {
+                    "reflection_roughness_constant": 0.7626362226023093,
+                    "metallic_constant": 0.7176133908090405,
+                    "specular_level": 0.897353137097118
+                },
+                {
+                    "reflection_roughness_constant": 0.43291578406965603,
+                    "metallic_constant": 0.6628205673293496,
+                    "specular_level": 0.3451584334692196
+                }
+            ]
+        }
+    },
+    "layout": {
+        "actors": {
+            "table": {
+                "uid": "box",
+                "size": [
+                    1.67640007,
+                    0.86360033,
+                    0.1
+                ],
+                "pose": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.86466378
+                    ],
+                    "quaternion": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "material": {
+                    "path": "data/vMaterials_2/Fabric/Cotton_Roughly_Woven.mdl",
+                    "name": "Fabric_Cotton_Roughly_Woven_Dark_Red"
+                }
+            },
+            "target": {
+                "uid": "13",
+                "asset": {
+                    "res_id": "graspnet1b",
+                    "uid": "13",
+                    "label": "lemon",
+                    "name": "lemon",
+                    "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/013_ruled.usd",
+                    "description": "todo"
+                },
+                "pose": {
+                    "position": [
+                        0.0644187405705452,
+                        0.07244151085615158,
+                        0.028974588960409164
+                    ],
+                    "quaternion": [
+                        0.7793411704996418,
+                        -0.06635771055039337,
+                        -0.6175659336195398,
+                        0.08268199227996911
+                    ]
+                },
+                "material": {
+                    "reflection_roughness_constant": 0.0015480613231675378,
+                    "metallic_constant": 0.5599433264331145,
+                    "specular_level": 0.6769405996903297
+                }
+            },
+            "distractor_0": {
+                "uid": "0",
+                "asset": {
+                    "res_id": "graspnet1b",
+                    "uid": "0",
+                    "label": "cracker_box",
+                    "name": "cracker box",
+                    "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/000_ruled.usd",
+                    "description": "todo"
+                },
+                "pose": {
+                    "position": [
+                        0.12564143538475037,
+                        0.2144441306591034,
+                        0.03784414753317833
+                    ],
+                    "quaternion": [
+                        0.7011834629996713,
+                        -0.04308405520495986,
+                        -0.7106447208593375,
+                        -0.038335311628302025
+                    ]
+                },
+                "material": {
+                    "reflection_roughness_constant": 0.768816428201918,
+                    "metallic_constant": 0.10308701573969259,
+                    "specular_level": 0.39706446694835107
+                }
+            },
+            "distractor_1": {
+                "uid": "1",
+                "asset": {
+                    "res_id": "graspnet1b",
+                    "uid": "1",
+                    "label": "sugar_box",
+                    "name": "sugar box",
+                    "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/001_ruled.usd",
+                    "description": "todo"
+                },
+                "pose": {
+                    "position": [
+                        0.2565854787826538,
+                        -0.0708676278591156,
+                        0.022657178342342377
+                    ],
+                    "quaternion": [
+                        0.4956605560710281,
+                        0.4872242785503168,
+                        -0.5043212233334757,
+                        0.5124385028878189
+                    ]
+                },
+                "material": {
+                    "reflection_roughness_constant": 0.7626362226023093,
+                    "metallic_constant": 0.7176133908090405,
+                    "specular_level": 0.897353137097118
+                }
+            },
+            "distractor_14": {
+                "uid": "14",
+                "asset": {
+                    "res_id": "graspnet1b",
+                    "uid": "14",
+                    "label": "peach",
+                    "name": "peach",
+                    "usd_path": "/home/songlin/workspace/projects/SIMPLE/data/assets/graspnet/ruled_models/014_ruled.usd",
+                    "description": "todo"
+                },
+                "pose": {
+                    "position": [
+                        -0.2906201481819153,
+                        0.21943210065364838,
+                        0.025653282180428505
+                    ],
+                    "quaternion": [
+                        0.31555852812985524,
+                        -0.07095799918814141,
+                        0.902991584562531,
+                        0.28283206304269126
+                    ]
+                },
+                "material": {
+                    "reflection_roughness_constant": 0.43291578406965603,
+                    "metallic_constant": 0.6628205673293496,
+                    "specular_level": 0.3451584334692196
+                }
+            }
+        },
+        "lights": [
+            {
+                "uid": "Light_0_0",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        -1.3081003024575972,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            {
+                "uid": "Light_0_1",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        0.0,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            {
+                "uid": "Light_0_2",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        1.3081003024575972,
+                        -1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            {
+                "uid": "Light_1_0",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        -1.3081003024575972,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            {
+                "uid": "Light_1_1",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        0.0,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            },
+            {
+                "uid": "Light_1_2",
+                "type": "CylinderLight",
+                "pose": {
+                    "position": [
+                        1.3081003024575972,
+                        1.2046785315024486,
+                        0.0
+                    ]
+                },
+                "light_radius": 0.10119621038090144,
+                "light_length": 2.0140180033905746,
+                "light_intensity": 91855.70640182012,
+                "light_color_temperature": 7305.245192852049,
+                "center_light_postion": [
+                    0.8733685619421816,
+                    -0.571335472655611,
+                    3.837719745340524
+                ],
+                "center_light_orientation": [
+                    0.7620784480449344,
+                    0.0,
+                    0.0,
+                    -0.6474847017694119
+                ]
+            }
+        ],
+        "cameras": {
+            "front_stereo_left": {
+                "cam_id": "front_stereo",
+                "cam_cfg": {
+                    "uid": "Realsense_D415",
+                    "mount": "eye_on_base",
+                    "width": 640,
+                    "height": 360,
+                    "fov": 1.2440706908215582,
+                    "near": 0.2,
+                    "far": 5,
+                    "focal_length": 1.88,
+                    "pose": {
+                        "distance": 1.35,
+                        "polar": 1.0471975511965976,
+                        "azimuth": 0.0
+                    },
+                    "baseline": 0.055
+                },
+                "resolution": [
+                    640,
+                    360
+                ],
+                "focal_length": 1.88,
+                "pose": {
+                    "position": [
+                        1.1691342951089922,
+                        0.0,
+                        0.6750000000000002
+                    ],
+                    "quaternion": [
+                        5.914589856893349e-17,
+                        -0.2588190451025208,
+                        1.5848095757158828e-17,
+                        0.9659258262890683
+                    ]
+                },
+                "fy": 446.3126508717093,
+                "fx": 446.3126508717093,
+                "cx": 320.0,
+                "cy": 180.0,
+                "mount": "eye_on_base"
+            },
+            "front_stereo_right": {
+                "cam_id": "front_stereo",
+                "cam_cfg": {
+                    "uid": "Realsense_D415",
+                    "mount": "eye_on_base",
+                    "width": 640,
+                    "height": 360,
+                    "fov": 1.2440706908215582,
+                    "near": 0.2,
+                    "far": 5,
+                    "focal_length": 1.88,
+                    "pose": {
+                        "distance": 1.35,
+                        "polar": 1.0471975511965976,
+                        "azimuth": 0.0
+                    },
+                    "baseline": 0.055
+                },
+                "resolution": [
+                    640,
+                    360
+                ],
+                "focal_length": 1.88,
+                "pose": {
+                    "position": [
+                        1.169134259223938,
+                        0.055,
+                        0.675000011920929
+                    ],
+                    "quaternion": [
+                        5.914589856893349e-17,
+                        -0.2588190451025208,
+                        1.5848095757158828e-17,
+                        0.9659258262890683
+                    ]
+                },
+                "fy": 446.3126508717093,
+                "fx": 446.3126508717093,
+                "cx": 320.0,
+                "cy": 180.0,
+                "mount": "eye_on_base"
+            },
+            "wrist": {
+                "cam_id": "wrist",
+                "cam_cfg": {
+                    "uid": "Logitech_C930e",
+                    "mount": "eye_in_hand",
+                    "width": 480,
+                    "height": 270,
+                    "fov": 1.5707963267948966,
+                    "near": 0.1,
+                    "far": 5,
+                    "focal_length": 0.94,
+                    "pose": {
+                        "position": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "quaternion": [
+                            0.5,
+                            0.5,
+                            -0.5,
+                            0.5
+                        ]
+                    }
+                },
+                "pose": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "quaternion": [
+                        0.5,
+                        0.5,
+                        -0.5,
+                        0.5
+                    ]
+                },
+                "fy": 240.00000000000003,
+                "fx": 240.00000000000003,
+                "cx": 240.0,
+                "cy": 135.0,
+                "mount": "eye_in_hand",
+                "resolution": [
+                    480,
+                    270
+                ],
+                "focal_length": 0.94
+            },
+            "wrist_left": {
+                "cam_id": "wrist_left",
+                "cam_cfg": {
+                    "uid": "Logitech_C930e",
+                    "mount": "eye_in_hand",
+                    "width": 480,
+                    "height": 270,
+                    "fov": 1.5707963267948966,
+                    "near": 0.1,
+                    "far": 5,
+                    "focal_length": 0.94,
+                    "pose": {
+                        "position": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "quaternion": [
+                            0.5,
+                            0.5,
+                            -0.5,
+                            0.5
+                        ]
+                    }
+                },
+                "pose": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "quaternion": [
+                        0.5,
+                        0.5,
+                        -0.5,
+                        0.5
+                    ]
+                },
+                "fy": 240.00000000000003,
+                "fx": 240.00000000000003,
+                "cx": 240.0,
+                "cy": 135.0,
+                "mount": "eye_in_hand",
+                "resolution": [
+                    480,
+                    270
+                ],
+                "focal_length": 0.94
+            },
+            "side_left": {
+                "cam_id": "side_left",
+                "cam_cfg": {
+                    "uid": "Realsense_D415_mono",
+                    "mount": "eye_on_base",
+                    "width": 640,
+                    "height": 360,
+                    "fov": 1.2440706908215582,
+                    "near": 0.2,
+                    "far": 5,
+                    "focal_length": 1.88,
+                    "pose": {
+                        "position": [
+                            0.35,
+                            0.9,
+                            0.675
+                        ],
+                        "eulers": [
+                            0.0,
+                            0.5235987755982988,
+                            -1.5707963267948966
+                        ]
+                    }
+                },
+                "pose": {
+                    "position": [
+                        0.35,
+                        0.9,
+                        0.675
+                    ],
+                    "quaternion": [
+                        0.6830127018922194,
+                        0.1830127018922193,
+                        0.18301270189221933,
+                        -0.6830127018922193
+                    ]
+                },
+                "fy": 446.3126508717093,
+                "fx": 446.3126508717093,
+                "cx": 320.0,
+                "cy": 180.0,
+                "mount": "eye_on_base",
+                "resolution": [
+                    640,
+                    360
+                ],
+                "focal_length": 1.88
+            }
+        },
+        "scene": {
+            "uid": "hssd:scene3",
+            "conf": {
+                "uid": "scene3",
+                "data_dir": "scenes/hssd",
+                "name": "102344280",
+                "default_prim_path": "/World/scene",
+                "scale": 0.01,
+                "hide_ceilings": true,
+                "hide_walls": false,
+                "center_offset_limit_up": [
+                    0.1,
+                    0.0,
+                    0.0
+                ],
+                "center_offset_limit_down": [
+                    0.4,
+                    0.0,
+                    0.0
+                ],
+                "center_orientation_limit_up": [
+                    90,
+                    0,
+                    -15
+                ],
+                "center_orientation_limit_down": [
+                    90,
+                    0,
+                    15
+                ],
+                "table_size": [
+                    1.67640007,
+                    0.86360033,
+                    0.91466378
+                ],
+                "surface": {
+                    "category": "kitchentable",
+                    "prim_path": "/World/furniture/d68aaf2484eec4c754d3b6e07adc09293d8b36de"
+                }
+            },
+            "name": "102344280",
+            "data_dir": "scenes/hssd/102344280",
+            "center_offset": [
+                0.25,
+                0.0,
+                0.0
+            ],
+            "center_orientation": [
+                90.0,
+                0.0,
+                0.0
+            ],
+            "table": {
+                "uid": "box",
+                "size": [
+                    1.67640007,
+                    0.86360033,
+                    0.1
+                ],
+                "pose": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.86466378
+                    ],
+                    "quaternion": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "material": {
+                    "path": "data/vMaterials_2/Fabric/Cotton_Roughly_Woven.mdl",
+                    "name": "Fabric_Cotton_Roughly_Woven_Dark_Red"
+                }
+            }
+        },
+        "scene_info": {}
+    }
+}

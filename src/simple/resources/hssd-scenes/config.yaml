@@ -1,0 +1,1059 @@
+- uid: scene0
+  data_dir: scenes/hssd
+  name: "107734119_175999932"
+  default_prim_path: "/World/scene"
+  scale: 1
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.1, 0.0, 0.0]
+  center_offset_limit_down: [0.4, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15] 
+  table_size: [1.25, 0.78999733, 0.40000113] # after rotation and scale
+  surface: 
+    category: teatable
+    prim_path: /World/furniture/node_b914fb6bcc81386bfa1ff7a3eb8412b7ac581ff
+
+- uid: scene1
+  data_dir: scenes/hssd
+  name: "102344280"
+  default_prim_path: "/World/scene"
+  scale: 0.01
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [-0.1, 0.0, 0.0]
+  center_offset_limit_down: [0.1, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, 75]
+  center_orientation_limit_down: [90, 0, 105]
+  table_size: [1.27, 0.7112, 0.459] # width, length, height
+  table2_size: [2, 0.7, 0.5]
+  table2_position: [0, 1.35, -0.2]
+  surface: 
+    category: dinningtable
+    prim_path: /World/furniture/c800ff5b3c40d93b26a1934a64c5fd4009c5cea2
+
+- uid: scene2
+  data_dir: scenes/hssd
+  name: "107733960_175999701"
+  default_prim_path: "/World/scene"
+  scale: 1
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.0, 0.0]
+  center_offset_limit_down: [0.3, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, 75]
+  center_orientation_limit_down: [90, 0, 105]
+  table_size: [2.06436027, 0.99856667,  0.9000001] # width, length, height
+  surface: 
+    category: dinningtable
+    prim_path: /World/furniture/node_929d5de4857ea4efe506b4637a63222e40e3960
+
+- uid: scene3
+  data_dir: scenes/hssd
+  name: "102344280"
+  default_prim_path: "/World/scene"
+  scale: 0.01
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.1, 0.0, 0.0]
+  center_offset_limit_down: [0.4, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.65, 0.86360033, 0.91466378]
+  surface: 
+    category: kitchentable
+    prim_path: /World/furniture/d68aaf2484eec4c754d3b6e07adc09293d8b36de
+
+- uid: scene4
+  data_dir: scenes/hssd
+  name: "102344049"
+  default_prim_path: "/World/scene"
+  scale: 0.01
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.1, 0.0, 0.0]
+  center_offset_limit_down: [0.4, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.8, 0.99060073, 0.75966796]
+  surface: 
+    category: dinningtable
+    prim_path: /World/furniture/e8dd67ee07d375f40264caed68e8c5f76ed707cb/e8dd67ee07d375f40264caed68e8c5f76ed707cb___/e8dd67ee07d375f40264caed68e8c5f76ed707cb______root/e8dd67ee07d375f40264caed68e8c5f76ed707cb______root___
+
+
+- uid: scene5
+  data_dir: scenes/hssd
+  name: "103997586_171030666"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.1, 0.0, 0.0]
+  center_offset_limit_down: [0.4, 0.0, 0.0]
+  center_orientation_limit_up: [90, 0, 75]
+  center_orientation_limit_down: [90, 0, 105]
+  table_size: [1.99999901, 0.79999782, 0.89707224]
+  table2_size: [2, 0.6, 0.9]
+  table2_position: [0, 2.7, 0.0]
+  surface: 
+    category: kitchentable
+    prim_path: /World/furniture/node_65c339f405bf0f55e0c316820958dee1126dabd1
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_b6b15d5222cc51a287af92bf82e6b6e42ca235e
+
+
+- uid: scene6
+  data_dir: scenes/hssd
+  name: "102344022"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, 75]
+  center_orientation_limit_down: [90, 0, 105]
+  table_size: [0.79, 1.99, 0.91466378]
+  table2_size: [1.0, 2.39, 0.7]
+  table2_position: [-2.94, 0.0, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/af102d5ce3df9cc58b991eb618a86f66c5901efe
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/eeaf34edd2065a3fa2af3fc021cd343ca029f696
+
+- uid: scene7
+  data_dir: scenes/hssd
+  name: "102816009"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -105]
+  center_orientation_limit_down: [90, 0, -75]
+  table_size: [2.1, 1.2, 0.7]
+  table2_size: [2.0, 1.5, 0.9]
+  table2_position: [5.92579, -8.43008, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_b6b15d5222cc51a287af92bf82e6b6e42ca235e
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_65c339f405bf0f55e0c316820958dee1126dabd
+
+- uid: scene8
+  data_dir: scenes/hssd
+  name: "107734176_176000019"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -105]
+  center_orientation_limit_down: [90, 0, -75]
+  table_size: [1.2, 2, 0.9]
+  table2_size: [0.4, 1.5, 0.9]
+  table2_position: [2.2, 0.0, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/bf0ea53947cff924371c0ae4abf8b9891452e9c5
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_f366035e778f93cff51f06f392d86814b3eab65
+
+
+- uid: scene9
+  data_dir: scenes/hssd
+  name: "102344529"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.79, 1.5, 0.9]
+  table2_size: [0.7, 2, 0.9]
+  table2_position: [1.8, 0, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/ce4c0195c0f836a2906ea79caf605e01d2ac444b3
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_631f4924b2008d86b4a02c6cbf4ef640a10c4e6
+
+- uid: scene10
+  data_dir: scenes/hssd
+  name: "102344094"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.6, 1.2, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_cdf3fae1e6c7c3e407fb4a5eaf8ebc51fbdc5b7
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_e8ab0b6640c5a66914dbb05d4019a5dcaeb0b44
+
+- uid: scene11
+  data_dir: scenes/hssd
+  name: "102344115"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.6, 0.9, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_7e2fe8d91a9d2cc02ce98e94f5f498548b88a5f
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_e0ebc895a31d5b6a064e057e922b7221943fa1a
+
+
+- uid: scene12
+  data_dir: scenes/hssd
+  name: "102344193"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2.4, 1, 0.9]
+  table2_size: [2, 0.6, 0.9]
+  table2_position: [0, -1.4, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_df45b4963699bb2f2340149b79a7229d3048184
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_68c7b290805e59fc57bfd0792437889e4fa4403
+
+
+- uid: scene13
+  data_dir: scenes/hssd
+  name: "102344250"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 0.6, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_e7c674ea7231612862a5bb66960f0cfef5d8f0e
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/a7931cc380b0cb2b5d31a212280182a458701032
+
+- uid: scene14
+  data_dir: scenes/hssd
+  name: "102344307"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2.8, 1, 0.9]
+  table2_size: [2.4, 1, 0.9]
+  table2_position: [0, 2.5, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_7903d5a77d900067dd9031caf2f229776d800d4
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/e3ea77bd63ceaa2d05ff5d18c85d854526fe6267
+
+
+- uid: scene15
+  data_dir: scenes/hssd
+  name: "102344328"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.5, 0.9, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_2ece2d4b711becb90ad614ee1b07e937c68646a
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_84665d3445bda636ec38444167785ad3d6d586a
+
+
+- uid: scene16
+  data_dir: scenes/hssd
+  name: "102344403"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [3.2, 0.8, 0.9]
+  table2_size: [3.2, 1, 0.9]
+  table2_position: [0, 3.5, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/d68aaf2484eec4c754d3b6e07adc09293d8b36de1
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_b6e2296c1849a4cadf880247534682dad8c1ba4
+
+
+- uid: scene17
+  data_dir: scenes/hssd
+  name: "102344457"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 2, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/node_9865697a8377939639bb8dfab9f28664f5b58cc
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/a20af6e98d04cc5775fe03fe3b34ee98ee750255
+
+- uid: scene18
+  data_dir: scenes/hssd
+  name: "102344469"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.2, 0.6, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/node_3fb5e8a8b1a611902d77c642e06215d668b347e
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/node_5d1703dfba289bb347d5037e51543d1b774a88e1    
+
+- uid: scene19
+  data_dir: scenes/hssd
+  name: "103997403_171030405"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.4, 1, 0.9]
+  table2_size: [0.8, 0.8, 0.9]
+  table2_position: [ -0.65,3.5, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/node_f43112d6f35621565da3c1232ea940d7d9c555e
+  surface2:
+    category: shelf
+    prim_path: /World/furniture/node_8ff1097f76976c669353c9e85003ebaed75f7b0
+
+
+- uid: scene20
+  data_dir: scenes/hssd
+  name: "103997445_171030492"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [4,0.6, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/b1c9d7321512686e02f2d0be978056456479e14c
+
+
+- uid: scene21
+  data_dir: scenes/hssd
+  name: "103997541_171030615"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2.4, 1.1, 0.9]
+  table2_size: [2.4, 1, 0.9]
+  table2_position: [0, 3.8, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/bdab4ca579230f7652590bc19fa00a35701857ef
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_65c339f405bf0f55e0c316820958dee1126dabd
+
+
+- uid: scene22
+  data_dir: scenes/hssd
+  name: "103997562_171030642"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [3, 0.8, 0.9]
+  table2_size: [3, 0.8, 0.9]
+  table2_position: [0, -2.2, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_9443cc1873a0b4954ce7a2c357f296e98bf86a7
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_b6b15d5222cc51a287af92bf82e6b6e42ca235e
+
+
+- uid: scene23
+  data_dir: scenes/hssd
+  name: "103997586_171030669"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 1, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/node_ae7b21ff41782f7591b042d1252c487340c80e41
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/node_109c42777e2ed5bc927a8d5f839efb48dc8a02f
+
+
+- uid: scene24
+  data_dir: scenes/hssd
+  name: "103997643_171030747"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.4, 0.5, 0.9]
+  table2_size: [2.4, 0.8, 0.9]
+  table2_position: [0, -1.15, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/fa5562e2e06d5c189107ed10f1c3e05552cb1bb2
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/fa5562e2e06d5c189107ed10f1c3e05552cb1bb2
+
+
+- uid: scene25
+  data_dir: scenes/hssd
+  name: "103997781_171030978"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.8, 0.9, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: cabinet
+    prim_path: /World/furniture/node_ebb5b6681fd5e30859f09ad5eda9f5cb2401ba0
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_ebb5b6681fd5e30859f09ad5eda9f5cb2401ba0
+
+
+- uid: scene26
+  data_dir: scenes/hssd
+  name: "103997799_171031002"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2, 0.6, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/cfba3ddc51c5c21b0ec4e4ec63fb2d28e34c2ffe1
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_fe5296c8eae107200db3fb2341d72c0a3472eab
+
+
+- uid: scene27
+  data_dir: scenes/hssd
+  name: "103997895_171031182"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.6, 1.1, 0.9]
+  table2_size: [0.8, 1.6, 0.9]
+  table2_position: [1.35, 0, 0.0]
+  surface:
+    category: table
+    prim_path: /World/furniture/node_35845d0674f69f736af7e0f116767a01392f9b8
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/node_09aa90d72a9aa73fadef388620c7ca3668f9d00
+
+
+- uid: scene28
+  data_dir: scenes/hssd
+  name: "103997919_171031233"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.79, 1, 0.9]
+  table2_size: [1.6, 0.58, 0.9]
+  table2_position: [0, -1, 0.0]
+  surface:
+    category: table
+    prim_path: /World/furniture/node_a9ddd540e29e31a3905e06af88471f0209f4071
+  surface2:
+    category: sofa
+    prim_path: /World/furniture/node_d4442ba5d31ebcbd6e33efad5c3531b6583ef32
+
+
+- uid: scene29
+  data_dir: scenes/hssd
+  name: "103997940_171031257"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.4, 4.4, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: table
+    prim_path: /World/furniture/node_254f35550281f6e419bb5c25f5ee5350b5c6487
+  surface2:
+    category: table
+    prim_path: /World/furniture/node_4bd057b9085e00fa3dabc364224bcbfba1a98d4
+
+
+- uid: scene30
+  data_dir: scenes/hssd
+  name: "104348010_171512832"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.2, 1.8, 0.9]
+  table2_size: [2, 0.6, 0.9]
+  table2_position: [0, 2.2, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_7903d5a77d900067dd9031caf2f229776d800d4
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_7903d5a77d900067dd9031caf2f229776d800d41
+
+
+- uid: scene31
+  data_dir: scenes/hssd
+  name: "104348028_171512877"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [4, 2.4, 0.9]
+  table2_size: [2.4, 0.8, 0.9]
+  table2_position: [0, 3, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/af102d5ce3df9cc58b991eb618a86f66c5901efe
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_23f833b8a1d7e07f87da07a9ae3ecf0ec561bbd
+
+
+- uid: scene32
+  data_dir: scenes/hssd
+  name: "104348037_171512898"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.9, 2, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/fcd398b303ce33d4fc51caba1a897ad92c50e1c8
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/bc6c12a06e7df418a448bcc7017bebb7bcdbe247
+
+
+- uid: scene33
+  data_dir: scenes/hssd
+  name: "104348160_171513093"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 2, 0.9]
+  table2_size: [0.6, 2, 0.9]
+  table2_position: [-1.8, 0, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_d25e1002786f30a59058bf930b5c0a27f7ca0ba
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_d25e1002786f30a59058bf930b5c0a27f7ca0ba
+
+
+- uid: scene34
+  data_dir: scenes/hssd
+  name: "104348361_171513414"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 2, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_e7f82e48f14d6fb2ad6a6b1a8d0429e76401542
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_d5bb48091eb674ed2e72177175d7a80e7196f31
+
+
+- uid: scene35
+  data_dir: scenes/hssd
+  name: "104348511_171513654"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2.6, 1.1, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_7e2fe8d91a9d2cc02ce98e94f5f498548b88a5f
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/febaef471e1f0c3dca29b98fe23777ecb1659274
+
+
+- uid: scene36
+  data_dir: scenes/hssd
+  name: "104862384_172226319"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.6, 1.5, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_3aeb985d25ce548e5565c7a1a6813d0027b692a
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_6d5162c9a8e70eeba38575c2974e98e7876a983
+
+
+- uid: scene37
+  data_dir: scenes/hssd
+  name: "104862396_172226349"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.9, 1.8, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_499145eb110f57094d4715bdca49edafc680ff6
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_499145eb110f57094d4715bdca49edafc680ff6
+
+
+- uid: scene38
+  data_dir: scenes/hssd
+  name: "104862417_172226382"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.8, 1.5, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/edac4829501b7064951b3e1b3ac2aaae5c1fe251
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/e3679a6ea0b6f45e4e88f64b51099e0c3d3a84eb
+
+- uid: scene39
+  data_dir: scenes/hssd
+  name: "104862501_172226556"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.8, 1.5, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: teatable
+    prim_path: /World/furniture/node_ceb5e714002bb2cd99eb99da280b555db07c476
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/a62fd2ce7682a979db3b7b0d4cd541ae15ea6db71
+
+
+- uid: scene40
+  data_dir: scenes/hssd
+  name: "104862513_172226580"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2, 1, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_254f35550281f6e419bb5c25f5ee5350b5c6487
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_2f0dd69c5c68ae650f50fd468be1ba105c7ec6e
+
+
+- uid: scene41
+  data_dir: scenes/hssd
+  name: "104862534_172226625"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.8, 1.8, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: tvtable
+    prim_path: /World/furniture/bb034d375833247e8539a25b7075afb01e908507
+  surface2:
+    category: desk
+    prim_path: /World/furniture/bb034d375833247e8539a25b7075afb01e908507
+
+
+- uid: scene42
+  data_dir: scenes/hssd
+  name: "104862558_172226664"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1, 1.5, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/b5221ec028df698ed28613eb9a9fd5abb3309373
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_a886310f67f7cca9d6ea34b5b1b28bc43f282f5
+
+
+- uid: scene43
+  data_dir: scenes/hssd
+  name: "104862639_172226823"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.79, 1.9, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/b8fbc479fa7f044b67ebbe29bc7ab12e6745c910
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_f0ee9cd04341addee62f7d08561acb797a5b297
+
+
+- uid: scene44
+  data_dir: scenes/hssd
+  name: "104862660_172226844"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.7, 1.3, 1]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/df21f89b4559be781d3f70f41832c90ed035d0ef
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/fcbd5b4248b9d224b000d36ec0a923993d8d69d7
+
+
+- uid: scene45
+  data_dir: scenes/hssd
+  name: "104862687_172226883"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [2, 1.1, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/dd665def2d6a4b899e40affc18c777799f0d65fd
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_7e2fe8d91a9d2cc02ce98e94f5f498548b88a5f
+
+
+- uid: scene46
+  data_dir: scenes/hssd
+  name: "105515235_173104215"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [1.4, 1.8, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_026f0416657bbd8c0fa84ff29fab9f700bd6695
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/d68aaf2484eec4c754d3b6e07adc09293d8b36de
+
+
+- uid: scene47
+  data_dir: scenes/hssd
+  name: "105515286_173104287"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.9, 1.9, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: dinningtable
+    prim_path: /World/furniture/node_665c18655d09ed5c0d9149c78b0f72c93cbe860
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/f025ddbddf010d750d973a09f03dfea80a849f07
+
+
+- uid: scene48
+  data_dir: scenes/hssd
+  name: "105515307_173104317"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.8, 1.8, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: kitchentable
+    prim_path: /World/furniture/node_a25fe7eebf70b970ecf8c919e5e7391a7392486
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/node_a25fe7eebf70b970ecf8c919e5e7391a7392486
+
+- uid: scene49
+  data_dir: scenes/hssd
+  name: "105515337_173104347"
+  default_prim_path: "/World/scene"
+  scale: 1.0
+  hide_ceilings: true
+  hide_walls: false
+  center_offset_limit_up: [0.0, 0.1, 0.0]
+  center_offset_limit_down: [0.0, 0.4, 0.0]
+  center_orientation_limit_up: [90, 0, -15]
+  center_orientation_limit_down: [90, 0, 15]
+  table_size: [0.6, 2, 0.9]
+  table2_size: [1.5, 0.79, 0.9]
+  table2_position: [1.46619, -3.82, 0.0]
+  surface:
+    category: teatable
+    prim_path: /World/furniture/node_97cff30d7278e734d17f9b5fe8033782dbcaa761
+  surface2:
+    category: dinningtable
+    prim_path: /World/furniture/edac4829501b7064951b3e1b3ac2aaae5c1fe251

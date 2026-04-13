@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evdev"
+version = "1.9.2"
+description = "Bindings to the Linux input handling subsystem"
+keywords = ["evdev", "input", "uinput"]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+authors = [
+  { name="Georgi Valkov", email="georgi.t.valkov@gmail.com" },
+]
+maintainers = [
+  { name="Tobi", email="proxima@sezanzeb.de" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/gvalkov/python-evdev"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+ignore = ["E265", "E241", "F403", "F401", "E401", "E731"]
+
+[tool.bumpversion]
+current_version = "1.9.2"
+commit = true
+tag = true
+allow_dirty = true
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+
+[[tool.bumpversion.files]]
+filename = "docs/conf.py"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = """
+    no-member,
+"""
+
+[tool.pylint.typecheck]
+generated-members = ["evdev.ecodes.*"]
+ignored-modules= ["evdev._*"]

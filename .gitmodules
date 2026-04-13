@@ -1,0 +1,26 @@
+[submodule "third_party/curobo"]
+	path = third_party/curobo
+	url = https://github.com/songlin/curobo.git
+	branch = bodex-support
+[submodule "third_party/gsnet"]
+	path = third_party/gsnet
+	url = https://github.com/graspnet/graspnet-baseline.git
+[submodule "third_party/AMO"]
+	path = third_party/AMO
+	url = https://github.com/songlin/amo.git
+	branch = main
+[submodule "third_party/openpi-client"]
+	path = third_party/openpi-client
+	url = git@github.com:songlin/openpi-client.git
+[submodule "third_party/gear_sonic"]
+	path = third_party/gear_sonic
+	url = git@github.com:songlin/gear_sonic.git
+[submodule "third_party/unitree_sdk2_python"]
+	path = third_party/unitree_sdk2_python
+	url = git@github.com:songlin/unitree_sdk2_python.git
+[submodule "third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64"]
+	path = third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64
+	url = git@github.com:songlin/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64.git
+[submodule "third_party/decoupled_wbc"]
+	path = third_party/decoupled_wbc
+	url = git@github.com:songlin/decoupled_wbc.git

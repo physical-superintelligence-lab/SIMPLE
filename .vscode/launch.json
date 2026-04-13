@@ -1,0 +1,757 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python Debugger: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          // "--robot=vega_1.yml", 
+          // "--visualize_spheres",
+          // "--reactive",
+      ]
+    },
+    {
+      "name": "sonic",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/third_party/gear_sonic/scripts/run_sim_loop.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "DISPLAY": ":1"
+      },
+      "args": [
+          // "--robot=vega_1.yml", 
+          // "--visualize_spheres",
+          // "--reactive",
+      ]
+    },
+    {
+      "name": "list_env.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/list_env.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false
+    },
+    {
+      "name": "test_env.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/test_env.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl"
+      },
+      "args": [
+          // "--sim-mode=mujoco_isaac",
+          "--sim-mode=mujoco_isaac",
+          "--no-headless",
+          "--env-id=simple/G1WholebodyLocomotion-v0",
+          "--task=g1_wholebody_locomotion",
+          "--robot-uid=g1_wholebody",
+      ]
+    },
+    {
+      "name": "keyboard_ctrl",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/keyboard_ctrl.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+        "--no-headless",
+      ]
+    },
+    {
+      "name": "example/multi_arm_reacher",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/multi_arm_reacher.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          // "--robot=dual_ur10e.yml"
+          // "--robot=aloha",
+          "--robot=vega_1",
+      ],
+    },
+    {
+      "name": "example/motion_gen_reacher",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/motion_gen_reacher.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          // "--robot=dual_ur10e.yml"
+          // "--robot=aloha",
+          // "--robot=vega_1",
+          "--robot=franka.yml", 
+          // "--robot=vega_1.yml", 
+          "--visualize_spheres",
+          "--reactive",
+      ],
+    },
+    {
+      "name": "example/multi_target_mp",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/multi_target_mp.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          // "--robot=dual_ur10e.yml"
+          // "--robot=aloha",
+          // "--robot=vega_1",
+      ],
+    },
+    {
+      "name": "test_task.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/test_task.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl"
+      },
+      "args": [
+      ]
+    },
+    {
+      "name": "dp_ctrl",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/dp_ctrl.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl"
+      },
+      "args": [
+      ]
+    },
+    {
+      "name": "active_perception",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/active_perception.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl"
+      },
+      "args": [
+      ]
+    },
+    {
+      "name": "cli/eval",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/eval.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        "simple/G1WholebodyBendPickMP-v0",
+        // "simple/FrankaTabletopGrasp-v0", 
+        // "simple/G1WholebodyBendPickAndPlaceOnSofa-v0",
+        // "simple/G1WholebodyBendPickMP-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant2-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant5-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant13-v0",
+        // "simple/G1WholebodyTabletopGraspVariant1-v0",
+        // "simple/G1WholebodyTabletopGraspMP-v0",
+        // "simple/G1WholebodyTabletopHandover-v0",
+        // "simple/G1WholebodyXMoveBendPick-v0",
+        // "simple/G1WholebodyTurnXMoveAndPick-v0",
+        // "simple/G1WholebodyXMoveAndPick-v0",
+        // "simple/G1WholebodyYMoveBendPick-v0",
+        "pi05",
+        // "psi0",
+        // "dit_policy",
+        // "openvla",
+        // "qwen3vl_7d",
+        // "dp",
+        // "act",
+        // "intervla_m1_g1",
+        // "act_g1",
+        // "dp_g1",
+        // "hfm_action",
+        // "vlt",
+        "level-0", // eval task dr level
+        "--host=localhost",
+        "--port=9000",
+        // "--port=22081",
+        "--sim-mode=mujoco_isaac",
+        "--no-headless",
+        "--num-episodes=10", // eval nums
+        // "--max-episode-steps=150", //for franka_tabletop_grasp
+        // "--max-episode-steps=300", //for g1_bend_pick
+        // "--max-episode-steps=5000",
+        // "--data-format=rlds-numpy",
+        "--data-format=lerobot",
+        "--data-dir=data/evals/simple/G1WholebodyTabletopGraspMP-v0/level-2",
+        // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0/level-1",
+        // "--data-dir=data/eval_dr/simple/G1WholebodyTabletopGraspMP-v0/level-2",
+        // "--data-dir=data/simple/learn/G1WholebodyTabletopGrasp-v0",
+      ]
+    },
+    {
+      "name": "cli/teleop",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/teleop.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+        "MUJOCO_GL": "egl",
+        "CUDA_VISIBLE_DEVICES": "0",
+        "DISPLAY": ":1",
+      },
+      "args": [
+        "simple/G1WholebodyBendPick-v1",
+      ]
+    },
+    {
+      "name": "cli/teleop_decoupled_wbc",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/teleop_decoupled_wbc.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+        "MUJOCO_GL": "egl",
+        "CUDA_VISIBLE_DEVICES": "0",
+        "DISPLAY": ":1",
+      },
+      "args": [
+        "simple/G1WholebodyXMovePickTeleop-v0",
+        // "simple/G1WholebodyXMoveBendPickTeleop-v0",
+        // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
+        // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
+        // "simple/G1WholebodyHandoverTeleop-v0",
+        "--target=graspnet1b:0",
+        "--sim-mode=mujoco", //_isaac
+        "--record",
+        "--no-headless" // 
+      ],
+      "preLaunchTask": "clean simple teleop (decoupled wbc)"
+    },
+    {
+      "name": "cli/replay_decoupled_wbc",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/replay_decoupled_wbc.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "CUDA_VISIBLE_DEVICES": "0",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        "simple/G1WholebodyXMovePickTeleop-v0",
+        // "simple/G1WholebodyHandoverSonic-v0",
+        // "simple/G1WholebodyXMovePickTeleop-v0", 
+        // "simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0",
+        // "simple/G1WholebodyXMoveBendPickTeleop-v0",
+        // "simple/G1WholebodyBendPick-v1",
+        // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
+        // "--data-dir=data/G1WholebodyBendPick-v1/",
+        "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyXMovePickTeleop-v0/level-0/",
+        "--sim-mode=mujoco_isaac",
+        "--no-headless", // no-headless
+        "--render-hz=50",
+        "--save-dir=data/replay_decoupled_wbc",
+        "--record",
+        "--resume"
+      ],
+      // "preLaunchTask": "clean simple render (decoupled wbc)",
+    },
+    {
+      "name": "cli/render_decoupled_wbc",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/render_decoupled_wbc.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+        "MUJOCO_GL": "egl",
+        "CUDA_VISIBLE_DEVICES": "0",
+        "DISPLAY": ":1",
+      },
+      "args": [
+        "simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0",
+        "--data-dir=data/teleop_G1_wholebody_loco_between_tables/teleop_decoupled_wbc/simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0/level-0/",
+        // "simple/G1WholebodyHandoverSonic-v0",
+        // "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyHandoverSonic-v0/level-0/",
+        "--sim-mode=mujoco_isaac", //
+        "--no-headless",
+        "--record",
+        // "--webrtc", "true",
+        "--render-hz=50"
+      ],
+      "preLaunchTask": "clean simple render (decoupled wbc)"
+    },
+    {
+      "name": "cli/eval_decoupled_wbc",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/eval_decoupled_wbc.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        // "simple/G1WholebodyTabletopGraspMP-v0",
+        // "simple/G1WholebodyXMovePickTeleop-v0",
+        // "simple/G1WholebodyHandoverTeleop-v0",
+        // "simple/G1WholebodyBendPick-v1",
+        "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
+        // "simple/G1WholebodyHandoverTeleop-v0",
+        // "simple/G1WholebodyXMoveBendPickTeleop-v0",
+        // "psi0_decoupled_wbc",
+        "pi05_decoupled_wbc",
+        // "act_decoupled_wbc",
+        // "dp_decoupled_wbc",
+        // "intervla_decoupled_wbc",
+        // "sonic_loco_pick-lv1", //eval task name 
+        "level-1",
+        "--host=localhost",
+        "--port=9001",
+        // "--port=22081",
+        "--sim-mode=mujoco_isaac",
+        "--no-headless",
+        // "--max-episode-steps=500", //for g1_bend_pick
+        // "--max-episode-steps=800", //for g1_handover
+        "--data-format=lerobot",
+        // "--data-dir=data/evals/simple-eval/G1WholebodyBendPickMP-v0/level-0",
+        "--data-dir=data/evals/simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0/level-2"
+        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPickTeleop-v0/level-0",
+        // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
+        // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
+        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPick-v0/level-0",
+        // "--data-dir=data/evals/simple/G1WholebodyXMovePick-v0/dr-level-0",
+        // "--data-dir=data/replay_decoupled_wbc/simple/G1WholebodyXMovePick-v0/level-0",
+        // "--data-dir=data/eval/simple/G1WholebodyXMovePick-v0/level-0",
+        // "--data-dir=data/G1WholebodyBendPick-v1",
+        // "--data-dir=data/G1WholebodyHandoverSonic-v0",
+        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPickTeleop-v0/level-2",
+        // "--data-dir=data/G1WholebodyXMovePick-v0",
+        // "--data-dir=data/simple/learn/G1WholebodyHandoverSonic-v0",
+        // "--data-dir=data/G1WholebodyLocomotionPickBetweenTablesSonic-v0/G1WholebodyLocomotionPickBetweenTablesSonic-v0_postprocess/"
+      ]
+    },
+    {
+      "name": "cli/dr_decoupled_wbc",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/dr_decoupled_wbc.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "CUDA_VISIBLE_DEVICES": "0",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        // "simple/G1WholebodyBendPick-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0",
+        "simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0",
+        "--data-dir=data/G1WholebodyLocomotionPickBetweenTables-v0/",
+        "--dr-level=2",
+        "--num-episodes=10",
+        "--save-dir=data/evals"
+      ]
+    },
+    {
+      "name": "cli/datagen",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/datagen.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "CUDA_VISIBLE_DEVICES": "0",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        // "simple/FrankaTabletopPickNPlace-v0",
+        // "simple/FrankaTabletopGrasp-v0",
+
+        // "simple/AlohaTabletopHandover-v0",
+        // "simple/AlohaTabletopGrasp-v0",
+        // "--plan-batch-size=10",
+        
+        // "simple/VegaTabletopGrasp-v0",
+        
+        // "simple/G1InspireTabletopGrasp-v0",
+        // "simple/G1InspireWholebodyLocomotion-v0",
+        // "simple/G1InspireWholebodyPickNPlace-v0",
+        
+        // "simple/G1TabletopGrasp-v0",
+        // "simple/G1TabletopHandover-v0",
+        // "simple/G1TabletopPickNPlace-v0",
+
+        // "simple/G1WholebodyLocomotion-v0",
+        // "simple/G1WholebodyPickNPlace-v0",
+        // "simple/G1WholebodyPickNPlaceVariant1-v0",
+        
+        // "simple/G1WholebodySit-v0",
+        // "simple/G1WholebodyBendPickAndPlace-v0",
+        // "simple/G1WholebodyBendPickMP-v0",
+        
+        // "simple/G1WholebodyBendHandover-v0",
+        // "simple/G1WholebodyTabletopHandover-v0",
+
+        // "simple/G1WholebodyBendPickAndPlaceOnSofa-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTables-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant1-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant2-v0",
+        // "simple/G1WholebodyTabletopGrasp-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0", // for gen eval dataset
+        "simple/G1WholebodyHandoverTeleop-v0", // for gen eval dataset
+        // "simple/G1WholebodyXMoveBendPickTeleop-v0", // for gen eval dataset
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant3-v0",
+        // "simple/G1WholebodyTurnPick-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant4-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant5-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant6-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant7-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant8-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant9-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant10-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant11-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant12-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant13-v0",
+
+        // "simple/G1WholebodyXMoveAndPick-v0",
+        // "simple/G1WholebodyXMoveAndPickVariant1-v0",
+        // "simple/G1WholebodyXMoveAndPickVariant2-v0",
+        // "simple/G1WholebodyXMoveAndPickVariant3-v0",
+        // "simple/G1WholebodyXMoveAndPickNPlace-v0",
+        // "simple/G1WholebodyXMoveBendPick-v0",
+        // "simple/G1WholebodyXMoveBendPickNPlace-v0",
+        // "simple/G1WholebodyYMoveAndPick-v0",
+        // "simple/G1WholebodyXMoveAndHandover-v0",
+        // "simple/G1WholebodyXMoveAndHandoverVariant1-v0",
+
+        // "simple/G1WholebodyYMoveAndHandover-v0",
+        // "simple/G1WholebodyYMoveBendPick-v0",
+        // "simple/G1WholebodyPickAndBendPlace-v0",
+        // "simple/G1WholebodyBendPickVariant1-v0",
+        // "simple/G1WholebodyTurnPickVariant1-v0"
+        // "simple/G1WholebodyTabletopGraspVariant1-v0"
+        // "simple/G1WholebodyBendPickAndPlaceOnSofaVariant1-v0",
+        // "simple/G1WholebodyBendPickAndPlaceOnSofaVariant2-v0",
+        // "simple/G1WholebodyYMoveAndPickVariant1-v0",
+        // "simple/G1WholebodyYMoveAndPickVariant2-v0",
+        // "simple/G1WholebodyTabletopGraspVariant2-v0",
+        // "simple/G1WholebodyTurnXMoveAndPick-v0",
+        // "simple/G1WholebodyTurnXMoveAndPickVariant1-v0",
+        // "simple/G1WholebodyTurnXMoveAndPickVariant2-v0",
+        // "simple/G1WholebodyXMoveBendHandover-v0",
+        // "simple/G1WholebodyTurnYMoveAndPick-v0",
+        // "simple/G1WholebodyTurnXMoveAndHandover-v0",
+        // "simple/G1WholebodyTurnXMoveAndHandoverVariant1-v0",
+        // "simple/G1WholebodyTurnXMoveAndBendPick-v0",
+        // "simple/G1WholebodyTurnYMoveAndPickVariant1-v0",
+        // "simple/G1WholebodyTurnYMoveAndBendPick-v0",
+        // "simple/G1WholebodyTurnXMoveAndBendHandover-v0",
+        // "simple/G1WholebodyYMoveAndHandoverVariant1-v0",
+        // "simple/G1WholebodyTabletopGraspVariant3-v0",
+        "--render-hz=50",
+        "--sim-mode=mujoco_isaac",
+        // "--sim-mode=mujoco",
+        // "--no-ignore-target-collision",
+        // "--debug",
+        "--no-headless",
+        // "--eval", // just for gen eval dataset
+        // "--num-episodes=10", // just for gen eval dataset
+        // "--dr-level=2", // just for gen eval dataset
+        // "--env-config-dir=data/training_data/G1WholebodyHandoverTeleop-v0", // just for gen eval dataset
+        // "--save-dir=data/eval_dr", // just for gen eval dataset
+        // "--scene-uid=hssd:scene3",
+      ],
+      "preLaunchTask": "clean simple datagen"
+    },
+    {
+      "name": "cli/replay",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/replay.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "HF_HOME": "data/cache",
+          "TORCH_HOME": "data/cache",
+          "HF_TOKEN": "${env:HF_TOKEN}",
+          "DISPLAY": ":1"
+      },
+      "args": [
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant13-v0",
+        // "simple/G1WholebodyBendPick-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesVariant5-v0",
+        // "simple/G1WholebodyTabletopHandover-v0",
+        // "simple/G1WholebodyTabletopGrasp-v0",
+        "simple/G1WholebodyXMoveAndPick-v0",
+        "--sim-mode=mujoco_isaac",
+        // "--sim-mode=mujoco",
+        // "--data-format=lerobot",
+        // "--data-format=rlds-legacy",
+        "--render-hz=50",
+        "--data-dir=data/G1WholebodyXMoveAndPick-v0",
+        // "--data-dir=data/datagen0/simple/G1WholebodyBendPick-v0/level-0",
+        // "--data-dir=data/G1WholebodyLocomotionPickBetweenTablesVariant13-v0/",
+        // "--data-dir=data/G1WholebodyBendPick-v0/",
+        // "--data-dir=data/G1WholebodyBendPick-Processed",
+        // "--data-dir=data/evals/simple/FrankaTabletopGrasp-v0/train-obj63","--data-format=rlds_numpy", "--num-episodes=20",
+        // "--data-dir=data/datagen_pick_place/simple/FrankaTabletopPickNPlace-v0/level-0",
+        // "--data-dir=/hfm/data/vlt-rlds/vlt-renders.fr3-all-37312-frontstereo+wrist+side-randall-obj63-test".
+        "--no-headless",
+        "--success-criteria=0.5",
+        "--is-postprocess",
+
+        //"--num-episodes=100"
+      ]
+    },
+    {
+      "name": "cli/replay legacy rlds",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/replay.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl",
+          "HF_HOME": "data/cache",
+          "TORCH_HOME": "data/cache",
+          "HF_TOKEN": "${env:HF_TOKEN}"
+      },
+      "args": [
+        "simple/FrankaTabletopGrasp-v0",
+        "--sim-mode=mujoco_isaac",//
+        "--render-hz=3",
+        "--data-format=rlds",
+        "--render-hz=3",
+        "--data-dir=data/vlt-renders.fr3-all-37312-frontstereo+wrist+side-randall-obj63-test"
+      ]
+    },
+    {
+      "name": "cli/plan",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/plan.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          "--task=franka_tabletop_grasp",
+          "--render-hz=20",
+          "--dr-level=0",
+      ]
+    },
+    {
+      "name": "cli/control",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/control.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          "--task=franka_tabletop_grasp",
+          "--render-hz=20",
+          "--dr-level=0"
+          
+      ]
+    },
+      {
+      "name": "cli/render",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/simple/cli/render.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+          "--task=franka_tabletop_grasp",
+          "--render-hz=20",
+          "--dr-level=0"
+          
+      ]
+    },
+    {
+      "name": "activate_perception",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/examples/active_perception.py",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "args": [
+        // "--headless",
+        // "simple/AlohaTabletopFindNGraspTask-v0"
+        "simple/VegaTabletopFindNGraspTask-v0"
+      ]
+    },
+    {
+      "name": "bodex_plan_batch",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/third_party/BODex/example_grasp/plan_batch_env.py",
+      "console": "integratedTerminal",
+      "args": [
+          "--manip_cfg_file=sim_dex3/right.yml",
+          "--parallel_world=40",
+          // "--skip",
+          // "--save_id=0"
+      ]
+    },
+
+    {
+      "name": "amo",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/third_party/AMO/play_amo.py",
+      "console": "integratedTerminal",
+      "env": {
+          "MUJOCO_GL": "egl",
+          "DISPLAY": ":1"
+      },
+      
+    },
+    {
+      "name": "amo_29dof",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/third_party/AMO/play_amo_29dof.py",
+      "console": "integratedTerminal",
+      
+    },
+    {
+      "name": "lerobot_simple",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/third_party/lerobot/examples/dataset/load_simple_dataset.py",
+      "console": "integratedTerminal",
+      
+    },
+    {
+      "name": "lerobot",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/third_party/lerobot/examples/dataset/load_lerobot_dataset.py",
+      "console": "integratedTerminal",
+      
+    },
+    {
+      "name": "postprocess psi0",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/scripts/postprocess_psi0.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--sim-root=data/render_decoupled_wbc_fixed/simple/G1WholebodyBendPick-v1/level-0",
+        "--out-dir=/home/songlin/hfm/data/simple/learn/G1WholebodyBendPick-v1",
+        "--skip=60"
+      ]
+    },
+    {
+      "name": "postprocess psi0 (sonic)",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/scripts/postprocess_psi0_sonic.py",
+      "console": "integratedTerminal",
+      "args": [
+        // "--sim-root=data/replay_data/replay_decoupled_wbc*/simple/G1WholebodyXMoveBendPickTeleop-v0/level-0/", // handle multi dirs
+        // "--out-dir=data/G1WholebodyXMoveBendPickTeleop-v0",
+        "--sim-root=data/replay_decoupled_wbc*/G1WholebodyLocomotionPickBetweenTablesSonic-v0/level-0/",
+        "--out-dir=data/G1WholebodyLocomotionPickBetweenTables-v0",
+        "--skip=0",
+        "--total_episodes=99"
+      ]
+    },
+    {
+      "name": "test_objaverse.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/test_objaverse.py",
+      "console": "integratedTerminal",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "env": {
+          "MUJOCO_GL": "egl"
+      },
+      "args": [
+          "--sim-mode=mujoco_isaac",
+          // "--sim-mode=mujoco_isaac",
+          "--no-headless",
+          // "--env-id=simple/G1WholebodyLocomotion-v0",
+          // "--task=g1_wholebody_locomotion",
+          // "--robot-uid=g1_wholebody",
+      ]
+    },
+    {
+      "name": "test_export_obj_usd.py",
+      "type": "debugpy",
+      "request": "launch",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/export_obj_usd.py",
+      "console": "integratedTerminal",
+      "args": [
+        "--input_dir_template=data/assets/objaverse/*",
+      ]
+    },
+    {
+      "name": "upload_objaverse.py",
+      "type": "debugpy",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/data",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "program": "${workspaceFolder}/data/_upload_objaverse.py",
+      "console": "integratedTerminal",
+      "args": [
+        // "--input_dir_template=data/assets/objaverse/*",
+      ]
+    }
+  ]
+}
+
+

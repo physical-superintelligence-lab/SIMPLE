@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "clean simple datagen",
+            "type": "shell",
+            "command": "rm -rf data/datagen/simple",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean simple teleop (decoupled wbc)",
+            "type": "shell",
+            "command": "rm -rf data/teleop_decoupled_wbc/simple",
+            "problemMatcher": []
+        },
+        {
+            "label": "clean simple render (decoupled wbc)",
+            "type": "shell",
+            "command": "rm -rf data/render_decoupled_wbc/simple",
+            "problemMatcher": []
+        }
+    ]
+}
