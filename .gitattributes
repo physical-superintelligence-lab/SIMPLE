@@ -1,3 +1,6 @@
+# Jupyter Notebooks (do not count toward language stats)
+*.ipynb linguist-detectable=false
+
 # Machine Learning Models
 *.pth filter=lfs diff=lfs merge=lfs -text
 *.pt filter=lfs diff=lfs merge=lfs -text
