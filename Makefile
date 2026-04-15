@@ -9,7 +9,7 @@ html:
 	$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html
 
 live:
-	uv run --group docs sphinx-autobuild $(SOURCEDIR) $(BUILDDIR)/html --port 8001
+	uv run --group docs sphinx-autobuild $(SOURCEDIR) $(BUILDDIR)/html --port 8005
 
 clean:
 	rm -rf $(BUILDDIR)/*

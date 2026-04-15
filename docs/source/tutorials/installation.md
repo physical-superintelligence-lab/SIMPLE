@@ -1,116 +1,92 @@
 # Installation
 
-The supported installation path for this repo is the Nix runtime.
-
-Do not treat this project as a plain `uv sync` virtualenv. The supported contract is:
-
-1. check host prerequisites
-2. enter the Nix dev shell
-3. import `simple` as a Python library inside that shell
-
-## Supported Host Shape
-
-The intended baseline is:
-
-- Linux
-- NVIDIA drivers already installed on the host
-- Ubuntu-style NVIDIA driver layouts or NixOS `/run/opengl-driver/...`
-- enough free disk for the CUDA closure and local caches
-
-## Install Steps
-
-Clone the repo and initialize submodules:
-
-```bash
-git clone git@github.com:songlin/SIMPLE.git
-cd SIMPLE
-git submodule update --init --recursive
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Install Nix if needed:
-
-```bash
-sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
+Create virtual environment
+```
+UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
 ```
 
-Run the host prerequisite check:
-
-```bash
-./scripts/nix/prereq-check.sh
+Check if installation is done. You should see version number printed.
 ```
-
-Enter the dev shell:
-
-```bash
-nix --extra-experimental-features "nix-command flakes" develop
-```
-
-Check the install:
-
-```bash
 python -c "import simple; print(simple.__version__)"
 ```
 
-## Preferred Usage: Import The Library
-
-Prefer using SIMPLE as a Python library from inside the dev shell:
-
-```python
-import gymnasium as gym
-import simple.envs as _
-
-env = gym.make("simple/FrankaTabletopGrasp-v0", sim_mode="isaac", headless=True)
-obs, info = env.reset()
-obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
-env.close()
+Activate virtual env to start hacking!
+```
+source .venv/bin/activate
 ```
 
-CLI commands such as `eval` and `datagen` are supported, but they are thin convenience wrappers. If another codebase integrates SIMPLE, it should usually import `simple` directly instead of launching subprocesses.
+## Install CuRobo
 
-If you need to invoke `nix` directly from an uncertain shell, prefer:
+> Currently, CuRobo is a must-have dependency, but we might remove it in the future.
 
+Some modules use [CuRobo](https://curobo.org/index.html) for GPU-accelerated motion planning, forward-kinematics and inverse kinematics.
+
+CuRobo requires `git-lfs`.
+
+```
+sudo apt install git-lfs
+```
+
+Then install [`CUDA`](https://developer.nvidia.com/cuda-12-4-0-download-archive?target_os=Linux). We tested versions `11.8` and `12.4`. Similar versions should also work.
+
+Now install `CuRobo`, run:
+
+> 💡 Compiling cuda kernels for every compute capability can significantly increase the install time of `CuRobo`, it’s reccommended to set the environment variable `TORCH_CUDA_ARCH_LIST` to the correct computablity according to [offical doc](https://developer.nvidia.com/cuda-gpus)
+> ```
+> export TORCH_CUDA_ARCH_LIST=12.0+PTX # for 5090 etc., 
+> # export TORCH_CUDA_ARCH_LIST=8.9+PTX # for 4090 etc., 
+> ```
+
+
+```
+./scripts/install_curobo.sh
+```
+
+Test CuRobo installation:
+
+> If you happen to have a display then you can run the official arm reacher example with GUI.
+> Please refer to the [official cuRobo doc](https://curobo.org/get_started/2b_isaacsim_examples.html#multi-arm-reacher) to learn more about operating the examples.
+
+> Hint: It may take a while the first time you launch Isaac Sim. 
+
+```
+python examples/multi_arm_reacher.py
+```
+
+Test SIMPLE installation
+```
+python scripts/list_env.py
+```
+
+
+## [Optional] Download Resource Files
+
+Many scripts in this project requires downloading extra data and files.
+Most of them will be downloaded ***automatically*** when running the script.
+However, if you want to ***pre-download ALL neccessary***  the resources and data, run the following command:
 ```bash
-env -u LD_LIBRARY_PATH nix --extra-experimental-features "nix-command flakes" develop
+scripts/pre-minimal-download.sh
 ```
+Optionally, append `--cleanup` to delete the zip files once extracted.
 
-## Build The Docs
+> Whenever a download is interrupted, simply re-run the script to resume from where it left off.
 
-```bash
-make live
-```
-
-Then open [http://127.0.0.1:8000](http://127.0.0.1:8000) to read the documentation.
-
-## Optional Resource Downloads
-
-Many scripts download extra data automatically when needed.
-If you want to pre-download the shared resources and data, run:
-
-```bash
-./scripts/download_data.sh
-```
-
-The structure of the `data` folder should look like:
-
+The structure of the ```data``` folder should be like this:
 ```text
 data
 ├── assets
 │   ├── graspnet
 │   └── ...
 ├── robots
-│   ├── robot_1
+│   ├── [robot_1]
+│   ├── [robot_2]
 │   └── ...
 ├── scenes
 └── vMaterials
-    └── ...
-```
-
-## Optional Bootstrap Entry Points
-
-Use these only when you need to run parts of the install explicitly:
-
-```bash
-./scripts/nix/bootstrap-python.sh
-./scripts/nix/bootstrap-gpu.sh
-./scripts/nix/bootstrap.sh
+└── ...
 ```
