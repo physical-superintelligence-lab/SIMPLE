@@ -64,13 +64,13 @@ Current host lookup paths:
   - `/usr/share/glvnd/egl_vendor.d/10_nvidia.json`
   - `/usr/share/glvnd/egl_vendor.d/50_nvidia.json`
 
-If an Ubuntu host keeps NVIDIA files elsewhere, update [scripts/nix/common.sh](/home/zhenyu/src/SIMPLE/scripts/nix/common.sh).
+If an Ubuntu host keeps NVIDIA files elsewhere, update [scripts/nix/common.sh](../../scripts/nix/common.sh).
 
 ## Runtime Layout
 
 ### 1. Base Nix runtime
 
-[nix/runtime-base.nix](/home/zhenyu/src/SIMPLE/nix/runtime-base.nix)
+[nix/runtime-base.nix](../../nix/runtime-base.nix)
 
 Owns:
 
@@ -88,7 +88,7 @@ Important rule:
 
 ### 2. Host NVIDIA bridge
 
-[nix/runtime-host-gpu.nix](/home/zhenyu/src/SIMPLE/nix/runtime-host-gpu.nix)
+[nix/runtime-host-gpu.nix](../../nix/runtime-host-gpu.nix)
 
 Owns:
 
@@ -97,7 +97,7 @@ Owns:
 
 ### 3. Shared runtime policy
 
-[scripts/nix/common.sh](/home/zhenyu/src/SIMPLE/scripts/nix/common.sh)
+[scripts/nix/common.sh](../../scripts/nix/common.sh)
 
 Owns:
 
@@ -110,7 +110,7 @@ Owns:
 
 ### 4. Shell orchestration
 
-[scripts/nix/shell-init.sh](/home/zhenyu/src/SIMPLE/scripts/nix/shell-init.sh)
+[scripts/nix/shell-init.sh](../../scripts/nix/shell-init.sh)
 
 Owns:
 
@@ -122,11 +122,11 @@ Owns:
 ### 5. Bootstrap phases
 
 - Python/bootstrap phase:
-  [scripts/nix/bootstrap-python.sh](/home/zhenyu/src/SIMPLE/scripts/nix/bootstrap-python.sh)
+  [scripts/nix/bootstrap-python.sh](../../scripts/nix/bootstrap-python.sh)
 - GPU/bootstrap phase:
-  [scripts/nix/bootstrap-gpu.sh](/home/zhenyu/src/SIMPLE/scripts/nix/bootstrap-gpu.sh)
+  [scripts/nix/bootstrap-gpu.sh](../../scripts/nix/bootstrap-gpu.sh)
 - Convenience wrapper:
-  [scripts/nix/bootstrap.sh](/home/zhenyu/src/SIMPLE/scripts/nix/bootstrap.sh)
+  [scripts/nix/bootstrap.sh](../../scripts/nix/bootstrap.sh)
 
 This split is intentional:
 
@@ -244,10 +244,10 @@ That is the practical limit for GPU-heavy Linux development without fully contai
 
 When changing the runtime:
 
-1. Put shared policy in [scripts/nix/common.sh](/home/zhenyu/src/SIMPLE/scripts/nix/common.sh)
-2. Keep [flake.nix](/home/zhenyu/src/SIMPLE/flake.nix) as orchestration only
-3. Put Nix-owned userspace in [nix/runtime-base.nix](/home/zhenyu/src/SIMPLE/nix/runtime-base.nix)
-4. Put host NVIDIA bridging in [nix/runtime-host-gpu.nix](/home/zhenyu/src/SIMPLE/nix/runtime-host-gpu.nix)
+1. Put shared policy in [scripts/nix/common.sh](../../scripts/nix/common.sh)
+2. Keep [flake.nix](../../flake.nix) as orchestration only
+3. Put Nix-owned userspace in [nix/runtime-base.nix](../../nix/runtime-base.nix)
+4. Put host NVIDIA bridging in [nix/runtime-host-gpu.nix](../../nix/runtime-host-gpu.nix)
 5. Keep Python bootstrap separate from GPU bootstrap
 6. Keep the user-facing contract stable: `prereq-check -> nix develop -> import simple`
 
