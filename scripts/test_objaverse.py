@@ -20,30 +20,42 @@ from typing_extensions import Annotated
 from simple.core.action import ActionCmd
 
 def main(
-    env_id: str = "simple/FrankaTabletopGrasp-v0",
-    task: str = "franka_tabletop_grasp",
-    robot_uid: str = "franka_fr3",
-    controller_uid: str = "pd_joint_pos",
-    scene_uid: str = "hssd:scene3",
-    target_object: str = "objaverse:88",
+    env_id: Annotated[str, typer.Argument()] = "simple/FrankaTabletopGrasp-v0",
+    scene_uid: Annotated[str, typer.Option()] = "hssd:scene1",
+    target_object: str | None = None,
     sim_mode: Annotated[str, typer.Option()] = "mujoco_isaac",
-    headless: Annotated[bool, typer.Option()] = True,  # Must be True for WebRTC
+    headless: Annotated[bool, typer.Option()] = False,
     webrtc: Annotated[bool, typer.Option()] = True,  # Enable WebRTC streaming
-    max_episode_steps: Annotated[int, typer.Option()] = 6000,
-    save_dir: Annotated[str, typer.Option()] = "data/output",
+    max_episode_steps: Annotated[int, typer.Option()] = 30000,
+    render_hz: Annotated[int, typer.Option()] = 30, # FIXME
+    data_format: Annotated[str, typer.Option()] = "lerobot",
+    save_dir: Annotated[str, typer.Option()] = "data/datagen",
+    num_episodes: Annotated[int, typer.Option()] = 100,
+    shard_size: Annotated[int, typer.Option()] = 100,
+    dr_level: Annotated[int, typer.Option()] = 0,
+    plan_batch_size: Annotated[int, typer.Option()] = 1,
+    ignore_target_collision: Annotated[bool, typer.Option()] = False,
+    debug: Annotated[bool, typer.Option()] = False,
+    easy_motion_gen: Annotated[bool, typer.Option()] = False,
+    eval: Annotated[bool, typer.Option(help="Only generate env configs")] = False,
 ):
-    env = gym.make(
-        env_id,
-        task=task,
-        robot_uid=robot_uid,
-        controller_uid=controller_uid, 
-        target_object=target_object,
+    make_kwargs = dict(
         scene_uid=scene_uid,
+        target_object=target_object,
         sim_mode=sim_mode,
         headless=headless,
         webrtc=webrtc,
         max_episode_steps=max_episode_steps,
+        render_hz=render_hz,
+        dr_level=dr_level,
     )
+    if "Sonic" in env_id or "Teleop" in env_id:
+        from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
+        sonic_config = SimLoopConfig().load_wbc_yaml()
+        sonic_config["ENV_NAME"] = "simple"
+        make_kwargs["sonic_config"] = sonic_config
+    env = gym.make(env_id, **make_kwargs)
+    task = env.unwrapped.task  # type: ignore
 
     output_eval_dir = f"{save_dir}/test_env"
     os.makedirs(output_eval_dir, exist_ok=True)

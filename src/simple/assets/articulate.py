@@ -21,7 +21,8 @@ Articulated_Object_Names = {
     0: "office_chair",
     1: "bottle",
     2: "oven",
-    # 3: "microwave",
+    3: "door",
+    4: "faucet"
 }
 
 
@@ -32,12 +33,14 @@ class ArticulatedObjectAsset(ArticulatedAsset, SemanticAnnotated):
                  name: str,
                  usd_path: str   | None,
                  mjcf_path: str,
-                 description: str | None = None
+                 description: str | None = None,
+                 articulate_init_joint_qpos: dict[str, float] | None = None,
                  ) -> None:
         super().__init__(uid=uid, usd_path=usd_path, mjcf_path=mjcf_path)
         self.label = label
         self.name = name
         self.description = description
+        self.articulate_init_joint_qpos = articulate_init_joint_qpos
     
     def __repr__(self) -> str:
         return f"ArticulatedObjectAsset(uid={self.uid}, name={self.name})"
@@ -51,6 +54,7 @@ class ArticulatedObjectAsset(ArticulatedAsset, SemanticAnnotated):
             "usd_path": self.usd_path,
             "mjcf_path": self.mjcf_path,
             "description": self.description,
+            "articulate_init_joint_qpos": self.articulate_init_joint_qpos,
         }
 
 @AssetManager.register("articulated")
@@ -63,7 +67,7 @@ class ArticulatedAssetManager(AssetManager):
         self.src_dir = "assets/articulated"
     
 
-    def load(self, asset_id: str) -> ArticulatedAsset: 
+    def load(self, asset_id: str, articulate_init_joint_qpos :dict[str, float] | None = None) -> ArticulatedAsset: 
         """Load an asset by its ID."""
         assert int(asset_id) in Articulated_Object_Names, f"Invalid asset ID: {asset_id}"
 
@@ -81,6 +85,7 @@ class ArticulatedAssetManager(AssetManager):
             name=name,
             usd_path=usd_path,
             mjcf_path=mjcf_path,
+            articulate_init_joint_qpos=articulate_init_joint_qpos
         )
     
     def sample(self, exclude: list[str] | None = None) -> ArticulatedAsset:

@@ -53,7 +53,7 @@ Put on your PICO headset and complete the following steps inside the VR environm
 To start the teleoperation server and load a specific simulation environment, open your terminal and run the following command from the root of your `SIMPLE` directory:
 
 ```bash
-python src/simple/cli/teleop_decoupled_wbc.py simple/G1WholebodyXMoveBendPickTeleop-v0 
+python src/simple/cli/teleop_decoupled_wbc.py simple/G1WholebodyXMoveBendPickTeleop-v0 \
 --target=graspnet1b:0 --sim-mode=mujoco --record --no-headless
 ```
 

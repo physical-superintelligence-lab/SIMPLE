@@ -112,7 +112,13 @@ class MujocoSimulator(Simulator):
                 wrapped_qpos = (raw_qpos + np.pi) % (2 * np.pi) - np.pi
 
                 articulated_joints_state[articulate_joint] = wrapped_qpos
-            articulate_object_position = np.round(self.mjData.joint("articulate_floating_base").qpos, 4)
+            try:
+                articulate_object_position = np.round(self.mjData.joint("articulate_floating_base").qpos, 4)
+            except (KeyError, ValueError):
+        
+                body_ptr = self.mjData.body("articulate_base")
+                combined_pos = np.concatenate([body_ptr.xpos, body_ptr.xquat])
+                articulate_object_position = np.round(combined_pos, 4)
             return [self.render_step, joint_state, self.obj_names, obj_positions, obj_orientations, robot_position, articulated_joints_state, articulate_object_position]
        
             
@@ -231,6 +237,15 @@ class MujocoSimulator(Simulator):
         # 6. setup control
         assert isinstance(self.task.robot, Controllable), "Task robot is None."
         self.joints, self.actuators=self.task.robot.setup_control(self.mjData, self.mjModel, mjSpec=self.mjSpec)
+        
+        
+        if self.articulated_object_joints is not None:
+            articulate_joint_qpos = self.task.layout.actors["articulated"].asset.articulate_init_joint_qpos
+            if articulate_joint_qpos is not None:
+                for joint_name, qpos in articulate_joint_qpos.items():
+                    self.mjData.joint(joint_name).qpos[0] = qpos
+
+
 
         
 

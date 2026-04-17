@@ -267,7 +267,7 @@ class Vega1(CuRoboMixin, Humanoid, WristCamMountable, Robot, HasDexterousHand, H
                 # Set mimic joint target
                 self.actuators[mimic_joint].ctrl = primary_ctrl * ratio + offset
 
-    def setup_control(self, mjData, mjModel) -> Tuple[dict[str, Any], dict[str, Any]]:
+    def setup_control(self, mjData, mjModel,mjSpec) -> Tuple[dict[str, Any], dict[str, Any]]:
         actuators = {}
         joints = {}
 

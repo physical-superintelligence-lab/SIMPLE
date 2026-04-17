@@ -66,6 +66,15 @@ def _parse_zip_file_from_rel_path(rel_path: str) -> str:
     if match:
         return f"assets_graspnet.zip"
 
+    pattern = r"^assets/([^/]+)/([^/]+)/.*\.(xml|usd)$"
+
+    match = re.search(pattern, rel_path)
+    if match:
+        asset_category = match.group(1)
+        asset_name = match.group(2)
+        ext = match.group(3)
+        return f"assets_{asset_category}.zip"
+
     pattern = r"^assets/([^/]+)/([^/]+)/([^/]+)/(.+)$"
 
     match = re.match(pattern, rel_path)

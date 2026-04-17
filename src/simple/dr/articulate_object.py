@@ -28,12 +28,14 @@ class ArticulatedObjectDr(Randomizer):
         return self._inner_state.to_dict() if self._inner_state else {}
     
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self._inner_state =  AssetManager.get(state_dict["res_id"]).load(state_dict["uid"])
+        self._inner_state =  AssetManager.get(state_dict["res_id"]).load(state_dict["uid"],state_dict["articulate_init_joint_qpos"])
+            
+        
 
     def __call__(self, split: str, **kwargs) -> ArticulatedAsset:
         
         # res_id, obj_id = self.asset_id.split(':')
-        asset = AssetManager.get(self.res_id).load(self.obj_id)
+        asset = AssetManager.get(self.res_id).load(self.obj_id,self.cfg.articulate_init_joint_qpos)
         # return self.object
 
         # if self.rand_stable_pose:
@@ -45,6 +47,7 @@ class ArticulatedObjectDr(Randomizer):
 class ArticulatedObjectDrCfg(RandomizerCfg):
     asset_id: str | None = None  # e.g., "res_id:obj_id"
     randmizer_class: Type[Randomizer] = ArticulatedObjectDr
+    articulate_init_joint_qpos: Dict[str, float] | None = None  # e.g., {"articulate_joint_1": 0.5, "articulate_joint_2": 0.0}
 
     # def __init__(self, asset_id) -> None:
     #     if asset_id is None or ':' not in asset_id:

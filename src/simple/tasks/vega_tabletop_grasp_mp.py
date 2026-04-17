@@ -96,20 +96,7 @@ class VegaTabletopGraspMP(Task):
                 position=[0.07, -0.01, 0.02],
             )
         ),
-        head_stereo = StereoCameraCfg(
-            uid="Realsense_D435i",
-            mount="eye_in_head",
-            width=640,
-            height=360,
-            focal_length=1.93,
-            fov=np.deg2rad(55.2),
-            near=0.2,
-            far=5,
-            baseline=0.05,
-            pose=dict(
-                position=[0.03, 0.0, 0.03],
-            )
-        ),
+      
         side_left = CameraCfg(
             uid="Realsense_D415_mono",
             mount="eye_on_base",
@@ -260,15 +247,15 @@ class VegaTabletopGraspMP(Task):
         # TODO derive from robot and sensors
         default_obs = super().observation_space
         obs: dict[str, Any] = {
-            # "agent": spaces.Box(-np.pi, np.pi, shape=(self.robot.dof,), dtype=np.float32), # FIXME handle gripper
+            "agent": spaces.Box(-np.pi, np.pi, shape=(self.robot.dof,), dtype=np.float32), # FIXME handle gripper
             "joint_qpos": spaces.Box(-np.pi, np.pi, shape=(self.robot.dof,), dtype=np.float32),
             "eef_pose": spaces.Box(-np.inf, np.inf, shape=(7,), dtype=np.float32),
-            "mujoco": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
-            "front_stereo_left": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
-            "front_stereo_right": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
-            "wrist": spaces.Box(0, 255, shape=(270, 480, 3), dtype=np.uint8),
-            "wrist_left": spaces.Box(0, 255, shape=(270, 480, 3), dtype=np.uint8),
-            "side_left": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
+            # "mujoco": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
+            # "front_stereo_left": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
+            # "front_stereo_right": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
+            # "wrist": spaces.Box(0, 255, shape=(270, 480, 3), dtype=np.uint8),
+            # "wrist_left": spaces.Box(0, 255, shape=(270, 480, 3), dtype=np.uint8),
+            # "side_left": spaces.Box(0, 255, shape=(360, 640, 3), dtype=np.uint8),
         }
         if isinstance(default_obs, spaces.Dict):
             obs.update(dict(default_obs))
@@ -302,7 +289,7 @@ class VegaTabletopGraspMP(Task):
         return reward >= 1.0
     
     def compute_reward(self, info: dict[str, Any], *args, **kwargs) -> float:
-        target_obj_height = info[str(self.target.uid)][2]
+        target_obj_height = info["target"][2]
         if self._init_target_height is None:
             self._init_target_height = target_obj_height
         """Compute reward based on info dict."""

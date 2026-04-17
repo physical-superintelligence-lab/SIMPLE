@@ -8,6 +8,7 @@ import omni.kit.app
 import os
 # 👇 导入 USD 底层核心库
 from pxr import Usd, Sdf, UsdGeom 
+from pxr import UsdPhysics
 
 # 启用 URDF 导入插件
 manager = omni.kit.app.get_app().get_extension_manager()
@@ -15,8 +16,8 @@ manager.set_extension_enabled_immediate("isaacsim.asset.importer.urdf", True)
 
 # ── 路径配置 ────────────────────────────────────────────────
 current_dir = os.getcwd()
-urdf_file_path = os.path.join(current_dir, "data/assets/articulated/000/000_scaled_06.urdf")
-usd_save_path  = os.path.join(current_dir, "data/assets/articulated/000/output_usd/000.usd")
+urdf_file_path = os.path.join(current_dir, "data/assets/articulated/002/002_scaled_04.urdf")
+usd_save_path  = os.path.join(current_dir, "data/assets/articulated/002/output_usd/002.usd")
 # ─────────────────────────────────────────────────────────────
 
 os.makedirs(os.path.dirname(usd_save_path), exist_ok=True)
@@ -95,7 +96,18 @@ if success:
                 # 添加到批量修改任务中
                 joint_edit.Add(old_joint_path, new_joint_path)
                 renamed_count += 1
+            if prim.IsA(UsdGeom.Mesh) or prim.IsA(UsdGeom.Gprim):
+                # 创建或获取碰撞开关属性
+                # physics:collisionEnabled 是 PhysX 识别的标准属性
+                collision_attr = prim.CreateAttribute("physics:collisionEnabled", Sdf.ValueTypeNames.Bool)
+                collision_attr.Set(False)
                 
+                # 为了保险，如果导入器已经加上了 CollisionAPI，可以将其移除或设置
+                if prim.HasAPI(UsdPhysics.CollisionAPI):
+                    # 也可以通过 API 设置
+                    coll_api = UsdPhysics.CollisionAPI(prim)
+                    coll_api.CreateCollisionEnabledAttr(False)
+                        
         # 执行批量重命名
         if renamed_count > 0:
             stage.GetRootLayer().Apply(joint_edit)

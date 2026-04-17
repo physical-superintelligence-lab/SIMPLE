@@ -129,7 +129,7 @@ class FrankaTabletopGraspTaskMP(Task):
 
         distractors = DistractorDRCfg(
             res_id="objaverse", 
-            number_of_distractors=70,
+            number_of_distractors=0,
             allow_duplicates=False,
             exclude=["0"]  # Exclude the target object 
         ),

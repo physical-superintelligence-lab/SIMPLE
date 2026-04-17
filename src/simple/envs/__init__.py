@@ -424,6 +424,22 @@ register(
     kwargs={"task":"g1_wholebody_handover_teleop"},
 )
 
+register(
+    id="simple/G1WholebodyCloseDoorTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_close_door_teleop"},
+)
+register(
+    id="simple/G1WholebodyOpenOvenTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_open_oven_teleop"},    
+)
+register(
+    id="simple/G1WholebodyOpenFaucetTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_open_faucet_teleop"},
+)
+
 
 
 # def task_register(task):

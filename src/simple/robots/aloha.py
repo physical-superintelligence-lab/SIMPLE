@@ -150,7 +150,7 @@ class Aloha(CuRoboMixin, WristCamMountable, Robot, DualArm):
     #         self._controller = self.controller_cfg.clazz(self.controller_cfg)
     #     return self._controller
 
-    def setup_control(self, mjData, mjModel) -> Tuple[dict[str, Any], dict[str, Any]]:
+    def setup_control(self, mjData, mjModel,mjSpec) -> Tuple[dict[str, Any], dict[str, Any]]:
         actuators = {}
         joints = {}
           

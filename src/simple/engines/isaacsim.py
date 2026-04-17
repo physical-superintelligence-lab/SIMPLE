@@ -637,8 +637,15 @@ class IsaacSimSimulator(Simulator):
             # set articulated joint state if articulated objects is not empty
             if self.articulated_objects:
                 for obj_name in self.articulated_objects.keys():
-                    init_joint_states = np.zeros(self.articulated_objects[obj_name]._articulation_view.num_dof, dtype=np.float32)
-                    self.articulated_objects[obj_name].set_joint_positions(list(init_joint_states))
+                    articulate_joint_qpos = self.task.layout.actors["articulated"].asset.articulate_init_joint_qpos
+                    if articulate_joint_qpos is not None:
+                        qpos = []
+                        for articulate_joint, articulate_jpos in articulate_joint_qpos.items():
+                            qpos.append(articulate_jpos)
+                        self.articulated_objects[obj_name].set_joint_positions(qpos)
+                    else:
+                        init_joint_states = np.zeros(self.articulated_objects[obj_name]._articulation_view.num_dof, dtype=np.float32)
+                        self.articulated_objects[obj_name].set_joint_positions(list(init_joint_states))
 
 
             # Stop all motion
@@ -733,7 +740,7 @@ class IsaacSimSimulator(Simulator):
         for jname, jpos in joint_state.items():
             isaac_jname = self.task.robot.jname_mujoco_to_isaac(jname)
             joint_indices.append(self.robot.get_dof_index(isaac_jname))
-            qpos.append(round(jpos,4))
+            qpos.append(round(jpos,6))
         self.robot.set_joint_positions(qpos, joint_indices=joint_indices)
 
         if self.articulated_objects:
@@ -743,7 +750,7 @@ class IsaacSimSimulator(Simulator):
                 articulate_joint_pos = []
                 for articulate_joint, articulate_jpos in articulated_joints_state.items():
                     articulate_joint_indices.append(articulated_object.get_dof_index(articulate_joint))
-                    articulate_joint_pos.append(round(articulate_jpos,4))
+                    articulate_joint_pos.append(round(articulate_jpos,6))
                 articulated_object.set_joint_positions(articulate_joint_pos, joint_indices=articulate_joint_indices)
 
         if self.need_gravity:
@@ -784,6 +791,39 @@ class IsaacSimSimulator(Simulator):
             position = obj_info.pose.position,
             orientation = obj_info.pose.quaternion,
         )
+        self.articulated_objects[obj_name].set_enabled_self_collisions(False)
+
+        from omni.isaac.core.prims import GeometryPrim
+        from pxr import Usd
+
+        articulation_prim = self.articulated_objects[obj_name].prim.GetParent()
+
+
+        
+        for prim in Usd.PrimRange(articulation_prim):
+            prim_name = prim.GetName()
+            
+
+            if prim_name.lower() == "collisions" or prim_name.lower() == "collision":
+                prim_path = str(prim.GetPath())
+                
+                # unique_name = f"{obj_name}_{prim_path.split('/')[-2]}_col" 
+                
+                try:
+        
+                    obj_collision_geom = GeometryPrim(
+                        prim_path=prim_path, 
+                        # name=unique_name,
+                        # translation=None,
+                        # orientation=None  
+                    )
+                    
+                    
+                    obj_collision_geom.set_collision_enabled(False)
+
+                    
+                except Exception as e:
+                    print(f"skip: {prim_path}")
 
 
     def add_robot(self):
