@@ -6,37 +6,21 @@ Licensed under the terms in LICENSE file.
 """
 
 import numpy as np
-from .base_agent import BaseAgent
-from simple.constants import GripperAction
-try: 
-    from simple.datagen.planner import CuroboPlanner
-
-    import curobo.util_file
-    from curobo.types.math import Pose
-    from curobo.geom.types import WorldConfig, Mesh, Cuboid
-    from curobo.wrap.reacher.ik_solver import IKSolver
-    from curobo.types.base import TensorDeviceType
-    from curobo.types.state import JointState
-    from curobo.wrap.reacher.motion_gen import MotionGenPlanConfig
-except:
-    raise ImportError("CuRobo is not installed. Please follow the instructions in the tutorials/installation")
-
 import torch
-import transforms3d as t3d
-import sys
-# from third_party.gsnet.util_gsnet import GSNet
+from .base_agent import BaseAgent
+from simple.core.action import ActionCmd
 from scipy.spatial.transform import Rotation as R
 from PIL import Image
 import cv2
-import time
-from pathlib import Path
+import sys
 import os
-import random
-import threading
-import select
 import termios
-import tty
 import fcntl
+
+from curobo.types.base import TensorDeviceType
+from curobo.types.math import Pose
+from curobo.geom.types import WorldConfig, Cuboid
+from simple.mp.curobo import CuRoboPlanner
 
 class KeyboardController:
     def __init__(self):
@@ -96,23 +80,30 @@ class KeyboardAgent(BaseAgent):
         super().__init__(robot)
         self._gt_step_idx = 0
         
-        self.planner = CuroboPlanner(
-            robot=robot,
-            robot_cfg=robot.robot_cfg,
-            plan_batch_size=40,
-            plan_dt=1.0/10,
-            easy_motion_gen=False,
-        )
-        
-        world_cfg = WorldConfig(cuboid=[Cuboid(
-            'table', pose=[0., 0., -0.2, 1., 0., 0., 0.], scale=[1., 1., 1.], dims=[2., 2., 0.5]
-            )])
-        
-        self.planner.motion_gen.update_world(world_cfg)
-        
+        # Joint names for creating ActionCmd dicts
+        self._joint_names = list(robot.init_joint_states.keys())
+        self._arm_joint_names = [n for n in self._joint_names if not n.startswith("finger")]
 
         self._last_pred_eef_pose = None
         self._last_pred_action = None
+        
+        # Initialize CuRoboPlanner for IK solving and motion planning
+        self.planner = None
+        try:
+            self.planner = CuRoboPlanner(
+                robot=robot,
+                plan_batch_size=40,
+                plan_dt=1.0 / 10,
+                easy_motion_gen=False,
+            )
+            world_cfg = WorldConfig(cuboid=[Cuboid(
+                'table', pose=[0., 0., -0.2, 1., 0., 0., 0.],
+                scale=[1., 1., 1.], dims=[2., 2., 0.5]
+            )])
+            self.planner.motion_gen.update_world(world_cfg)
+            print("CuRoboPlanner initialized for keyboard control.")
+        except Exception as e:
+            print(f"Failed to init CuRoboPlanner, falling back to robot.ik(): {e}")
         
         # Keyboard control parameters
         self.keyboard_controller = KeyboardController()
@@ -133,28 +124,18 @@ class KeyboardAgent(BaseAgent):
         
         self._print_instructions()
 
-    def get_action(self, observation, 
-                   info, 
-                   target_info=None,
-                   instruction=None, 
-                   conditions=None, 
-                   replay_gt_action=None, 
-                   check_error=False):
+    def get_action(self, observation, instruction=None, **kwargs):
         
         self._last_observation = observation
         curr_qpos = observation["agent"]
-        self._last_qpos = curr_qpos
+        self._last_qpos = dict(zip(self._joint_names, curr_qpos))
         self._gt_step_idx += 1
 
-        front_left_frame = observation["front_stereo_left"]
-        front_left_image = Image.fromarray(front_left_frame)
-        wrist_frame = observation["wrist"]
-        wrist_image = Image.fromarray(wrist_frame)
-        
-        # Real-time display of wrist camera image
-        if self.enable_visualization:
-            self._display_wrist_camera(wrist_frame)
-
+        # Display wrist camera if available
+        if "wrist" in observation:
+            wrist_frame = observation["wrist"]
+            if self.enable_visualization:
+                self._display_wrist_camera(wrist_frame)
 
         # Keyboard control mode
         if self.control_mode == "keyboard":
@@ -162,41 +143,33 @@ class KeyboardAgent(BaseAgent):
             if keyboard_action is not None:
                 self._last_pred_action = keyboard_action
                 
-                # Calculate end-effector pose
+                # Calculate end-effector pose for display
                 try:
-                    eef = self.robot.fk(keyboard_action[:7])
-                    if isinstance(eef, tuple) and len(eef) == 2:
-                        eef_pos = eef[0]
-                        eef_quat = eef[1]
-                        if hasattr(eef_pos, 'cpu'):
-                            eef_pos = eef_pos.cpu().numpy()
-                        if hasattr(eef_quat, 'cpu'):
-                            eef_quat = eef_quat.cpu().numpy()
-                        eef_combined = np.concatenate([eef_pos, eef_quat])
-                        self._last_pred_eef_pose = eef_combined
+                    target_qpos = keyboard_action["target_qpos"]
+                    if target_qpos is not None:
+                        eef_pos, eef_quat = self.robot.fk(target_qpos)
+                        self._last_pred_eef_pose = np.concatenate([eef_pos, eef_quat])
                 except Exception as e:
                     print(f"Failed to calculate end-effector pose: {e}")
                 
                 return keyboard_action
             else:
                 # No key input, maintain current position
-                return self._get_default_action(observation)
+                return self._make_hold_action(curr_qpos)
         
-        # Auto mode - keep original curobo planning logic
+        # Auto mode - maintain current position
         else:
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
 
-    def query_action(self, observation, instruction, gt_action=None):
+    def query_action(self, obs_image, instruction, gt_action=None):
         if self._last_pred_action is not None:
             return self._last_pred_action, 1.0
         else:
-            return self._get_default_action(observation), 1.0
+            raise NotImplementedError
 
-    def reset(self):
+    def reset(self, **kwargs):
+        super().reset(**kwargs)
         self._gt_step_idx = 0
-        self._last_qpos = None
-        self._last_observation = None
-        self._last_pred_action = None
 
     def _display_wrist_camera(self, wrist_frame):
         """Display wrist camera image"""
@@ -264,7 +237,7 @@ class KeyboardAgent(BaseAgent):
         print(f"Wrist camera visualization: {'ON' if self.enable_visualization else 'OFF'}")
 
     def _handle_keyboard_input(self, observation):
-        """Handle keyboard input"""
+        """Handle keyboard input, returns ActionCmd or None"""
         key = self.keyboard_controller.get_key()
         if key is None:
             return None
@@ -272,25 +245,23 @@ class KeyboardAgent(BaseAgent):
         print(f"Key detected: '{key}'")
             
         curr_qpos = observation["agent"]
-        action = curr_qpos.copy()
         
         # Mode switching
         if key == 'm':
             self.control_mode = "auto" if self.control_mode == "keyboard" else "keyboard"
             print(f"Switched to {self.control_mode} mode")
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
         elif key == 'c':
             self.control_space = "cartesian" if self.control_space == "joint" else "joint"
             print(f"Switched to {self.control_space} control space")
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
         elif key == 'h':
             self._print_instructions()
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
         elif key == '\x03':  # Ctrl+C
             print("Stop all actions")
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
         elif key == 'v':
-            # Toggle wrist camera visualization
             self.enable_visualization = not self.enable_visualization
             if self.enable_visualization:
                 cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
@@ -299,41 +270,43 @@ class KeyboardAgent(BaseAgent):
             else:
                 cv2.destroyWindow(self.window_name)
                 print("Wrist camera visualization: OFF")
-            return self._get_default_action(observation)
+            return self._make_hold_action(curr_qpos)
             
         # Gripper control
         if key == 'g':
             self.gripper_open = not self.gripper_open
+            eef_type = "open_eef" if self.gripper_open else "close_eef"
             print(f"Gripper: {'Open' if self.gripper_open else 'Close'}")
-            return self._get_default_action(observation)
+            qpos_dict = dict(zip(self._joint_names, curr_qpos))
+            return ActionCmd(eef_type, target_qpos=qpos_dict)
             
         # Reset
         if key == 'r':
             return self._get_reset_action()
+        
+        # Build target arm qpos array (copy from current)
+        arm_qpos = curr_qpos[:len(self._arm_joint_names)].copy()
             
         # Joint space control
         if self.control_space == "joint":
-            joint_idx = None
             if key in '1234567':
-                joint_idx = int(key) - 1
-                self.selected_joint = joint_idx
+                self.selected_joint = int(key) - 1
                 print(f"Selected joint {key}")
-                return self._get_default_action(observation)
+                return self._make_hold_action(curr_qpos)
             elif key == '+' or key == '=':
-                action[self.selected_joint] += self.joint_step
-                print(f"Joint {self.selected_joint + 1} increased to {action[self.selected_joint]:.3f}")
+                arm_qpos[self.selected_joint] += self.joint_step
+                print(f"Joint {self.selected_joint + 1} increased to {arm_qpos[self.selected_joint]:.3f}")
             elif key == '-' or key == '_':
-                action[self.selected_joint] -= self.joint_step
-                print(f"Joint {self.selected_joint + 1} decreased to {action[self.selected_joint]:.3f}")
+                arm_qpos[self.selected_joint] -= self.joint_step
+                print(f"Joint {self.selected_joint + 1} decreased to {arm_qpos[self.selected_joint]:.3f}")
             else:
-                return self._get_default_action(observation)
+                return self._make_hold_action(curr_qpos)
                 
         # Cartesian space control
         elif self.control_space == "cartesian":
             delta_pos = np.zeros(3)
-            delta_rot = np.zeros(3)  # Euler angle increment [roll, pitch, yaw]
+            delta_rot = np.zeros(3)
             
-            # Position control
             if key == 'w':
                 delta_pos[0] = self.cartesian_step
                 print("Moving in positive X direction")
@@ -352,101 +325,104 @@ class KeyboardAgent(BaseAgent):
             elif key == 'e':
                 delta_pos[2] = -self.cartesian_step
                 print("Moving in negative Z direction")
-            
-            # Rotation control
             elif key == 'i':
-                delta_rot[0] = self.rotation_step  # Positive rotation around X-axis
+                delta_rot[0] = self.rotation_step
                 print("Rotating positively around X-axis")
             elif key == 'k':
-                delta_rot[0] = -self.rotation_step  # Negative rotation around X-axis
-                print("Rotating negatively around X-axis")
+                delta_rot[0] = -self.rotation_step
+                print("Rotating negsssatively around X-axis")
             elif key == 'j':
-                delta_rot[1] = self.rotation_step  # Positive rotation around Y-axis
+                delta_rot[1] = self.rotation_step
                 print("Rotating positively around Y-axis")
             elif key == 'l':
-                delta_rot[1] = -self.rotation_step  # Negative rotation around Y-axis
+                delta_rot[1] = -self.rotation_step
                 print("Rotating negatively around Y-axis")
             elif key == 'u':
-                delta_rot[2] = self.rotation_step  # Positive rotation around Z-axis
+                delta_rot[2] = self.rotation_step
                 print("Rotating positively around Z-axis")
             elif key == 'o':
-                delta_rot[2] = -self.rotation_step  # Negative rotation around Z-axis
+                delta_rot[2] = -self.rotation_step
                 print("Rotating negatively around Z-axis")
             else:
-                return self._get_default_action(observation)
+                return self._make_hold_action(curr_qpos)
                 
             if np.any(delta_pos != 0) or np.any(delta_rot != 0):
-                # Calculate current end-effector position and orientation
                 try:
-                    current_eef = self.robot.fk(curr_qpos[:7])
-                    if isinstance(current_eef, tuple):
-                        current_pos = current_eef[0]
-                        current_quat = current_eef[1]
-                    else:
-                        current_pos = current_eef[:3]
-                        current_quat = current_eef[3:7]
-                        
-                    # Convert to numpy arrays
-                    if hasattr(current_pos, 'cpu'):
-                        current_pos = current_pos.cpu().numpy()
-                    if hasattr(current_quat, 'cpu'):
-                        current_quat = current_quat.cpu().numpy()
+                    current_pos, current_quat = self.robot.fk(curr_qpos)
+                    current_pos = np.asarray(current_pos)
+                    current_quat = np.asarray(current_quat)
                     
-                    # Calculate target position
                     target_pos = current_pos + delta_pos
-                    
-                    # Calculate target orientation
                     target_quat = current_quat.copy()
+                    
                     if np.any(delta_rot != 0):
-                        # Convert quaternion to rotation matrix
                         current_rotation = R.from_quat(current_quat)
-                        
-                        # Apply Euler angle increment (using 'xyz' order)
                         delta_rotation = R.from_euler('xyz', delta_rot)
-                        
-                        # Combine rotations
                         new_rotation = current_rotation * delta_rotation
-                        
-                        # Convert back to quaternion
                         target_quat = new_rotation.as_quat()
-                        
                         print(f"Rotation increment: roll={delta_rot[0]:.3f}, pitch={delta_rot[1]:.3f}, yaw={delta_rot[2]:.3f}")
                     
-                    # Solve IK
-                    target_qpos = self.robot.ik(target_pos, target_quat, current_joint=curr_qpos[:7])
-                    if target_qpos is not None:
-                        action[:7] = target_qpos
-                        if np.any(delta_pos != 0):
-                            print(f"Moving to position: {target_pos}")
-                        if np.any(delta_rot != 0):
-                            # Display current Euler angles
-                            euler_angles = R.from_quat(target_quat).as_euler('xyz', degrees=True)
-                            print(f"Current orientation(deg): roll={euler_angles[0]:.1f}, pitch={euler_angles[1]:.1f}, yaw={euler_angles[2]:.1f}")
-                    else:
-                        print("IK solution failed, cannot move to target position/orientation")
-                        return self._get_default_action(observation)
+                    arm_qpos = self._solve_ik(target_pos, target_quat, curr_qpos)
+                    
+                    if np.any(delta_pos != 0):
+                        print(f"Moving to position: {target_pos}")
+                    if np.any(delta_rot != 0):
+                        euler_angles = R.from_quat(target_quat).as_euler('xyz', degrees=True)
+                        print(f"Current orientation(deg): roll={euler_angles[0]:.1f}, pitch={euler_angles[1]:.1f}, yaw={euler_angles[2]:.1f}")
+                except RuntimeError:
+                    print("IK solution failed, cannot move to target position/orientation")
+                    return self._make_hold_action(curr_qpos)
                 except Exception as e:
                     print(f"Cartesian control error: {e}")
-                    return self._get_default_action(observation)
+                    return self._make_hold_action(curr_qpos)
+            else:
+                return self._make_hold_action(curr_qpos)
         
-        # Set gripper action
-        gripper_action = GripperAction.open if self.gripper_open else GripperAction.close
-        final_action = np.concatenate([action[:7], [gripper_action]])
+        # Build target_qpos dict from arm joints + current finger joints
+        target_qpos = {}
+        for i, name in enumerate(self._arm_joint_names):
+            target_qpos[name] = float(arm_qpos[i])
+        for name in self._joint_names:
+            if name not in target_qpos:
+                target_qpos[name] = float(curr_qpos[self._joint_names.index(name)])
+                
+        eef_state = "open_eef" if self.gripper_open else "close_eef"
+        return ActionCmd("move_qpos_with_eef", target_qpos=target_qpos, eef_state=eef_state)
+
+    def _solve_ik(self, target_pos, target_quat, full_qpos):
+        """Solve IK using CuRoboPlanner's lift_ik_solver if available, otherwise fall back to robot.ik()
         
-        return final_action
+        Args:
+            target_pos: target end-effector position
+            target_quat: target end-effector quaternion
+            full_qpos: full joint state array (all DOFs including fingers)
+        """
+        if self.planner is not None:
+            tensor_args = TensorDeviceType()
+            p = tensor_args.to_device(torch.tensor(target_pos, dtype=torch.float32))
+            q = tensor_args.to_device(torch.tensor(target_quat, dtype=torch.float32))
+            goal = Pose(p, q)
+            retract_cfg = torch.tensor(full_qpos, dtype=torch.float32).cuda()
+            num_seeds = self.planner.lift_ik_solver.num_seeds
+            seed_cfg = retract_cfg.unsqueeze(0).repeat(num_seeds, 1).cuda().unsqueeze(0)
+            result = self.planner.lift_ik_solver.solve_single(goal, retract_cfg, seed_cfg)
+            if result.success[0, 0]:
+                return result.solution[0, 0].cpu().numpy()[:len(self._arm_joint_names)]
+            raise RuntimeError("CuRobo IK failed")
+        else:
+            result = self.robot.ik(target_pos, target_quat, current_joint=full_qpos)
+            return result[:len(self._arm_joint_names)]
 
     def _get_reset_action(self):
-        """Get reset action"""
-        # Reset to initial joint positions
-        reset_qpos = np.array([0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785])  # Franka default position
-        gripper_action = GripperAction.open
-        action = np.concatenate([reset_qpos, [gripper_action]])
+        """Get reset action - move to robot's initial joint positions"""
+        self.gripper_open = True
         print("Resetting to initial position")
-        return action
+        return ActionCmd("move_qpos_with_eef", 
+                         target_qpos=dict(self.robot.init_joint_states),
+                         eef_state="open_eef")
 
-    def _get_default_action(self, observation):
-        """Get default action (maintain current position)"""
-        curr_qpos = observation["agent"]
-        gripper_action = GripperAction.open if self.gripper_open else GripperAction.close
-        action = np.concatenate([curr_qpos[:7], [gripper_action]])
-        return action
+    def _make_hold_action(self, curr_qpos):
+        """Create an ActionCmd that holds the current position with current gripper state"""
+        qpos_dict = dict(zip(self._joint_names, [float(v) for v in curr_qpos]))
+        eef_state = "open_eef" if self.gripper_open else "close_eef"
+        return ActionCmd("move_qpos_with_eef", target_qpos=qpos_dict, eef_state=eef_state)

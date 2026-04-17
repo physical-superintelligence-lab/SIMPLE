@@ -57,8 +57,8 @@
           // "--sim-mode=mujoco_isaac",
           "--sim-mode=mujoco_isaac",
           "--no-headless",
-          "--env-id=simple/G1WholebodyLocomotion-v0",
-          "--task=g1_wholebody_locomotion",
+          "--env-id=simple/G1WholebodyLocomotionMP-v0",
+          "--task=g1_wholebody_locomotion_mp",
           "--robot-uid=g1_wholebody",
       ]
     },
@@ -174,7 +174,7 @@
         "simple/G1WholebodyBendPickMP-v0",
         // "simple/FrankaTabletopGrasp-v0", 
         // "simple/G1WholebodyBendPickAndPlaceOnSofa-v0",
-        // "simple/G1WholebodyBendPickMP-v0",
+        "simple/G1WholebodyBendPickMP-v0",
         // "simple/G1WholebodyLocomotionPickBetweenTablesVariant2-v0",
         // "simple/G1WholebodyLocomotionPickBetweenTablesVariant5-v0",
         // "simple/G1WholebodyLocomotionPickBetweenTablesVariant13-v0",
@@ -199,7 +199,7 @@
         // "vlt",
         "level-0", // eval task dr level
         "--host=localhost",
-        "--port=9000",
+        "--port=6000",
         // "--port=22081",
         "--sim-mode=mujoco_isaac",
         "--no-headless",
@@ -209,7 +209,7 @@
         // "--max-episode-steps=5000",
         // "--data-format=rlds-numpy",
         "--data-format=lerobot",
-        "--data-dir=data/evals/simple/G1WholebodyTabletopGraspMP-v0/level-2",
+        "--data-dir=data/evals/simple/G1WholebodyBendPickMP-v0/level-0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0/level-1",
         // "--data-dir=data/eval_dr/simple/G1WholebodyTabletopGraspMP-v0/level-2",
         // "--data-dir=data/simple/learn/G1WholebodyTabletopGrasp-v0",
@@ -246,7 +246,11 @@
         "DISPLAY": ":1",
       },
       "args": [
-        "simple/G1WholebodyXMovePickTeleop-v0",
+        "simple/G1WholebodyOpenFaucetTeleop-v0",
+        // "simple/G1WholebodyOpenOvenTeleop-v0",
+        // "simple/G1WholebodyCloseDoorTeleop-v0
+        // "simple/G1WholebodyCloseDoorTeleop-v0",
+        // "simple/G1WholebodyXMovePickTeleop-v0",
         // "simple/G1WholebodyXMoveBendPickTeleop-v0",
         // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
         // "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
@@ -273,7 +277,11 @@
           "DISPLAY": ":1"
       },
       "args": [
-        "simple/G1WholebodyXMovePickTeleop-v0",
+        "simple/G1WholebodyOpenFaucetTeleop-v0",
+        // "simple/G1WholebodyOpenOvenTeleop-v0"
+        // "simple/G1WholebodyCloseDoorTeleop-v0",
+        // "simple/G1WholebodyCloseDoorTeleop-v0",
+        // "simple/G1WholebodyXMovePickTeleop-v0",
         // "simple/G1WholebodyHandoverSonic-v0",
         // "simple/G1WholebodyXMovePickTeleop-v0", 
         // "simple/G1WholebodyLocomotionPickBetweenTablesSonic-v0",
@@ -281,8 +289,8 @@
         // "simple/G1WholebodyBendPick-v1",
         // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
         // "--data-dir=data/G1WholebodyBendPick-v1/",
-        "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyXMovePickTeleop-v0/level-0/",
-        "--sim-mode=mujoco_isaac",
+        "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyOpenFaucetTeleop-v0/level-0/",
+        "--sim-mode=mujoco_isaacsim",
         "--no-headless", // no-headless
         "--render-hz=50",
         "--save-dir=data/replay_decoupled_wbc",
@@ -334,18 +342,19 @@
         // "simple/G1WholebodyXMovePickTeleop-v0",
         // "simple/G1WholebodyHandoverTeleop-v0",
         // "simple/G1WholebodyBendPick-v1",
-        "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
-        // "simple/G1WholebodyHandoverTeleop-v0",
+        // "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0",
+        "simple/G1WholebodyHandoverTeleop-v0",
         // "simple/G1WholebodyXMoveBendPickTeleop-v0",
         // "psi0_decoupled_wbc",
-        "pi05_decoupled_wbc",
+        // "pi05_decoupled_wbc",
+        "hrdt_decoupled_wbc",
         // "act_decoupled_wbc",
         // "dp_decoupled_wbc",
         // "intervla_decoupled_wbc",
         // "sonic_loco_pick-lv1", //eval task name 
-        "level-1",
+        "level-0",
         "--host=localhost",
-        "--port=9001",
+        "--port=6001",
         // "--port=22081",
         "--sim-mode=mujoco_isaac",
         "--no-headless",
@@ -353,7 +362,7 @@
         // "--max-episode-steps=800", //for g1_handover
         "--data-format=lerobot",
         // "--data-dir=data/evals/simple-eval/G1WholebodyBendPickMP-v0/level-0",
-        "--data-dir=data/evals/simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0/level-2"
+        "--data-dir=data/evals/simple/G1WholebodyHandoverTeleop-v0/level-0"
         // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPickTeleop-v0/level-0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
@@ -407,13 +416,13 @@
       },
       "args": [
         // "simple/FrankaTabletopPickNPlace-v0",
-        // "simple/FrankaTabletopGrasp-v0",
+        // "simple/FrankaTabletopGraspMP-v0",
 
         // "simple/AlohaTabletopHandover-v0",
-        // "simple/AlohaTabletopGrasp-v0",
+        // "simple/AlohaTabletopGraspMP-v0",
         // "--plan-batch-size=10",
         
-        // "simple/VegaTabletopGrasp-v0",
+        // "simple/VegaTabletopGraspMP-v0",
         
         // "simple/G1InspireTabletopGrasp-v0",
         // "simple/G1InspireWholebodyLocomotion-v0",
@@ -429,7 +438,7 @@
         
         // "simple/G1WholebodySit-v0",
         // "simple/G1WholebodyBendPickAndPlace-v0",
-        // "simple/G1WholebodyBendPickMP-v0",
+        "simple/G1WholebodyBendPickMP-v0",
         
         // "simple/G1WholebodyBendHandover-v0",
         // "simple/G1WholebodyTabletopHandover-v0",
@@ -440,7 +449,7 @@
         // "simple/G1WholebodyLocomotionPickBetweenTablesVariant2-v0",
         // "simple/G1WholebodyTabletopGrasp-v0",
         // "simple/G1WholebodyLocomotionPickBetweenTablesTeleop-v0", // for gen eval dataset
-        "simple/G1WholebodyHandoverTeleop-v0", // for gen eval dataset
+        // "simple/G1WholebodyHandoverTeleop-v0", // for gen eval dataset
         // "simple/G1WholebodyXMoveBendPickTeleop-v0", // for gen eval dataset
         // "simple/G1WholebodyLocomotionPickBetweenTablesVariant3-v0",
         // "simple/G1WholebodyTurnPick-v0",
@@ -720,6 +729,12 @@
           "MUJOCO_GL": "egl"
       },
       "args": [
+        // "simple/FrankaTabletopPickNPlace-v0",
+        // "simple/FrankaTabletopGraspMP-v0",
+        "simple/VegaTabletopGraspMP-v0",
+
+        // "simple/AlohaTabletopHandover-v0",
+        // "simple/AlohaTabletopGraspMP-v0",
           "--sim-mode=mujoco_isaac",
           // "--sim-mode=mujoco_isaac",
           "--no-headless",
