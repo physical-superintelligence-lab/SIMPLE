@@ -22,7 +22,8 @@ Articulated_Object_Names = {
     1: "bottle",
     2: "oven",
     3: "door",
-    4: "faucet"
+    4: "faucet",
+    5: "trash_can"
 }
 
 

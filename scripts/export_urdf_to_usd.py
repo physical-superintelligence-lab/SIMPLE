@@ -16,8 +16,8 @@ manager.set_extension_enabled_immediate("isaacsim.asset.importer.urdf", True)
 
 # ── 路径配置 ────────────────────────────────────────────────
 current_dir = os.getcwd()
-urdf_file_path = os.path.join(current_dir, "data/assets/articulated/002/002_scaled_04.urdf")
-usd_save_path  = os.path.join(current_dir, "data/assets/articulated/002/output_usd/002.usd")
+urdf_file_path = os.path.join(current_dir, "data/assets/articulated/005/005_scaled_05.urdf")
+usd_save_path  = os.path.join(current_dir, "data/assets/articulated/005/output_usd/005.usd")
 # ─────────────────────────────────────────────────────────────
 
 os.makedirs(os.path.dirname(usd_save_path), exist_ok=True)

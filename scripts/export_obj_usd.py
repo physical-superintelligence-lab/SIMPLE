@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
         input_obj_dir = os.path.join(input_dir, "mesh", "normalized.obj")
         output_usd_dir = input_obj_dir.replace(".obj", "_isaac.usd")
-        abs_obj_path = os.path.abspath(input_obj_dir)
-        convert_obj_to_isaac_usd(abs_obj_path, output_usd_dir)
+        rel_obj_path = os.path.join(".", os.path.basename(input_obj_dir))
+        convert_obj_to_isaac_usd(rel_obj_path, output_usd_dir)
 
 
 

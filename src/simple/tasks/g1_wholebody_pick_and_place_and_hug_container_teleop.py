@@ -180,6 +180,7 @@ class G1WholebodyPickAndPlaceAndHugContainerTaskTeleop(Task):
         self._instruction = None
         self._target = None
         self._container = None
+        self._distractors: list[Actor] = []
         self._layout = None
         self._init_target_height = None
         self._contact_started = False
@@ -265,6 +266,7 @@ class G1WholebodyPickAndPlaceAndHugContainerTaskTeleop(Task):
         split = self.metadata.get("split", "train")
         self._target = self.layout.actors.get("target")
         self._container = self.layout.actors.get("container")
+        self._distractors = [actor for name, actor in self.layout.actors.items() if name.startswith("distractor_")]
         lang_dr = self.dr.get_randomizer("language")
         assert lang_dr is not None
         language_template = lang_dr(split)
@@ -359,6 +361,66 @@ class G1WholebodyPickAndPlaceAndHugContainerTaskTeleop(Task):
                 return True
         return False
     
+    def check_distractor_contact_target(self, *args, **kwargs) -> bool:
+        mujoco_env = kwargs.get("mujoco_env", None)
+        if mujoco_env is None:
+            return False
+        if not self._distractors:
+            return True
+            
+        target_name = str(self.target.asset.label)
+
+        mj_physics_data = mujoco_env.mjData
+        mj_physics_model = mujoco_env.mjModel
+
+        for distractor in self._distractors:
+            distractor_name = str(distractor.asset.label)
+            found = False
+            for i_contact in range(mj_physics_data.ncon):
+                contact = mj_physics_data.contact[i_contact]
+                g1 = mj_physics_model.geom(contact.geom1)
+                g2 = mj_physics_model.geom(contact.geom2)
+                body1 = mj_physics_model.body(g1.bodyid).name
+                body2 = mj_physics_model.body(g2.bodyid).name
+                if (distractor_name in body1 and target_name in body2) or \
+                   (distractor_name in body2 and target_name in body1):
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+    
+    def check_distractor_in_container(self, *args, **kwargs) -> bool:
+        """
+        Check if all distractor objects are in the container.
+        """
+        mujoco_env = kwargs.get("mujoco_env", None)
+        if mujoco_env is None:
+            return False
+        if not self._distractors:
+            return True
+
+        container_name = str(self.container.asset.label)
+        mj_physics_data = mujoco_env.mjData
+        mj_physics_model = mujoco_env.mjModel
+
+        for distractor in self._distractors:
+            distractor_name = str(distractor.asset.label)
+            found = False
+            for i_contact in range(mj_physics_data.ncon):
+                contact = mj_physics_data.contact[i_contact]
+                g1 = mj_physics_model.geom(contact.geom1)
+                g2 = mj_physics_model.geom(contact.geom2)
+                body1 = mj_physics_model.body(g1.bodyid).name
+                body2 = mj_physics_model.body(g2.bodyid).name
+                if (distractor_name in body1 and container_name in body2) or \
+                   (distractor_name in body2 and container_name in body1):
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
     def check_success(self,  info: dict[str, Any], *args, **kwargs) -> bool:
         reward = self.compute_reward(info, *args, **kwargs)
         return reward >= self.success_criteria
@@ -367,9 +429,12 @@ class G1WholebodyPickAndPlaceAndHugContainerTaskTeleop(Task):
         is_object_in_container = self.check_object_in_container(info=info, *args, **kwargs)
         # is_object_contacted_by_hand = self.check_hand_object_contact(*args, **kwargs)
         is_container_on_table = self.check_container_on_table(*args, **kwargs)
+        is_distractor_in_container = self.check_distractor_in_container(*args, **kwargs)
+        is_distractor_contact_target = self.check_distractor_contact_target(*args, **kwargs)
+        # print(f"Reward Debug: distractor_in_container={is_distractor_in_container}")
 
-        if is_object_in_container and is_container_on_table:
-            self.reward += 0.025
+        if is_object_in_container and is_container_on_table and (is_distractor_in_container or is_distractor_contact_target):
+            self.reward += 1
         else:
             self.reward = 0.0
         return self.reward

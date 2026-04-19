@@ -439,7 +439,16 @@ register(
     entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
     kwargs={"task":"g1_wholebody_open_faucet_teleop"},
 )
-
+register(
+    id="simple/G1WholebodyPushOfficeChairTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_push_office_chair_teleop"},
+)
+register(
+    id="simple/G1WholebodyOpenTrashCanTeleop-v0",
+    entry_point="simple.envs.sonic_loco_manip:SonicLocoManipEnv",
+    kwargs={"task":"g1_wholebody_open_trash_can_teleop"},
+)
 
 
 # def task_register(task):

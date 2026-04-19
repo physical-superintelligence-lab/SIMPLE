@@ -979,8 +979,9 @@ class IsaacSimSimulator(Simulator):
 
         p, q, s = table_box.pose.position, table_box.pose.quaternion, table_box.size
         prim.GetAttribute("xformOp:translate").Set(Gf.Vec3d(*[float(x) for x in p]))
+        # q is wxyz [qw, qx, qy, qz]; Gf.Quatd(real, i, j, k) expects (w, x, y, z)
         prim.GetAttribute("xformOp:orient").Set(
-            Gf.Quatd(float(q[3]), float(q[0]), float(q[1]), float(q[2])))
+            Gf.Quatd(float(q[0]), float(q[1]), float(q[2]), float(q[3])))
         prim.GetAttribute("xformOp:scale").Set(Gf.Vec3d(*[float(x) for x in s]))
 
         UsdPhysics.CollisionAPI.Apply(prim)

@@ -111,10 +111,10 @@ class ObjaverseAssetManager(AssetManager):
         assert int(asset_id) in Objaverse_Names, f"Asset ID {asset_id} not found in Objaverse."
         
         asset_id_int = int(asset_id)
-
+        local_data_dir = resolve_data_path(f'{self.src_dir}/{asset_id_int:04d}',auto_download=True)
         collision_mesh_curobo = f"data/{self.src_dir}/{asset_id_int:04d}/mesh/normalized.obj"
         
-        collision_mesh_new_dir = resolve_data_path(f'{self.src_dir}/{asset_id_int:04d}/urdf/meshes', auto_download=True)
+        collision_mesh_new_dir = resolve_data_path(f'{self.src_dir}/{asset_id_int:04d}/urdf/meshes')
         collision_meshes_mujoco= []
         for dir, dirs, files in os.walk(collision_mesh_new_dir):
             collision_meshes_mujoco = [dir + "/" + file for file in files if file.startswith('convex_piece')]

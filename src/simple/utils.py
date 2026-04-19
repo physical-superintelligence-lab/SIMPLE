@@ -75,6 +75,8 @@ def _parse_zip_file_from_rel_path(rel_path: str) -> str:
         ext = match.group(3)
         return f"assets_{asset_category}.zip"
 
+
+
     pattern = r"^assets/([^/]+)/([^/]+)/([^/]+)/(.+)$"
 
     match = re.match(pattern, rel_path)
