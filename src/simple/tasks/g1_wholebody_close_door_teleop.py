@@ -102,7 +102,7 @@ class G1WholebodyCloseDoorTaskTeleop(Task):
         ),
         spatial=SpatialDRCfg(
             spatial_mode="random",
-            robot_region=Box(low=[-1, 1.2, 0.0], high=[-1.1, 0.8, 0.0]),
+            robot_region=Box(low=[-1.2, 1.2, 0.0], high=[-1.3, 0.8, 0.0]),
             target_region=Box(low=[-0.3, -0.08], high=[-0.25, -0.04]),
             distractors_region=Box(low=[-0.2, -0.3], high=[0.4, 0.3]),
             target_stable_indices=[0],

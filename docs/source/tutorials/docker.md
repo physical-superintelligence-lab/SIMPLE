@@ -1,5 +1,24 @@
 # Docker Setup
 
+## Prebuilt image
+
+If you just want to run SIMPLE without building, pull the prebuilt minimal
+image from DockerHub:
+
+```
+docker pull junjieye/simple:latest
+```
+
+Available tags and image history: https://hub.docker.com/r/junjieye/simple
+
+The published image is the **minimal** variant — sufficient for all headless
+sim use cases (`eval`, `replay`, `datagen`, decoupled-WBC sim side). For the
+full stack (real-robot / GUI teleop), build locally with
+`SIMPLE_FULL_INSTALL=1` (see [Build variants](#build-variants) below) or
+[upgrade a running minimal container](#upgrading-a-running-minimal-container-to-the-full-stack).
+
+## Build from source
+
 build and start docker container
 
 First pull all submodules
@@ -34,6 +53,25 @@ docker buildx bake --allow=network.host isaac-sim
 docker buildx bake --allow=network.host --no-cache isaac-sim
 ```
 
+#### Build variants
+
+By default, `docker buildx bake isaac-sim` produces a **minimal** image sufficient
+for all headless sim use cases: `eval`, `replay`, `datagen`, `teleop-decoupled-wbc`
+(sim-side), `eval-decoupled-wbc`, `replay-decoupled-wbc`, and any environment
+that instantiates `G1Sonic` / `SonicLocoManipEnv` / `ReplayDecoupledAgent`.
+
+To include the **full** `decoupled_wbc[full]` stack (ROS bridge, PyQt6 GUI,
+pyrealsense2, Ray, mujoco, rerun) — needed for real-robot deployment or GUI
+teleop — set `SIMPLE_FULL_INSTALL=1` at build time:
+
+```
+SIMPLE_FULL_INSTALL=1 docker buildx bake --allow=network.host isaac-sim
+```
+
+The full variant is byte-equivalent to what README Option 1's
+`uv sync --all-groups` installs on a bare host. Image size increases by
+roughly 2-4 GB.
+
 (c) start sim container in detached mode
 ```
 docker compose up sim -d
@@ -63,6 +101,28 @@ docker compose down --remove-orphans
 ```
 
 ### Useful Commands
+
+#### Upgrading a running minimal container to the full stack
+
+If you built with the default (minimal) variant but need the full
+`decoupled_wbc[full]` stack (ROS, PyQt6, realsense, Ray, mujoco, rerun)
+without rebuilding the image:
+
+```
+docker exec -it simple-sim-1 bash -c "\
+  uv pip install --python /workspace/SIMPLE/.venv/bin/python \
+    --no-build-isolation \
+    -e 'third_party/decoupled_wbc[full]' \
+    -e third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64 \
+    -e third_party/evdev"
+```
+
+The `third_party/` tree inside the container is baked at image build time,
+so the install uses that frozen snapshot. If you need bleeding-edge
+`decoupled_wbc`, either rebuild with `SIMPLE_FULL_INSTALL=1` or bind-mount
+`third_party/` when launching the container.
+
+#### GPU selection
 
 If you want to specify which GPU to run the command, just prepend `GPUs=0` to any following command:
 ```

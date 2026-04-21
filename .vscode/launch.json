@@ -246,9 +246,11 @@
         "DISPLAY": ":1",
       },
       "args": [
-        "simple/G1WholebodyOpenFaucetTeleop-v0",
+        // "simple/G1WholebodyOpenTrashCanTeleop-v0",
+        // "simple/G1WholebodyPushOfficeChairTeleop-v0",
+        // "simple/G1WholebodyOpenFaucetTeleop-v0",
         // "simple/G1WholebodyOpenOvenTeleop-v0",
-        // "simple/G1WholebodyCloseDoorTeleop-v0
+        "simple/G1WholebodyCloseDoorTeleop-v0",
         // "simple/G1WholebodyCloseDoorTeleop-v0",
         // "simple/G1WholebodyXMovePickTeleop-v0",
         // "simple/G1WholebodyXMoveBendPickTeleop-v0",
@@ -277,7 +279,10 @@
           "DISPLAY": ":1"
       },
       "args": [
-        "simple/G1WholebodyOpenFaucetTeleop-v0",
+        "simple/G1WholebodyOpenTrashCanTeleop-v0",
+        // "simple/G1WholebodyPushOfficeChairTeleop-v0",
+        // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
+        // "simple/G1WholebodyOpenFaucetTeleop-v0",
         // "simple/G1WholebodyOpenOvenTeleop-v0"
         // "simple/G1WholebodyCloseDoorTeleop-v0",
         // "simple/G1WholebodyCloseDoorTeleop-v0",
@@ -289,11 +294,12 @@
         // "simple/G1WholebodyBendPick-v1",
         // "simple/G1WholebodyPickAndPlaceAndHugContainerTeleop-v0",
         // "--data-dir=data/G1WholebodyBendPick-v1/",
-        "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyOpenFaucetTeleop-v0/level-0/",
-        "--sim-mode=mujoco_isaacsim",
+        // "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyOpenFaucetTeleop-v0/level-0/",
+        "--data-dir=data/teleop_decoupled_wbc/simple/G1WholebodyOpenTrashCanTeleop-v0/level-0/",
+        "--sim-mode=mujoco_isaac",
         "--no-headless", // no-headless
         "--render-hz=50",
-        "--save-dir=data/replay_decoupled_wbc",
+        "--save-dir=data/replay_decoupled_wbc_1",
         "--record",
         "--resume"
       ],
@@ -730,8 +736,8 @@
       },
       "args": [
         // "simple/FrankaTabletopPickNPlace-v0",
-        // "simple/FrankaTabletopGraspMP-v0",
-        "simple/VegaTabletopGraspMP-v0",
+        "simple/FrankaTabletopGraspMP-v0",
+        // "simple/VegaTabletopGraspMP-v0",
 
         // "simple/AlohaTabletopHandover-v0",
         // "simple/AlohaTabletopGraspMP-v0",
@@ -748,7 +754,7 @@
       "type": "debugpy",
       "request": "launch",
       "python": "${workspaceFolder}/.venv/bin/python",
-      "program": "${workspaceFolder}/export_obj_usd.py",
+      "program": "${workspaceFolder}/scripts/export_obj_usd.py",
       "console": "integratedTerminal",
       "args": [
         "--input_dir_template=data/assets/objaverse/*",

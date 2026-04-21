@@ -106,7 +106,7 @@ class G1WholebodyOpenOvenTaskTeleop(Task):
             distractors_region=Box(low=[0.2, -0.3], high=[0.4, 0.3]),
             target_stable_indices=[0],
             target_rotate_z=Box(low=-0.15, high=0.15),
-            articulated_region=Box(low=[-0.1, -0.1,0.7], high=[-0.2, 0.1,0.7]),
+            articulated_region=Box(low=[-0.1, -0.1,0.65], high=[-0.2, 0.1,0.65]),
             articulated_rotate_z= Box(low=-0.12, high=0.12),
         ),
         camera=CameraDRCfg(
@@ -121,7 +121,7 @@ class G1WholebodyOpenOvenTaskTeleop(Task):
             table_position=Box(low=[0.3, 0], high=[0.3, 0]),
             # table_height=Box(low=0.0, high=0.0),
             # rotation_z=Box(low=0, high=3.14),  # Rotation around the Z-axis
-            table_height=Box(low=0.58, high=0.45),
+            table_height=Box(low=0.55, high=0.5),
             room_choices=["hssd:scene1"],
             scene_manager="hssd",
         ),

@@ -148,7 +148,7 @@ check_user_shell_pollution() {
 
 echo "[prereq-check] checking SIMPLE host/runtime prerequisites"
 
-check_command git "required for submodules and vendored patches"
+check_command git "required for submodules"
 check_command nix "required to realize the dev shell"
 check_command bash ""
 check_optional_command uv "the Nix dev shell provides uv even if the host does not"

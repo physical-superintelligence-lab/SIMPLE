@@ -23,35 +23,6 @@ export UV_HTTP_TIMEOUT="${UV_HTTP_TIMEOUT:-300}"
 export GIT_LFS_SKIP_SMUDGE=1
 export MAX_JOBS="${MAX_JOBS:-4}"
 
-apply_curobo_patch() {
-  # This patch fixes nix-specific libc header paths; skip it outside a nix shell.
-  if [[ -z "${IN_NIX_SHELL:-}" ]]; then
-    return 0
-  fi
-
-  local patch_file="$ROOT_DIR/patches/curobo/0001-nix-fix-torch-cpp-extension-libc-headers.patch"
-
-  if [[ ! -f "$patch_file" ]]; then
-    echo "[install_curobo] missing curobo patch file: $patch_file"
-    exit 1
-  fi
-
-  if git -C "$ROOT_DIR/third_party/curobo" apply --check "$patch_file" >/dev/null 2>&1; then
-    echo "[install_curobo] applying repo-managed curobo patch"
-    git -C "$ROOT_DIR/third_party/curobo" apply "$patch_file"
-    return 0
-  fi
-
-  if git -C "$ROOT_DIR/third_party/curobo" apply -R --check "$patch_file" >/dev/null 2>&1; then
-    return 0
-  fi
-
-  echo "[install_curobo] curobo patch does not apply cleanly"
-  echo "[install_curobo] submodule may have changed and the patch may need refresh:"
-  echo "  $patch_file"
-  exit 1
-}
-
 VENV_PYTHON="${UV_PROJECT_ENVIRONMENT}/bin/python"
 if [[ ! -x "$VENV_PYTHON" ]]; then
   echo "[install_curobo] missing venv python at $VENV_PYTHON"
@@ -79,8 +50,6 @@ fi
 if ! simple_runtime_assert_vendor_tree "install_curobo" "nvidia-curobo" "$ROOT_DIR/third_party/curobo"; then
   exit 1
 fi
-
-apply_curobo_patch
 
 if ! simple_runtime_assert_nvidia_runtime "install_curobo" "$ROOT_DIR"; then
   echo "[install_curobo] host NVIDIA runtime is incomplete for GPU builds"
