@@ -30,8 +30,8 @@ ENV CUDA_HOME=/usr/local/cuda-${CUDA_VERSION}
 # strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep 3.4.32
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg dirmngr \
-    git curl wget vim ca-certificates build-essential ninja-build libgmp-dev libgmp10 ffmpeg \
-    python3 python3-pip python3-dev software-properties-common \
+    git curl wget vim ca-certificates build-essential ninja-build cmake libgmp-dev libgmp10 ffmpeg \
+    python3 python3-pip python3-dev pybind11-dev software-properties-common \
     && curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60C317803A41BA51845E371A1E9377A2BA9EF27F' \
        | gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu-toolchain-r.gpg \
     && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ubuntu-toolchain-r-test.list \
@@ -59,16 +59,12 @@ ENV UV_CACHE_DIR=/workspace/.uv-cache
 RUN mkdir -p ${UV_CACHE_DIR} && chmod 777 ${UV_CACHE_DIR}
 VOLUME ["/workspace/.uv-cache"]
 
-# --- Copy dependency files and cuRobo (cache key) ---
+# --- Copy dependency files (cache key for venv) ---
 WORKDIR /workspace/SIMPLE
 COPY pyproject.toml uv.lock ./
-COPY third_party/curobo third_party/curobo
-COPY third_party/openpi-client third_party/openpi-client
-COPY third_party/evdev third_party/evdev
-COPY third_party/decoupled_wbc third_party/decoupled_wbc
-COPY third_party/gear_sonic third_party/gear_sonic
-COPY third_party/unitree_sdk2_python third_party/unitree_sdk2_python
-COPY third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64 third_party/XRoboToolkit-PC-Service-Pybind_X86_and_ARM64
+
+# --- Copy third-party packages (filtered by .dockerignore) ---
+COPY third_party third_party
 
 # --- Install dependencies (cached) ---
 ENV UV_HTTP_TIMEOUT=1800
@@ -77,7 +73,7 @@ ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.7.7
 ENV OMNI_KIT_ACCEPT_EULA=Y
 
 RUN --mount=type=cache,target=/workspace/.uv-cache \
-    GIT_LFS_SKIP_SMUDGE=1 uv sync --group rlds --group lerobot --group isaacsim-hotfix --index-strategy unsafe-best-match && \
+    GIT_LFS_SKIP_SMUDGE=1 uv sync --group lerobot --index-strategy unsafe-best-match && \
     rm -rf /tmp/* /var/tmp/*
 
 # --- Copy install script (separate from cuRobo files) ---

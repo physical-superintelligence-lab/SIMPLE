@@ -84,7 +84,7 @@ python -c "import simple; print(simple.__version__)"
 make live
 ```
 
-Open http://127.0.0.1:8000 in a browser to view the documentation. 
+Open http://127.0.0.1:8005 in a browser to view the documentation. 
 
 > The document are working in progress. Feel free to raise questions using github issue, we will try to complete the document construction as soon as possible.
 
@@ -214,7 +214,7 @@ Operational notes:
 
 ### [Option 3] Docker setup
 
-We also support building and running SIMPLE in docker. Please refer to the documents for docker setup.
+We also support building and running SIMPLE in docker. Please refer to the documents for [docker setup](docs/source/tutorials/docker.md).  
 
 ## 📊 Simulation Benchmarking Results
 

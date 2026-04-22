@@ -16,4 +16,4 @@ __pycache__/
 .mypy_cache/
 *.egg-info/
 .tox/
-node_modules/
+node_modules/*.egg-info/

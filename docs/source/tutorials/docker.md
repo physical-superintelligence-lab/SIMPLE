@@ -6,10 +6,10 @@ If you just want to run SIMPLE without building, pull the prebuilt minimal
 image from DockerHub:
 
 ```
-docker pull junjieye/simple:latest
+docker pull ghcr.io/physical-superintelligence-lab/simple:latest
 ```
 
-Available tags and image history: https://hub.docker.com/r/junjieye/simple
+Available tags and image history: https://github.com/physical-superintelligence-lab/SIMPLE/pkgs/container/simple
 
 The published image is the **minimal** variant — sufficient for all headless
 sim use cases (`eval`, `replay`, `datagen`, decoupled-WBC sim side). For the
@@ -35,13 +35,14 @@ mkdir -p .uv-cache
 (a)  create and edit `.env`
 ```
 cp .env.sample .env  
-# --> then change all the env variables like: MY_USER, MY_UID, MY_GID (should be same as your host)
 # --> change DATA_DIR to your path on host
+# --> DATE is used as the docker image tag
 # --> other variables are optional
 ```
 
 > 💡 Compiling cuda kernels for every compute capability can significantly increase the install time of `CuRobo`, it’s reccommended to set the environment variable `TORCH_CUDA_ARCH_LIST` to the correct computablity according to [offical doc](https://developer.nvidia.com/cuda-gpus)
 > ```
+> TORCH_CUDA_ARCH_LIST=12.0+PTX # for 5090 etc., 
 > TORCH_CUDA_ARCH_LIST=8.9+PTX # for 4090 etc., 
 > TORCH_CUDA_ARCH_LIST=8.0+PTX # for A100 etc., 
 > ```
@@ -53,24 +54,39 @@ docker buildx bake --allow=network.host isaac-sim
 docker buildx bake --allow=network.host --no-cache isaac-sim
 ```
 
-#### Build variants
+>  ***Build variants***
+> 
+> By default, `docker buildx bake isaac-sim` produces a **minimal** image sufficient
+> for all headless sim use cases: `eval`, `replay`, `datagen`, `teleop-decoupled-wbc`
+> (sim-side), `eval-decoupled-wbc`, `replay-decoupled-wbc`, and any environment
+> that instantiates `G1Sonic` / `SonicLocoManipEnv` / `ReplayDecoupledAgent`.
+>
+> To include the **full** `decoupled_wbc[full]` stack (ROS bridge, PyQt6 GUI,
+> pyrealsense2, Ray, mujoco, rerun) — needed for real-robot deployment or GUI
+> teleop — set `SIMPLE_FULL_INSTALL=1` at build time:
+> 
+> ```
+> SIMPLE_FULL_INSTALL=1 docker buildx bake --allow=network.host isaac-sim
+> ```
+> 
+> The full variant is byte-equivalent to what README Option 1's
+> `uv sync --all-groups` installs on a bare host. Image size increases by
+> roughly 2-4 GB.
 
-By default, `docker buildx bake isaac-sim` produces a **minimal** image sufficient
-for all headless sim use cases: `eval`, `replay`, `datagen`, `teleop-decoupled-wbc`
-(sim-side), `eval-decoupled-wbc`, `replay-decoupled-wbc`, and any environment
-that instantiates `G1Sonic` / `SonicLocoManipEnv` / `ReplayDecoupledAgent`.
-
-To include the **full** `decoupled_wbc[full]` stack (ROS bridge, PyQt6 GUI,
-pyrealsense2, Ray, mujoco, rerun) — needed for real-robot deployment or GUI
-teleop — set `SIMPLE_FULL_INSTALL=1` at build time:
+Test installtion by running a demo data generation
 
 ```
-SIMPLE_FULL_INSTALL=1 docker buildx bake --allow=network.host isaac-sim
+docker compose -p wsl run datagen \
+    simple/G1WholebodyBendPickMP-v0 \
+    --render-hz=50 \
+    --sim-mode=mujoco_isaac \
+    --headless \
+    --num-episodes=1
 ```
+You should see 1 episode generated succesfully!
+The video is saved to `data/datagen/simple`.
 
-The full variant is byte-equivalent to what README Option 1's
-`uv sync --all-groups` installs on a bare host. Image size increases by
-roughly 2-4 GB.
+Or you can follow below (c-e) steps to launch the container manually.
 
 (c) start sim container in detached mode
 ```
@@ -86,19 +102,12 @@ docker attach simple-sim-1
 
 (e) run test code to verify installation
 ```
-cd ~/SIMPLE
-uv run replay
+cd /workspace/SIMPLE
+source .venv/bin/activate
+python src/simple/cli/datagen.py simple/G1WholebodyBendPickMP-v0 --render-hz=50 --sim-mode=mujoco_isaac --headless --num-episodes=1
 ```
 
-You should see episode replayed succesfully!
-The video is saved to `output/replays`
 
-(f) usefull commands
-
-take down all running containers
-```
-docker compose down --remove-orphans
-```
 
 ### Useful Commands
 
@@ -122,6 +131,11 @@ so the install uses that frozen snapshot. If you need bleeding-edge
 `decoupled_wbc`, either rebuild with `SIMPLE_FULL_INSTALL=1` or bind-mount
 `third_party/` when launching the container.
 
+#### take down all running containers
+```
+docker compose down --remove-orphans
+```
+
 #### GPU selection
 
 If you want to specify which GPU to run the command, just prepend `GPUs=0` to any following command:
@@ -134,7 +148,12 @@ GPUs=0 ...
 
 Run `datagen`
 ```
-docker compose -p wsl run datagen simple/FrankaTabletopGrasp-v0 --headless --ignore-target-collision
+GPUs=0 docker compose -p wsl run datagen \
+    simple/G1WholebodyBendPickMP-v0 \
+    --render-hz=50 \
+    --sim-mode=mujoco_isaac \
+    --headless \
+    --num-episodes=1
 ```
 
 

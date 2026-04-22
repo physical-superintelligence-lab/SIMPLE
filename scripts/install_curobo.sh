@@ -4,20 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# shellcheck disable=SC1091
-source "$ROOT_DIR/scripts/nix/common.sh"
-
-simple_runtime_source_home_env
-
+# Only source nix scripts if in nix shell
 if [[ -n "${IN_NIX_SHELL:-}" ]]; then
+  # shellcheck disable=SC1091
+  source "$ROOT_DIR/scripts/nix/common.sh"
+
+  simple_runtime_source_home_env
   simple_runtime_configure_uv_project_environment "$ROOT_DIR"
+  simple_runtime_sanitize_python_env
+  simple_runtime_stage_host_driver_libs "$ROOT_DIR"
 else
-  # Outside a nix shell: use the standard venv instead of .venv-nix.
+  # Outside a nix shell (e.g., Docker): use the standard venv instead of .venv-nix.
   export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$ROOT_DIR/.venv}"
 fi
-
-simple_runtime_sanitize_python_env
-simple_runtime_stage_host_driver_libs "$ROOT_DIR"
 
 export UV_HTTP_TIMEOUT="${UV_HTTP_TIMEOUT:-300}"
 export GIT_LFS_SKIP_SMUDGE=1
@@ -26,7 +25,7 @@ export MAX_JOBS="${MAX_JOBS:-4}"
 VENV_PYTHON="${UV_PROJECT_ENVIRONMENT}/bin/python"
 if [[ ! -x "$VENV_PYTHON" ]]; then
   echo "[install_curobo] missing venv python at $VENV_PYTHON"
-  echo "[install_curobo] run ./scripts/nix/bootstrap-python.sh first"
+  # echo "[install_curobo] run ./scripts/nix/bootstrap-python.sh first"
   exit 1
 fi
 
@@ -39,27 +38,35 @@ if [[ -n "${IN_NIX_SHELL:-}" ]]; then
   simple_runtime_filter_path_var LD_LIBRARY_PATH $(simple_runtime_allowed_ld_prefixes "$ROOT_DIR")
 fi
 
-simple_runtime_stage_python_runtime_libs
-
 if [[ -n "${IN_NIX_SHELL:-}" ]]; then
+  simple_runtime_stage_python_runtime_libs
+
   if ! simple_runtime_assert_runtime_boundary "install_curobo" "$ROOT_DIR"; then
     exit 1
   fi
-fi
 
-if ! simple_runtime_assert_vendor_tree "install_curobo" "nvidia-curobo" "$ROOT_DIR/third_party/curobo"; then
-  exit 1
-fi
+  if ! simple_runtime_assert_vendor_tree "install_curobo" "nvidia-curobo" "$ROOT_DIR/third_party/curobo"; then
+    exit 1
+  fi
 
-if ! simple_runtime_assert_nvidia_runtime "install_curobo" "$ROOT_DIR"; then
-  echo "[install_curobo] host NVIDIA runtime is incomplete for GPU builds"
-  exit 1
-fi
+  apply_curobo_patch
 
-if ! simple_runtime_detect_torch_cuda_arch_list "install_curobo"; then
-  echo "[install_curobo] failed to determine TORCH_CUDA_ARCH_LIST automatically"
-  echo "[install_curobo] set TORCH_CUDA_ARCH_LIST explicitly and rerun"
-  exit 1
+  if ! simple_runtime_assert_nvidia_runtime "install_curobo" "$ROOT_DIR"; then
+    echo "[install_curobo] host NVIDIA runtime is incomplete for GPU builds"
+    exit 1
+  fi
+
+  if ! simple_runtime_detect_torch_cuda_arch_list "install_curobo"; then
+    echo "[install_curobo] failed to determine TORCH_CUDA_ARCH_LIST automatically"
+    echo "[install_curobo] set TORCH_CUDA_ARCH_LIST explicitly and rerun"
+    exit 1
+  fi
+else
+  # Docker environment: skip nix-specific checks, but ensure TORCH_CUDA_ARCH_LIST is set
+  if [[ -z "${TORCH_CUDA_ARCH_LIST:-}" ]]; then
+    echo "[install_curobo] TORCH_CUDA_ARCH_LIST not set, using default 8.0+PTX"
+    export TORCH_CUDA_ARCH_LIST="8.0+PTX"
+  fi
 fi
 
 if [[ -n "${IN_NIX_SHELL:-}" ]]; then

@@ -8,7 +8,7 @@ dependencies = [
     "dm-control==1.0.21",
     "isaacsim[all,extscache]==4.5.0",
     "mujoco==3.3.6",
-    "nvidia-curobo",
+    #"nvidia-curobo",
     "openpi-client",
     "python-fcl>=0.7.0.8",
     "rich>=13.9.4",
@@ -33,9 +33,9 @@ rlds = [
 lerobot = [
     "lerobot"
 ]
-isaacsim_extra = [
-    "warp-lang==1.7.0"
-]
+#isaacsim_extra = [
+#    "warp-lang==1.7.0"
+#]
 active_perception = [
     "openai"
 ]
@@ -80,26 +80,26 @@ docs = [
     "sphinx-copybutton>=0.5.2",
     "sphinxemoji>=0.2.0",
 ]
-rlds = [
-    "dm-env>=1.6",
-    "envlogger[tfds]>=1.2",
-    "rlds[tensorflow]>=0.1.8",
-    "tensorflow==2.15.0",
-    "protobuf<=3.20.3",
-]
+#rlds = [
+#    "dm-env>=1.6",
+#    "envlogger[tfds]>=1.2",
+#    "rlds[tensorflow]>=0.1.8",
+#    "tensorflow==2.15.0",
+#    "protobuf<=3.20.3",
+#]
 lerobot = [
     "lerobot"
 ]
-curobo = [
-    "nvidia-curobo[isaacsim]"
-]
+#curobo = [
+#    "nvidia-curobo[isaacsim]"
+#]
 
-isaacsim-hotfix = [
-    "warp-lang==1.7.0"
-]
-active_perception = [
-    "openai"
-]
+#isaacsim-hotfix = [
+#    "warp-lang==1.7.0"
+#]
+#active_perception = [
+#    "openai"
+#]
 
 sonic = [
     "gear_sonic[sim,teleop]",
@@ -109,13 +109,13 @@ sonic = [
 ]
 
 [tool.uv]
-default-groups = ["curobo", "lerobot", "isaacsim-hotfix"]
+#default-groups = ["sonic"]
 index-strategy = "unsafe-best-match"
 
 [tool.uv.sources]
 evdev = { path = "third_party/evdev" }
 simple = {path = ".", editable = true }
-nvidia-curobo = {path = "third_party/curobo", editable = true }
+#nvidia-curobo = {path = "third_party/curobo", editable = true }
 openpi-client = {path = "third_party/openpi-client", editable = true }
 gear_sonic = {path = "third_party/gear_sonic", editable = true }
 unitree-sdk2py = {path = "third_party/unitree_sdk2_python", editable = true }
