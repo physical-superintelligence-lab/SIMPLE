@@ -35,7 +35,7 @@ Our goal is to build a simulation platform for policy learning and evalutions, f
 
 
 tutorials/index.md
-nix-setup/index.md
+robo-nix.md
 user-guides/index.md
 core/index.md
 tasks/index.md
