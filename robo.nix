@@ -6,6 +6,7 @@
     "base"
     "python-uv"
     "native-build"
+    "cuda-toolkit"
     "isaac-sim"
     "x11-gl"
     "mujoco"
@@ -29,8 +30,6 @@
     "third_party/AMO"
     "third_party/unitree_sdk2_python"
     "third_party/gear_sonic"
-    "third_party/gear_sonic.egg-info"
-    "third_party/decoupled_wbc.egg-info"
     "third_party/curobo"
     "third_party/openpi-client"
     "third_party/decoupled_wbc"
@@ -42,6 +41,11 @@
     componentReasons = [
       {
         name = "base";
+        source = "manual config";
+        reason = "selected with --components";
+      }
+      {
+        name = "cuda-toolkit";
         source = "manual config";
         reason = "selected with --components";
       }

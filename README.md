@@ -103,7 +103,7 @@ Prepare the runtime, enter it, and install Python dependencies:
 ```bash
 robo up
 robo shell
-uv sync --all-groups --index-strategy unsafe-best-match
+GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
 bash scripts/install_curobo.sh
 ```
 
