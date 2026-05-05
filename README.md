@@ -60,7 +60,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Install all dependencies at once
 ```
-UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
+UV_HTTP_TIMEOUT=3000 bash scripts/setup_python_env.sh
 ```
 
 Install CuRobo
@@ -103,7 +103,7 @@ Prepare the runtime, enter it, and install Python dependencies:
 ```bash
 robo up
 robo shell
-GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
+bash scripts/setup_python_env.sh
 bash scripts/install_curobo.sh
 ```
 

@@ -22,7 +22,7 @@ From the SIMPLE checkout:
 git submodule update --init --recursive
 robo up
 robo shell
-GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
+bash scripts/setup_python_env.sh
 bash scripts/install_curobo.sh
 ```
 

@@ -25,7 +25,7 @@ fi
 
 if [[ ! -x "$UV_PROJECT_ENVIRONMENT/bin/datagen" ]]; then
   echo "[check_datagen] missing datagen entrypoint" >&2
-  echo "[check_datagen] run: GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match" >&2
+  echo "[check_datagen] run: bash scripts/setup_python_env.sh" >&2
   exit 1
 fi
 
