@@ -18,8 +18,10 @@ dependencies = [
     "trimesh>=4.7.1",
     "typer-slim>=0.17.3",
     "gymnasium>0.29.1",
+    "envlogger>=1.2",
     "python-dotenv>=0.9.9",
-    "numpy==1.26.4"
+    "numpy==1.26.4",
+    "pybind11>=2.13"
 ]
 
 [project.optional-dependencies]
@@ -111,6 +113,7 @@ sonic = [
 [tool.uv]
 #default-groups = ["sonic"]
 index-strategy = "unsafe-best-match"
+no-build-isolation-package = ["xrobotoolkit-sdk"]
 
 [tool.uv.sources]
 evdev = { path = "third_party/evdev" }

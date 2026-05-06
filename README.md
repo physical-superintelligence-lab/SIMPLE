@@ -60,7 +60,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Install all dependencies at once
 ```
-UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy unsafe-best-match
+UV_HTTP_TIMEOUT=3000 bash scripts/setup_python_env.sh
 ```
 
 Install CuRobo
@@ -88,131 +88,49 @@ Open http://127.0.0.1:8005 in a browser to view the documentation.
 
 > The document are working in progress. Feel free to raise questions using github issue, we will try to complete the document construction as soon as possible.
 
-## [Option 2] Nix setup
+## [Option 2] robo-nix setup
 
-We recommend using [nix](https://nixos.org/) on fresh new linux host, otherwise, if you alread have install NVIDIA driver and CUDA, it will be faster to setup SIMPLE through `uv`.
+SIMPLE keeps Python dependencies in `uv`, but uses [robo-nix](https://github.com/ausbxuse/robo-nix) for the native robotics runtime: CUDA, graphics, MuJoCo, Isaac Sim runtime libraries, media libraries, and native build tools.
 
-> [Nix](https://nixos.org/) is a modern package manager and build system that focuses on reproducibility, isolation, and declarative system configuration.
-
-> Instead of installing software directly into your system (like apt or pip), Nix builds everything in isolated environments and stores them in the /nix/store, where each package version is uniquely identified by a hash.
-
-
-<details>
-<summary>Nix Setup (Recommend on fresh new hosts) </summary>
-
-1. Install Nix first, for all interactive questions, enter `y`:
+Install `robo`:
 
 ```bash
-sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
+curl -fsSL https://raw.githubusercontent.com/ausbxuse/robo-nix/develop/scripts/install.sh | sh
 ```
 
-2. After Nix installation, open up a new shell to proceed.
-
-If you encounter issues with `nix` command not found, try
+Prepare the runtime, enter it, and install Python dependencies:
 
 ```bash
-export PATH=/nix/var/nix/profiles/default/bin:$PATH
-
+robo up
+robo shell
+bash scripts/setup_python_env.sh
+bash scripts/install_curobo.sh
 ```
 
-3. Pull git modules recursively
+Verify the runtime:
 
 ```bash
-git submodule update --init --recursive
-```
-
-Run the prerequisite check once on a new host:
-
-```bash
-./scripts/nix/prereq-check.sh
-```
-
-`nix develop` auto-bootstraps dependencies on first entry (or when `uv.lock` / `pyproject.toml` changes).
-
-Start the dev shell:
-
-```bash
-nix --extra-experimental-features "nix-command flakes" develop
-```
-
-Or run a single command inside the dev shell:
-
-```bash
-env -u LD_LIBRARY_PATH nix --extra-experimental-features "nix-command flakes" develop -c <command>
-```
-
-Do not activate the virtual environment directly with `source .venv/bin/activate` or `source .venv-nix/bin/activate`.
-This repo expects the Nix shell and the Python environment to be used together. The virtual environment alone is not a supported runtime.
-If your IDE terminal auto-sources `.venv-nix/bin/activate`, disable that behavior for this workspace or `deactivate` before entering through `nix develop`.
-
-Check if install successfully.
-
-```
 python -c "import simple; print(simple.__version__)"
+bash scripts/tests/check_datagen.sh
+bash scripts/tests/check_eval.sh
 ```
 
-You should see version number printed.
-
-- If encouter installtion or running issues, please checkout `Troubleshootings` in the Docs
-
-### Download a task
+On hosts where the Nix daemon does not trust the `nixpkgs-python` binary cache, `robo up` fails before compiling CPython from source. Prefer adding the cache to the daemon trust list. If you intentionally accept the slow source-build fallback, run:
 
 ```bash
-export task=G1WholebodyXMovePickTeleop-v0
-hf download USC-PSI-Lab/psi-data simple-eval/$task.zip --local-dir=./data/evals/ --repo-type=dataset
-unzip data/evals/simple-eval/$task.zip -d data/evals/simple-eval
+ROBO_NIX_ALLOW_SOURCE_PYTHON=1 robo up
 ```
 
-### Running evaluation
+Isaac Sim 4.5 is not stable with every NVIDIA driver branch. NVIDIA driver 595
+has been observed to segfault during Isaac `SimulationApp` startup on an RTX
+5090 Laptop GPU, while drivers 575 and 580 have both been tested and worked. If
+datagen crashes right after Isaac/RTX startup, try a 575- or 580-series driver
+and rerun `robo up` after removing `.robo-nix/host-graphics`,
+`.robo-nix/shell-env`, and `.robo-nix/shell-env.key`.
 
-CLI usage is supported, but it is not the preferred integration surface.
+See [robo-nix setup](docs/source/robo-nix.md) for notes on the project runtime contract.
 
-```bash
-export task=G1WholebodyXMovePickTeleop-v0
-export entry=eval_decoupled_wbc
-export agent=gr00t_n16_decoupled_wbc
-export dr=level-0
-
-env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' develop -c \
-  python -m simple.cli.$entry simple/$task $agent $dr \
-  --data-format lerobot \
-  --data-dir data/evals/simple-eval/$task/$dr \
-  --host 127.0.0.1 \
-  --port 21000 \
-  --headless
-```
-
-### Evalating on tasks collected using the SONIC stack
-
-```bash
- TASK_NAME=G1WholebodyXMovePickTeleop-v0 uv run eval-decoupled-wbc simple/G1WholebodyXMovePickTeleop-v0 gr00t_n16_decoupled_wbc train --data-format lerobot --data-dir data/evals/simple-eval/G1WholebodyXMovePickTeleop-v0/level-0 --host 127.0.0.1 --port 21000 --headless
-```
-
-### Nix Notes
-
-The Nix runtime is documented in detail in [`docs/source/nix-runtime.md`](./docs/source/nix-runtime.md).
-
-Short version:
-
-- Mutually exclusive with Docker.
-- Intended host baseline: Linux with NVIDIA drivers already installed, especially Ubuntu hosts.
-- Run `./scripts/nix/prereq-check.sh` first on a new host.
-- Nix owns userspace; the host only owns the NVIDIA driver boundary.
-- The shell fails early on runtime pollution from `LD_LIBRARY_PATH`, `PYTHONPATH`, `PYTHONHOME`, or `LD_PRELOAD`.
-- The default Python environment is `.venv-nix`.
-- Bootstrap entry points are `./scripts/nix/bootstrap-python.sh`, `./scripts/nix/bootstrap-gpu.sh`, and `./scripts/nix/bootstrap.sh`.
-- Prefer importing `simple` as a library from inside the dev shell; treat the CLI as a thin convenience layer.
-
-Operational notes:
-
-- Remove a root-owned `.venv` left by older Docker runs with `sudo rm -rf .venv`.
-- Use `SIMPLE_AUTO_BOOTSTRAP=0` to skip auto-setup, or `SIMPLE_FORCE_BOOTSTRAP=1` to force re-bootstrap.
-- If you need to run `nix` from inside the dev shell, prefer `env -u LD_LIBRARY_PATH nix --extra-experimental-features "nix-command flakes" ...`.
-
-
-</details>
-
-### [Option 3] Docker setup
+## [Option 3] Docker setup
 
 We also support building and running SIMPLE in docker. Please refer to the documents for [docker setup](docs/source/tutorials/docker.md).  
 

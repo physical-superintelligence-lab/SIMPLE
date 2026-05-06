@@ -4,19 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# Only source nix scripts if in nix shell
-if [[ -n "${IN_NIX_SHELL:-}" ]]; then
-  # shellcheck disable=SC1091
-  source "$ROOT_DIR/scripts/nix/common.sh"
-
-  simple_runtime_source_home_env
-  simple_runtime_configure_uv_project_environment "$ROOT_DIR"
-  simple_runtime_sanitize_python_env
-  simple_runtime_stage_host_driver_libs "$ROOT_DIR"
-else
-  # Outside a nix shell (e.g., Docker): use the standard venv instead of .venv-nix.
-  export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$ROOT_DIR/.venv}"
-fi
+export UV_PROJECT_ENVIRONMENT="${UV_PROJECT_ENVIRONMENT:-$ROOT_DIR/.venv}"
 
 export UV_HTTP_TIMEOUT="${UV_HTTP_TIMEOUT:-300}"
 export GIT_LFS_SKIP_SMUDGE=1
@@ -32,53 +20,58 @@ fi
 export VIRTUAL_ENV="${UV_PROJECT_ENVIRONMENT}"
 export PATH="${UV_PROJECT_ENVIRONMENT}/bin:${PATH}"
 
-if [[ -n "${IN_NIX_SHELL:-}" ]]; then
-  # In nix: strip LD_LIBRARY_PATH down to only runtime-approved prefixes before
-  # adding torch libs, then enforce the nix runtime boundary.
-  simple_runtime_filter_path_var LD_LIBRARY_PATH $(simple_runtime_allowed_ld_prefixes "$ROOT_DIR")
+if [[ ! -d "$ROOT_DIR/third_party/curobo" ]]; then
+  echo "[install_curobo] missing third_party/curobo"
+  echo "[install_curobo] run: git submodule update --init --recursive"
+  exit 1
 fi
 
-if [[ -n "${IN_NIX_SHELL:-}" ]]; then
-  simple_runtime_stage_python_runtime_libs
-
-  if ! simple_runtime_assert_runtime_boundary "install_curobo" "$ROOT_DIR"; then
-    exit 1
-  fi
-
-  if ! simple_runtime_assert_vendor_tree "install_curobo" "nvidia-curobo" "$ROOT_DIR/third_party/curobo"; then
-    exit 1
-  fi
-
-  apply_curobo_patch
-
-  if ! simple_runtime_assert_nvidia_runtime "install_curobo" "$ROOT_DIR"; then
-    echo "[install_curobo] host NVIDIA runtime is incomplete for GPU builds"
-    exit 1
-  fi
-
-  if ! simple_runtime_detect_torch_cuda_arch_list "install_curobo"; then
-    echo "[install_curobo] failed to determine TORCH_CUDA_ARCH_LIST automatically"
-    echo "[install_curobo] set TORCH_CUDA_ARCH_LIST explicitly and rerun"
-    exit 1
-  fi
-else
-  # Docker environment: skip nix-specific checks, but ensure TORCH_CUDA_ARCH_LIST is set
-  if [[ -z "${TORCH_CUDA_ARCH_LIST:-}" ]]; then
-    echo "[install_curobo] TORCH_CUDA_ARCH_LIST not set, using default 8.0+PTX"
-    export TORCH_CUDA_ARCH_LIST="8.0+PTX"
-  fi
+if [[ -n "${ROBO_NIX_LIBC_DEV:-}" ]]; then
+  export SIMPLE_LIBC_DEV="${SIMPLE_LIBC_DEV:-$ROBO_NIX_LIBC_DEV}"
 fi
 
-if [[ -n "${IN_NIX_SHELL:-}" ]]; then
-  if [[ -z "${SIMPLE_LIBC_DEV:-}" || ! -d "${SIMPLE_LIBC_DEV}/include" ]]; then
-    echo "[install_curobo] missing libc development headers path"
-    echo "[install_curobo] expected SIMPLE_LIBC_DEV/include to exist"
-    exit 1
-  fi
+if [[ -n "${ROBO_NIX_ACTIVE:-}" && ( -z "${SIMPLE_LIBC_DEV:-}" || ! -d "${SIMPLE_LIBC_DEV}/include" ) ]]; then
+  echo "[install_curobo] missing libc development headers path"
+  echo "[install_curobo] run this script inside 'robo shell'"
+  exit 1
+fi
+
+if [[ -n "${ROBO_NIX_ACTIVE:-}" && -z "${ROBO_NIX_LIBCUDA_PATH:-}" && -z "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+  echo "[install_curobo] warning: robo-nix did not report a host CUDA driver path" >&2
+fi
+
+if [[ -z "${TORCH_CUDA_ARCH_LIST:-}" ]]; then
+  TORCH_CUDA_ARCH_LIST="$("$VENV_PYTHON" - <<'PY'
+import torch
+
+if torch.cuda.is_available():
+    major, minor = torch.cuda.get_device_capability()
+    print(f"{major}.{minor}")
+else:
+    print("8.0+PTX")
+PY
+)"
+  export TORCH_CUDA_ARCH_LIST
 fi
 
 echo "[install_curobo] using TORCH_CUDA_ARCH_LIST=$TORCH_CUDA_ARCH_LIST"
 echo "[install_curobo] using Python environment at: $VENV_PYTHON"
+
+uv pip install --python "$VENV_PYTHON" setuptools_scm wheel
+
+CUROBO_VERSION="$("$VENV_PYTHON" - <<'PY'
+import setuptools_scm
+
+print(
+    setuptools_scm.get_version(
+        root="third_party/curobo",
+        version_scheme="no-guess-dev",
+        local_scheme="dirty-tag",
+    )
+)
+PY
+)"
+export SETUPTOOLS_SCM_PRETEND_VERSION="$CUROBO_VERSION"
 
 uv pip install --python "$VENV_PYTHON" --no-build-isolation 'third_party/curobo[isaacsim]'
 

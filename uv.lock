@@ -3457,6 +3457,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pybind11"
+version = "3.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/f0/35145a3c3baffeef55d4b8324caa33abaa8fa56ab345ecd4b2211d09163e/pybind11-3.0.4.tar.gz", hash = "sha256:3286b59c8a774b9ee650169302dd5a4eedc30a8617905a0560dd8ee44775130c", size = 589533, upload-time = "2026-04-19T03:08:15.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/06/c3a23c9a0263b136c519f033a58d4641e73065fefc7754e9667ec206d992/pybind11-3.0.4-py3-none-any.whl", hash = "sha256:961720ee652da51d531b7b2451a6bd2bc042b0106e6d9baa48ecb7d58034ce63", size = 314166, upload-time = "2026-04-19T03:08:14.091Z" },
+]
+
+[[package]]
 name = "pydantic"
 version = "2.12.5"
 source = { registry = "https://pypi.org/simple" }
@@ -6608,11 +6617,13 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "dm-control" },
+    { name = "envlogger" },
     { name = "gymnasium" },
     { name = "isaacsim", extra = ["all", "extscache"] },
     { name = "mujoco" },
     { name = "numpy" },
     { name = "openpi-client" },
+    { name = "pybind11" },
     { name = "python-dotenv" },
     { name = "python-fcl" },
     { name = "rich" },
@@ -6682,6 +6693,7 @@ requires-dist = [
     { name = "dm-control", specifier = "==1.0.21" },
     { name = "dm-env", marker = "extra == 'full'", specifier = ">=1.6" },
     { name = "dm-env", marker = "extra == 'rlds'", specifier = ">=1.6" },
+    { name = "envlogger", specifier = ">=1.2" },
     { name = "envlogger", extras = ["tfds"], marker = "extra == 'full'", specifier = ">=1.2" },
     { name = "envlogger", extras = ["tfds"], marker = "extra == 'rlds'", specifier = ">=1.2" },
     { name = "gymnasium", specifier = ">0.29.1" },
@@ -6694,6 +6706,7 @@ requires-dist = [
     { name = "openpi-client", editable = "third_party/openpi-client" },
     { name = "protobuf", marker = "extra == 'full'", specifier = "<=3.20.3" },
     { name = "protobuf", marker = "extra == 'rlds'", specifier = "<=3.20.3" },
+    { name = "pybind11", specifier = ">=2.13" },
     { name = "python-dotenv", specifier = ">=0.9.9" },
     { name = "python-fcl", specifier = ">=0.7.0.8" },
     { name = "rich", specifier = ">=13.9.4" },

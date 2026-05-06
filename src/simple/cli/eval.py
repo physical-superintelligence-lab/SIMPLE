@@ -436,8 +436,6 @@ def run_eval(
                     )
             finally:
                 restore_cursor(console)
-                if terminal_stream is not None:
-                    terminal_stream.close()
         else:
             stats = _run_eval_worker(
                 **worker_kwargs,

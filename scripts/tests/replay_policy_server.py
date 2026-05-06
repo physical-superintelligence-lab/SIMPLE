@@ -99,7 +99,7 @@ class ReplayRequestHandler(BaseHTTPRequestHandler):
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay recorded SIMPLE datagen actions over HTTP.")
     parser.add_argument("--data-root", required=True, help="Datagen run root, e.g. .test-output/datagen-smoke-...")
-    parser.add_argument("--env-id", default="simple/G1WholebodyBendPick-v0")
+    parser.add_argument("--env-id", default="simple/G1WholebodyBendPickMP-v0")
     parser.add_argument("--episode-index", type=int, default=0)
     parser.add_argument("--chunk-size", type=int, default=64)
     parser.add_argument("--host", default="127.0.0.1")
