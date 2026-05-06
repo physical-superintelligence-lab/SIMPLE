@@ -121,6 +121,13 @@ On hosts where the Nix daemon does not trust the `nixpkgs-python` binary cache, 
 ROBO_NIX_ALLOW_SOURCE_PYTHON=1 robo up
 ```
 
+Isaac Sim 4.5 is not stable with every NVIDIA driver branch. NVIDIA driver 595
+has been observed to segfault during Isaac `SimulationApp` startup on an RTX
+5090 Laptop GPU, while drivers 575 and 580 have both been tested and worked. If
+datagen crashes right after Isaac/RTX startup, try a 575- or 580-series driver
+and rerun `robo up` after removing `.robo-nix/host-graphics`,
+`.robo-nix/shell-env`, and `.robo-nix/shell-env.key`.
+
 See [robo-nix setup](docs/source/robo-nix.md) for notes on the project runtime contract.
 
 ## [Option 3] Docker setup

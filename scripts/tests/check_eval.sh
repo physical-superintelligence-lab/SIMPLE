@@ -12,6 +12,7 @@ if [[ -z "$DATA_RUN_DIR" || ! -d "$DATA_RUN_DIR" ]]; then
   exit 1
 fi
 ENV_ID="simple/G1WholebodyBendPickMP-v0"
+SIM_MODE="${SIMPLE_SMOKE_SIM_MODE:-mujoco_isaac}"
 DATASET_DIR="$DATA_RUN_DIR/simple/G1WholebodyBendPickMP-v0/level-0"
 if [[ ! -d "$DATASET_DIR" ]]; then
   echo "[check_eval] dataset dir not found: $DATASET_DIR" >&2
@@ -28,6 +29,7 @@ mkdir -p "$EVAL_ROOT"
 echo "[check_eval] dataset root: $DATA_RUN_DIR"
 echo "[check_eval] lerobot dataset dir: $DATASET_DIR"
 echo "[check_eval] eval root: $EVAL_ROOT"
+echo "[check_eval] sim mode: $SIM_MODE"
 
 if [[ -z "${ROBO_NIX_ACTIVE:-}" ]]; then
   echo "[check_eval] run this script inside 'robo shell'" >&2
@@ -84,8 +86,9 @@ done
   --data-dir "$DATASET_DIR" \
   --eval-dir "$EVAL_ROOT" \
   --num-episodes 1 \
-  --sim-mode mujoco \
-  --headless
+  --sim-mode "$SIM_MODE" \
+  --headless \
+  --no-webrtc
 
 SERVER_PID="$(cat "$EVAL_ROOT/server.pid")"
 
