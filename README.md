@@ -95,13 +95,12 @@ SIMPLE keeps Python dependencies in `uv`, but uses [robo-nix](https://github.com
 Install `robo`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ausbxuse/robo-nix/develop/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/ausbxuse/robo-nix/master/scripts/install.sh | sh
 ```
 
 Prepare the runtime, enter it, and install Python dependencies:
 
 ```bash
-robo up
 robo shell
 bash scripts/setup_python_env.sh
 bash scripts/install_curobo.sh
@@ -113,12 +112,6 @@ Verify the runtime:
 python -c "import simple; print(simple.__version__)"
 bash scripts/tests/check_datagen.sh
 bash scripts/tests/check_eval.sh
-```
-
-On hosts where the Nix daemon does not trust the `nixpkgs-python` binary cache, `robo up` fails before compiling CPython from source. Prefer adding the cache to the daemon trust list. If you intentionally accept the slow source-build fallback, run:
-
-```bash
-ROBO_NIX_ALLOW_SOURCE_PYTHON=1 robo up
 ```
 
 Isaac Sim 4.5 is not stable with every NVIDIA driver branch. NVIDIA driver 595
