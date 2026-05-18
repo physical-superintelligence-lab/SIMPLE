@@ -87,14 +87,13 @@ done
   --eval-dir "$EVAL_ROOT" \
   --num-episodes 1 \
   --sim-mode "$SIM_MODE" \
-  --headless \
-  --no-webrtc
+  --headless
 
 SERVER_PID="$(cat "$EVAL_ROOT/server.pid")"
 
 test -f "$EVAL_ROOT/eval_stats.txt"
 test -d "$EVAL_ROOT/replay_policy/G1WholebodyBendPickMP-v0/train"
-grep -q "success rate:" "$EVAL_ROOT/eval_stats.txt"
+grep -qE "^episode_[0-9]+:" "$EVAL_ROOT/eval_stats.txt"
 find "$EVAL_ROOT/replay_policy/G1WholebodyBendPickMP-v0/train" -type f \( -name '*.mp4' -o -name '*.png' \) | grep -q .
 
 echo "[check_eval] success"
