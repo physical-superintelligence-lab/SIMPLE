@@ -22,7 +22,7 @@ SIMPLE is built on top of `IsaacSim 4.5` and `MuJoCo 3.3`.
 | **CPU** | Intel Core i7 / AMD Ryzen 7 | Intel Core i9 / AMD Ryzen 9 |
 | **RAM** | 32 GB | 64 GB |
 | **GPU** | NVIDIA RTX 2070 (8 GB VRAM) | NVIDIA RTX 3080 Ti / 4090 (16+ GB VRAM) |
-| **NVIDIA Driver** | 535.x | Latest |
+| **NVIDIA Driver** | 535.x | <=590 |
 | **CUDA** | 12.x | 12.x |
 | **Python** | 3.10 | 3.10 |
 | **Storage** | 50 GB SSD | 100+ GB NVMe SSD |
