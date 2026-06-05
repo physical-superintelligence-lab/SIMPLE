@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIMPLE &middot; Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation</title>
+  <meta name="description" content="SIMPLE: a unified simulation testbed coupling MuJoCo physics with Isaac Sim rendering for humanoid loco-manipulation policy learning and evaluation. 60 tasks, 50 scenes, 1000+ objects." />
+  <meta name="color-scheme" content="dark light" />
+  <script>
+    // Set theme before paint to avoid a flash of the wrong theme.
+    (function () {
+      try {
+        var param = new URLSearchParams(location.search).get('theme');
+        if (param === 'light' || param === 'dark') {
+          localStorage.setItem('theme', param);
+        }
+        var saved = localStorage.getItem('theme');
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Ambient gradient glow background -->
+  <div class="bg-field" aria-hidden="true">
+    <span class="blob blob--pink"></span>
+    <span class="blob blob--purple"></span>
+    <span class="blob blob--cyan"></span>
+    <span class="blob blob--orange"></span>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header class="nav glass" id="nav">
+    <a href="#top" class="nav__brand">
+      <span class="logo-text"><span class="g-s">S</span><span class="g-i">I</span><span class="g-m">M</span><span class="g-p">P</span><span class="g-l">L</span><span class="g-e">E</span></span>
+    </a>
+    <nav class="nav__links" id="navLinks">
+      <a href="#abstract">Abstract</a>
+      <a href="#stats">Highlights</a>
+      <a href="#method">Method</a>
+      <a href="#data">Data</a>
+      <a href="#results">Results</a>
+      <a href="#ablations">Ablations</a>
+      <a href="#sim2real">Sim2Real</a>
+      <a href="#bibtex">BibTeX</a>
+    </nav>
+    <div class="nav__right">
+      <button class="theme-toggle" id="themeToggle" aria-label="Switch between light and dark theme" title="Toggle theme">
+        <svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2.4M12 19.6V22M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M2 12h2.4M19.6 12H22M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+      <button class="nav__toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero__inner reveal">
+        <h1 class="hero__title">
+          <span class="logo-text logo-text--xl">
+            <span class="g-s">S</span><span class="g-i">I</span><span class="g-m">M</span><span class="g-p">P</span><span class="g-l">L</span><span class="g-e">E</span>
+          </span>
+        </h1>
+        <p class="hero__subtitle"><span class="grad-text">Sim</span>ulation-Based <span class="grad-text">P</span>olicy <span class="grad-text">L</span>earning and <span class="grad-text">E</span>valuation for Humanoid Loco-manipulation</p>
+
+        <p class="authors">
+          Songlin Wei<sup>*</sup>, Zhenhao Ni<sup>*</sup>, Jie Liu<sup>*</sup>, Zhenyu Zhao<sup>*</sup>,
+          Junjie Ye, Hongyi Jing, Junkai Xia, Xiawei Liu, Michael Leong, Liang Heng, Di Huang, Yue Wang<sup>&dagger;</sup>
+        </p>
+        <p class="affil">USC Physical Superintelligence (PSI) Lab &nbsp;&middot;&nbsp; <span class="affil-note"><sup>*</sup> equal contribution &nbsp; <sup>&dagger;</sup> corresponding author</span></p>
+
+        <div class="hero__cta">
+          <a class="btn glass" href="SIMPLE_paper.pdf" target="_blank" rel="noopener" aria-label="Paper PDF">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M6 2h9l5 5v15a0 0 0 0 1 0 0H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M14 2v6h6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            Paper
+          </a>
+          <a class="btn glass" href="#" aria-label="arXiv">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M4 19l8-14 8 14M7.5 13h9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            arXiv
+          </a>
+          <a class="btn glass" href="https://github.com/physical-superintelligence-lab/simple" target="_blank" rel="noopener" aria-label="Code on GitHub">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.36 1.09 2.94.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" fill="currentColor"/></svg>
+            Code
+          </a>
+          <!-- <a class="btn glass" href="#" aria-label="Dataset">
+            <svg viewBox="0 0 24 24" class="ico"><ellipse cx="12" cy="5" rx="7" ry="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 5v14c0 1.66 3.13 3 7 3s7-1.34 7-3V5M5 12c0 1.66 3.13 3 7 3s7-1.34 7-3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            Dataset
+          </a> -->
+          <a class="btn glass" href="leaderboard.html" aria-label="Leaderboard">
+            <svg viewBox="0 0 24 24" class="ico"><path d="M5 21V11M12 21V4M19 21v-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Leaderboard
+          </a>
+        </div>
+      </div>
+
+      <figure class="hero__teaser reveal">
+        <picture>
+          <source srcset="assets/teaser.webp" type="image/webp" />
+          <img src="assets/teaser.png" alt="SIMPLE benchmark: humanoid robots performing diverse whole-body loco-manipulation tasks across 50 photorealistic indoor scenes." loading="eager" />
+        </picture>
+        <figcaption>Humanoid loco-manipulation in <b>SIMPLE</b>: 60 whole-body tasks across 50 indoor scenes with 1,000+ objects, coupling MuJoCo physics with Isaac Sim photorealistic rendering.</figcaption>
+      </figure>
+    </section>
+
+    <!-- Abstract -->
+    <section class="section" id="abstract">
+      <div class="section__head reveal">
+        <span class="kicker">Overview</span>
+        <h2>Abstract</h2>
+      </div>
+      <div class="prose glass reveal">
+        <p>
+          Humanoid foundation models are advancing faster than we can evaluate them. While real-world testing is
+          expensive and difficult to reproduce, existing simulation benchmarks focus primarily on table-top or wheeled
+          robots. A scalable and reproducible benchmark for whole-body humanoid loco-manipulation remains an open
+          problem. To this end, we present <b>SIMPLE</b>, a unified simulation testbed for humanoid policy learning and
+          evaluation. SIMPLE couples the accurate contact-rich dynamics of <b>MuJoCo</b> with the photorealistic
+          rendering of <b>Isaac Sim</b>. It provides a large-scale environment comprising 60 diverse whole-body tasks,
+          50 indoor scenes, and over 1,000 object assets.
+        </p>
+        <p>
+          To facilitate scalable data collection, the framework integrates two data generation pipelines: automated
+          trajectory generation via motion planning and a low-latency VR teleoperation interface. We further integrate
+          and benchmark mainstream humanoid policies at scale, including lightweight imitation networks, large
+          vision-language-action (VLA) models, and recent world-action models (WAMs). Our experiments reveal a strong
+          correlation between policy performance in simulation and the real world. Furthermore, policies trained on data
+          collected in SIMPLE transfer <b>zero-shot</b> to physical humanoid robots under similar settings, providing a
+          robust and reproducible foundation for humanoid robotics research.
+        </p>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="section" id="stats">
+      <div class="stat-grid">
+        <div class="stat glass reveal">
+          <div class="stat__num" data-count="60">0</div>
+          <div class="stat__label">Whole-body tasks</div>
+        </div>
+        <div class="stat glass reveal">
+          <div class="stat__num" data-count="50">0</div>
+          <div class="stat__label">Indoor scenes</div>
+        </div>
+        <div class="stat glass reveal">
+          <div class="stat__num" data-count="1000" data-suffix="+">0</div>
+          <div class="stat__label">Object assets</div>
+        </div>
+        <div class="stat glass reveal">
+          <div class="stat__num" data-count="6000" data-suffix="+">0</div>
+          <div class="stat__label">Demonstrations</div>
+        </div>
+        <div class="stat glass reveal">
+          <div class="stat__num" data-count="9">0</div>
+          <div class="stat__label">Benchmarked policies</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Method -->
+    <section class="section" id="method">
+      <div class="section__head reveal">
+        <span class="kicker">Architecture</span>
+        <h2>A dual-simulator testbed</h2>
+        <p class="lede">SIMPLE strictly decouples physics from rendering, harnessing the best of two engines: MuJoCo for contact-rich locomotion fidelity and Isaac Sim for photorealistic perception.</p>
+      </div>
+
+      <div class="cards-2">
+        <div class="card glass reveal">
+          <span class="card__cat" style="--c:var(--cyan)">Physics</span>
+          <h3>MuJoCo</h3>
+          <p>Handles all rigid-body dynamics, contact resolution, and high-frequency robot control &mdash; delivering the contact fidelity and locomotion stability humanoids demand.</p>
+        </div>
+        <div class="card glass reveal">
+          <span class="card__cat" style="--c:var(--orange)">Rendering</span>
+          <h3>Isaac Sim</h3>
+          <p>Synchronizes physical state every step and performs ray-traced photorealistic rendering, supplying the visual diversity required for robust generalist perception.</p>
+        </div>
+      </div>
+
+      <div class="pipeline reveal">
+        <div class="pipe-step glass">
+          <span class="pipe-step__n">01</span>
+          <h4>Data Generation</h4>
+          <p>Trajectories collected in MuJoCo via motion planning and VR teleoperation.</p>
+        </div>
+        <div class="pipe-arrow" aria-hidden="true">&rarr;</div>
+        <div class="pipe-step glass">
+          <span class="pipe-step__n">02</span>
+          <h4>Offline Rendering</h4>
+          <p>Replayed in Isaac Sim with extensive domain randomization for photorealistic observations.</p>
+        </div>
+        <div class="pipe-arrow" aria-hidden="true">&rarr;</div>
+        <div class="pipe-step glass">
+          <span class="pipe-step__n">03</span>
+          <h4>Evaluation</h4>
+          <p>Policies tested under three progressive randomization levels via a standard Gym interface.</p>
+        </div>
+      </div>
+
+      <figure class="figure glass reveal">
+        <div class="figure__light">
+          <picture>
+            <source srcset="assets/pipeline.webp" type="image/webp" />
+            <img src="assets/pipeline.png" alt="System pipeline: data generation in MuJoCo, replay and rendering in Isaac Sim, and policy evaluation across three domain-randomization levels." loading="lazy" />
+          </picture>
+        </div>
+        <figcaption class="fig-cap"><span class="fig-n">Figure 2.</span> <b>System Pipeline.</b> Three stages: (1) data generation in MuJoCo via motion planning and teleoperation; (2) offline replay and rendering in Isaac Sim to obtain photorealistic observations; and (3) policy evaluation under diverse domain-randomized settings.</figcaption>
+      </figure>
+    </section>
+
+    <!-- Data Collection -->
+    <section class="section" id="data">
+      <div class="section__head reveal">
+        <span class="kicker">Scalable Data</span>
+        <h2>Two built-in data pipelines</h2>
+        <p class="lede">SIMPLE eliminates the engineering overhead of gathering high-quality whole-body demonstrations.</p>
+      </div>
+
+      <div class="cards-2">
+        <div class="card glass reveal">
+          <span class="card__cat" style="--c:var(--purple)">Automated</span>
+          <h3>Motion Planning</h3>
+          <p>Objects are dropped to find stable poses, grasps are synthesized with <b>BoDex</b>, and <b>CuRobo</b> generates kinematic dual-arm trajectories while a scripted policy coordinates the base.</p>
+        </div>
+        <div class="card glass reveal">
+          <span class="card__cat" style="--c:var(--pink)">Human</span>
+          <h3>VR Teleoperation</h3>
+          <p>Low-latency egocentric stereo video streams to a PICO XR headset; operator hand motion is retargeted via IK while a whole-body tracking policy autonomously manages balance and locomotion.</p>
+        </div>
+      </div>
+
+      <figure class="figure glass reveal">
+        <div class="figure__light">
+          <picture>
+            <source srcset="assets/mp_pipeline.webp" type="image/webp" />
+            <img src="assets/mp_pipeline.png" alt="Automated motion planning: task decomposition, upper-body manipulation planning with CuRobo, and lower-body locomotion planning." loading="lazy" />
+          </picture>
+        </div>
+        <figcaption class="fig-cap"><span class="fig-n">Figure 4.</span> <b>Automated Motion Planning.</b> Based on task decomposition, scripted policies coordinate upper-body manipulation via motion planning and lower-body movement to generate automated demonstrations.</figcaption>
+        <div class="figure__light" style="margin-top: 20px">
+          <picture>
+            <source srcset="assets/offline_preprocessing.webp" type="image/webp" />
+            <img src="assets/offline_preprocessing.png" alt="Offline object preprocessing: 3D assets, MuJoCo free-drop, stable pose recording, grasp pose filtering, and grasp database." loading="lazy" />
+          </picture>
+        </div>
+        <figcaption class="fig-cap"><span class="fig-n">Figure 7.</span> <b>Offline Object Preprocessing.</b> Objects are dropped in MuJoCo to find stable resting poses, which are then used to synthesize and filter feasible grasps into a reusable grasp database.</figcaption>
+      </figure>
+
+      <div class="prose prose--tight glass reveal">
+        <h4 class="prose-h">Collection efficiency &mdash; demonstrations per hour</h4>
+        <div class="bars">
+          <div class="bar-row">
+            <span class="bar-row__label">Motion Planning (Sim)</span>
+            <div class="bar-track"><div class="bar-fill" style="--w:19%;--c:var(--cyan)"></div></div>
+            <span class="bar-row__val">58.9</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row__label">Teleoperation (Real)</span>
+            <div class="bar-track"><div class="bar-fill" style="--w:67%;--c:var(--purple)"></div></div>
+            <span class="bar-row__val">206.8</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-row__label">Teleoperation (Sim)</span>
+            <div class="bar-track"><div class="bar-fill" style="--w:100%;--c:var(--pink)"></div></div>
+            <span class="bar-row__val">310.3</span>
+          </div>
+        </div>
+        <p class="note">Whole-body pick-and-place task. In-simulator teleoperation is the fastest &mdash; it avoids physical resets, safety constraints, and hardware maintenance, and scales infinitely via offline replay.</p>
+
+        <div class="table-block">
+          <p class="table-title"><span class="fig-n">Table 2.</span> Data Collection Efficiency</p>
+          <div class="table-wrap">
+            <table class="dtable">
+              <thead>
+                <tr>
+                  <th rowspan="2" class="lcol grp">Collection Method</th>
+                  <th colspan="2" class="grp">T1: Whole-Body Pick-Place</th>
+                  <th colspan="2" class="grp">T2: Stand-Still Handover</th>
+                  <th colspan="2" class="grp">T3: Mobile Pick-Place</th>
+                </tr>
+                <tr>
+                  <th>Demos/hr <span class="sub">&uarr;</span></th>
+                  <th>Avg. time (s) <span class="sub">&darr;</span></th>
+                  <th>Demos/hr <span class="sub">&uarr;</span></th>
+                  <th>Avg. time (s) <span class="sub">&darr;</span></th>
+                  <th>Demos/hr <span class="sub">&uarr;</span></th>
+                  <th>Avg. time (s) <span class="sub">&darr;</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="lcol">Motion Planning (Sim)</td>
+                  <td>58.9</td><td>61.1</td>
+                  <td>32.7</td><td>109.8</td>
+                  <td>24.0</td><td>150.0</td>
+                </tr>
+                <tr>
+                  <td class="lcol">Teleoperation (Real)</td>
+                  <td>206.8</td><td>17.4</td>
+                  <td>130.9</td><td>27.5</td>
+                  <td>87.2</td><td>41.3</td>
+                </tr>
+                <tr>
+                  <td class="lcol">Teleoperation (Sim)</td>
+                  <td class="best">310.3</td><td class="best">11.6</td>
+                  <td class="best">197.8</td><td class="best">18.2</td>
+                  <td class="best">156.5</td><td class="best">23.0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">Demonstrations collected per hour and mean episode duration. Motion planning runs without an operator; teleoperation reflects a single experienced operator per session. <b>Bold</b> marks the best result per metric.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section class="section" id="results">
+      <div class="section__head reveal">
+        <span class="kicker">Benchmark</span>
+        <h2>State-of-the-art policies at scale</h2>
+        <p class="lede">Nine representative VLA, world-action, and imitation-learning policies across six tasks, each reported under three domain-randomization levels (<b>L0 / L1 / L2</b>).</p>
+      </div>
+
+      <div class="table-wrap glass reveal">
+        <table class="bench">
+          <thead>
+            <tr>
+              <th class="sticky-col">Policy</th>
+              <th>XMovePick</th>
+              <th>BendPick</th>
+              <th>Handover</th>
+              <th>Mobile P&amp;P</th>
+              <th>Grasp</th>
+              <th>XMoveBendPick</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="sticky-col"><b>&Psi;<sub>0</sub></b></td>
+              <td>10 / 10 / 6</td>
+              <td class="best">10 / 10 / 10</td>
+              <td class="best">7 / 7 / 10</td>
+              <td class="best">7 / 5 / 6</td>
+              <td class="best">10 / 10 / 8</td>
+              <td class="second">10 / 9 / 9</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">GR00T N1.6</td>
+              <td class="second">10 / 10 / 7</td>
+              <td>7 / 7 / 6</td>
+              <td>1 / 3 / 3</td>
+              <td>0 / 0 / 0</td>
+              <td>9 / 9 / 7</td>
+              <td>4 / 4 / 1</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">&pi;<sub>0.5</sub></td>
+              <td>7 / 5 / 1</td>
+              <td class="second">10 / 10 / 8</td>
+              <td>5 / 4 / 5</td>
+              <td>3 / 3 / 3</td>
+              <td class="best">10 / 10 / 8</td>
+              <td>0 / 0 / 0</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">InternVLA</td>
+              <td>0 / 0 / 0</td>
+              <td>5 / 5 / 0</td>
+              <td>0 / 0 / 0</td>
+              <td>0 / 0 / 0</td>
+              <td>0 / 0 / 0</td>
+              <td>3 / 5 / 7</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">H-RDT</td>
+              <td>0 / 0 / 2</td>
+              <td>0 / 0 / 1</td>
+              <td>0 / 1 / 0</td>
+              <td>0 / 0 / 0</td>
+              <td>0 / 0 / 0</td>
+              <td>0 / 0 / 0</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">DreamZero</td>
+              <td class="best">10 / 10 / 10</td>
+              <td>9 / 9 / 8</td>
+              <td class="second">7 / 8 / 9</td>
+              <td>5 / 3 / 3</td>
+              <td>9 / 10 / 7</td>
+              <td>0 / 0 / 1</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">EgoVLA</td>
+              <td>0 / 1 / 2</td>
+              <td>7 / 5 / 8</td>
+              <td>0 / 4 / 3</td>
+              <td>0 / 0 / 0</td>
+              <td class="second">10 / 10 / 7</td>
+              <td>3 / 5 / 4</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">DP</td>
+              <td>3 / 3 / 2</td>
+              <td>10 / 8 / 6</td>
+              <td>3 / 2 / 4</td>
+              <td>4 / 0 / 0</td>
+              <td>8 / 9 / 8</td>
+              <td>0 / 0 / 0</td>
+            </tr>
+            <tr>
+              <td class="sticky-col">ACT</td>
+              <td>10 / 10 / 5</td>
+              <td>10 / 9 / 9</td>
+              <td class="best">7 / 7 / 10</td>
+              <td class="second">5 / 5 / 5</td>
+              <td class="best">10 / 10 / 8</td>
+              <td class="best">9 / 10 / 10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="legend reveal">
+        <span class="lg lg--best">Best</span>
+        <span class="lg lg--second">Second best</span>
+        <span class="lg-sep"></span>
+        Each cell: successes out of 10 rollouts at Level&nbsp;0 / Level&nbsp;1 / Level&nbsp;2.
+      </p>
+      <p class="takeaway glass reveal">Crucially, simulation rankings closely echo real-world experiments &mdash; confirming that SIMPLE serves as a <b>faithful proxy</b> for real-world policy evaluation.</p>
+    </section>
+
+    <!-- Ablations -->
+    <section class="section" id="ablations">
+      <div class="section__head reveal">
+        <span class="kicker">Analysis</span>
+        <h2>Ablation studies</h2>
+        <p class="lede">What drives policy performance? We study domain randomization, data scaling, and data source using <b>&Psi;<sub>0</sub></b> fine-tuned for 2,000 steps.</p>
+      </div>
+
+      <div class="cards-2" style="align-items:start">
+        <div class="table-block reveal">
+          <p class="table-title"><span class="fig-n">Table 3.</span> Domain Randomization &amp; Data Scaling</p>
+          <div class="table-wrap glass">
+            <table class="dtable">
+              <thead>
+                <tr>
+                  <th class="lcol grp">Task</th>
+                  <th class="grp">Training data</th>
+                  <th class="grp">Set 0</th>
+                  <th class="grp">Set 1</th>
+                  <th class="grp">Set 2</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="lcol" rowspan="2">BendHandover</td>
+                  <td class="lcol">10&times; Level 0</td>
+                  <td class="best">0.80</td><td class="best">0.80</td><td>0.50</td>
+                </tr>
+                <tr>
+                  <td class="lcol">5&times; L0 + 5&times; L1</td>
+                  <td class="best">0.80</td><td>0.70</td><td class="best">0.80</td>
+                </tr>
+                <tr class="divider"><td colspan="5"></td></tr>
+                <tr>
+                  <td class="lcol" rowspan="2">XmoveBendPick</td>
+                  <td class="lcol">10 traj. (Teleop)</td>
+                  <td>0.50</td><td>0.60</td><td>0.30</td>
+                </tr>
+                <tr>
+                  <td class="lcol">100 traj. (Teleop)</td>
+                  <td class="best">1.00</td><td class="best">0.90</td><td class="best">0.90</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">Success rates across evaluation sets. Mixing DR levels improves generalization to harder settings, and scaling teleoperation data further boosts performance.</p>
+        </div>
+
+        <div class="table-block reveal">
+          <p class="table-title"><span class="fig-n">Table 4.</span> Data Source</p>
+          <div class="table-wrap glass">
+            <table class="dtable">
+              <thead>
+                <tr>
+                  <th class="lcol grp">Variant</th>
+                  <th class="grp">BendPick</th>
+                  <th class="grp">Mobile P&amp;P</th>
+                  <th class="grp">XMoveBendPick</th>
+                  <th class="grp">Avg.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="lcol">MP only</td>
+                  <td class="best">10/10/10</td>
+                  <td>3/2/2</td>
+                  <td>4/2/2</td>
+                  <td>5.00</td>
+                </tr>
+                <tr>
+                  <td class="lcol">Teleop only</td>
+                  <td>8/8/6</td>
+                  <td class="best">7/5/6</td>
+                  <td class="best">10/9/9</td>
+                  <td class="best">7.56</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">Motion-planning-only vs. teleoperation-only training data across three task families (L0 / L1 / L2). Teleoperation data leads to better performance.</p>
+        </div>
+      </div>
+
+      <figure class="figure glass reveal">
+        <div class="figure__light">
+          <picture>
+            <source srcset="assets/sequence_diagram.webp" type="image/webp" />
+            <img src="assets/sequence_diagram.png" alt="Sequence diagram of the main simulation loop between SimpleEnv, Task, MuJoCo, Isaac Sim, Robot, and RL Tracker." loading="lazy" />
+          </picture>
+        </div>
+        <figcaption class="fig-cap"><span class="fig-n">Figure 6.</span> <b>Simulation Sequence Diagram.</b> The core control loop: SimpleEnv steps MuJoCo (applying actions through the whole-body RL tracker), then synchronizes states to Isaac Sim for rendering before returning observations.</figcaption>
+      </figure>
+    </section>
+
+    <!-- Sim2Real -->
+    <section class="section" id="sim2real">
+      <div class="section__head reveal">
+        <span class="kicker">Transfer</span>
+        <h2>Zero-shot sim-to-real</h2>
+        <p class="lede">Policies trained <b>entirely</b> on SIMPLE data generalize to physical humanoid robots with no real-world fine-tuning.</p>
+      </div>
+
+      <figure class="figure glass reveal s2r-card">
+        <p class="table-title"><span class="fig-n">Table 5.</span> Zero-Shot Sim-to-Real Transfer</p>
+        <div class="s2r-grid">
+          <div class="s2r-group">
+            <div class="s2r-pair">
+              <div class="s2r-cell">
+                <div class="s2r-shot">
+                  <picture>
+                    <source srcset="assets/s2r_pp_sim.webp" type="image/webp" />
+                    <img src="assets/s2r_pp_sim.png" alt="Pick-and-place, simulated egocentric view." loading="lazy" />
+                  </picture>
+                </div>
+                <span class="s2r-dom"><b>Pick &amp; Place:</b> Sim <span class="s2r-val">0.90</span></span>
+              </div>
+              <div class="s2r-cell">
+                <div class="s2r-shot">
+                  <picture>
+                    <source srcset="assets/s2r_pp_real.webp" type="image/webp" />
+                    <img src="assets/s2r_pp_real.png" alt="Pick-and-place, real-world egocentric rollout." loading="lazy" />
+                  </picture>
+                </div>
+                <span class="s2r-dom"><b>Pick &amp; Place:</b> Real <span class="s2r-val s2r-val--real">0.80</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="s2r-group">
+            <div class="s2r-pair">
+              <div class="s2r-cell">
+                <div class="s2r-shot">
+                  <picture>
+                    <source srcset="assets/s2r_ho_sim.webp" type="image/webp" />
+                    <img src="assets/s2r_ho_sim.png" alt="Handover, simulated egocentric view." loading="lazy" />
+                  </picture>
+                </div>
+                <span class="s2r-dom"><b>Handover:</b> Sim <span class="s2r-val">1.00</span></span>
+              </div>
+              <div class="s2r-cell">
+                <div class="s2r-shot">
+                  <picture>
+                    <source srcset="assets/s2r_ho_real.webp" type="image/webp" />
+                    <img src="assets/s2r_ho_real.png" alt="Handover, real-world egocentric rollout." loading="lazy" />
+                  </picture>
+                </div>
+                <span class="s2r-dom"><b>Handover:</b> Real <span class="s2r-val s2r-val--real">0.80</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption class="fig-cap">Each task shows the simulated egocentric view beside the matching real-world rollout, annotated with its success rate. A single policy fine-tuned <b>exclusively</b> on simulation data, evaluated both in the simulator and directly in the real world &mdash; with no real-world fine-tuning.</figcaption>
+      </figure>
+    </section>
+
+    <!-- BibTeX -->
+    <section class="section" id="bibtex">
+      <div class="section__head reveal">
+        <span class="kicker">Cite</span>
+        <h2>BibTeX</h2>
+      </div>
+      <div class="code glass reveal">
+        <button class="copy-btn" id="copyBtn" aria-label="Copy BibTeX">Copy</button>
+        <pre><code id="bibtex">@inproceedings{simple2026,
+  title     = {SIMPLE: Simulation-Based Policy Learning and Evaluation
+               for Humanoid Loco-manipulation},
+  author    = {Wei, Songlin and Ni, Zhenhao and Liu, Jie and Zhao, Zhenyu
+               and Ye, Junjie and Jing, Hongyi and Xia, Junkai
+               and Liu, Xiawei and Leong, Michael and Heng, Liang
+               and Huang, Di and Wang, Yue},
+  booktitle = {Conference on Robot Learning (CoRL)},
+  year      = {2026}
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner glass">
+      <span class="logo-text logo-text--sm"><span class="g-s">S</span><span class="g-i">I</span><span class="g-m">M</span><span class="g-p">P</span><span class="g-l">L</span><span class="g-e">E</span></span>
+      <p>USC Physical Superintelligence (PSI) Lab &middot; CoRL 2026</p>
+      <a class="back-top" href="#top" aria-label="Back to top">Back to top &uarr;</a>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
