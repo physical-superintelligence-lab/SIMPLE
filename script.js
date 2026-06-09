@@ -91,29 +91,130 @@
     );
   }
 
+  /* ---------- Custom video controls ---------- */
+  (function () {
+    var video = document.getElementById('teaserVideo');
+    if (!video) return;
+    var playBtn     = document.getElementById('vctrPlay');
+    var timeEl      = document.getElementById('vctrTime');
+    var progressEl  = document.getElementById('vctrProgress');
+    var fillEl      = document.getElementById('vctrFill');
+    var thumbEl     = document.getElementById('vctrThumb');
+    var muteBtn     = document.getElementById('vctrMute');
+    var fsBtn       = document.getElementById('vctrFs');
+    var wrap        = video.closest('.video-wrap');
+
+    function fmt(s) {
+      if (!isFinite(s)) return '0:00';
+      var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function syncProgress() {
+      if (!video.duration) return;
+      var pct = video.currentTime / video.duration * 100;
+      fillEl.style.width  = pct + '%';
+      thumbEl.style.left  = pct + '%';
+      progressEl.setAttribute('aria-valuenow', Math.round(pct));
+      timeEl.textContent  = fmt(video.currentTime) + ' / ' + fmt(video.duration);
+    }
+
+    video.addEventListener('timeupdate', syncProgress);
+    video.addEventListener('loadedmetadata', function () {
+      timeEl.textContent = '0:00 / ' + fmt(video.duration);
+    });
+
+    // Play / pause
+    function togglePlay() {
+      if (video.paused) video.play().catch(function () {});
+      else video.pause();
+    }
+    video.addEventListener('click', togglePlay);
+    playBtn.addEventListener('click', togglePlay);
+    video.addEventListener('play',  function () { playBtn.classList.add('is-playing');    playBtn.setAttribute('aria-label', 'Pause'); });
+    video.addEventListener('pause', function () { playBtn.classList.remove('is-playing'); playBtn.setAttribute('aria-label', 'Play');  });
+    video.addEventListener('ended', function () { playBtn.classList.remove('is-playing'); playBtn.setAttribute('aria-label', 'Play');  });
+
+    // Seeking — mouse and touch, with document-level drag tracking
+    function applySeek(clientX) {
+      var rect = progressEl.getBoundingClientRect();
+      var pct  = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      if (video.duration) video.currentTime = pct * video.duration;
+      fillEl.style.width = (pct * 100) + '%';
+      thumbEl.style.left = (pct * 100) + '%';
+    }
+    var seeking = false;
+    progressEl.addEventListener('mousedown', function (e) { seeking = true; applySeek(e.clientX); e.preventDefault(); });
+    document.addEventListener('mousemove',  function (e) { if (seeking) applySeek(e.clientX); });
+    document.addEventListener('mouseup',    function ()  { seeking = false; });
+    progressEl.addEventListener('touchstart', function (e) { seeking = true; applySeek(e.touches[0].clientX); e.preventDefault(); }, { passive: false });
+    document.addEventListener('touchmove',  function (e) { if (seeking) { applySeek(e.touches[0].clientX); e.preventDefault(); } }, { passive: false });
+    document.addEventListener('touchend',   function ()  { seeking = false; });
+    progressEl.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') video.currentTime = Math.min(video.duration || 0, video.currentTime + 5);
+      if (e.key === 'ArrowLeft')  video.currentTime = Math.max(0, video.currentTime - 5);
+    });
+
+    // Mute
+    muteBtn.addEventListener('click', function () {
+      video.muted = !video.muted;
+    });
+    video.addEventListener('volumechange', function () {
+      muteBtn.classList.toggle('is-muted', video.muted);
+      muteBtn.setAttribute('aria-label', video.muted ? 'Unmute' : 'Mute');
+    });
+
+    // Fullscreen
+    fsBtn.addEventListener('click', function () {
+      if (!document.fullscreenElement) {
+        var req = wrap.requestFullscreen || wrap.webkitRequestFullscreen || wrap.mozRequestFullScreen;
+        if (req) req.call(wrap);
+      } else {
+        var exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+        if (exit) exit.call(document);
+      }
+    });
+    document.addEventListener('fullscreenchange', function () {
+      var isFs = !!document.fullscreenElement;
+      fsBtn.classList.toggle('is-fs', isFs);
+      fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Fullscreen');
+    });
+  }());
+
+  /* ---------- GitHub stars ---------- */
+  fetch('https://api.github.com/repos/physical-superintelligence-lab/SIMPLE')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (data) {
+      if (!data) return;
+      var el = document.getElementById('ghStarCount');
+      if (!el) return;
+      var n = data.stargazers_count;
+      el.textContent = n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n);
+    })
+    .catch(function () {});
+
   /* ---------- Copy BibTeX ---------- */
-  const copyBtn = document.getElementById('copyBtn');
-  const bib = document.getElementById('bibtex');
-  if (copyBtn && bib) {
-    copyBtn.addEventListener('click', async () => {
-      const text = bib.innerText;
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    var code = btn.closest('.code').querySelector('code');
+    if (!code) return;
+    btn.addEventListener('click', async function () {
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(code.innerText);
       } catch (e) {
-        const r = document.createRange();
-        r.selectNode(bib);
-        const sel = window.getSelection();
+        var r = document.createRange();
+        r.selectNode(code);
+        var sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(r);
         try { document.execCommand('copy'); } catch (_) {}
         sel.removeAllRanges();
       }
-      copyBtn.textContent = 'Copied';
-      copyBtn.classList.add('copied');
-      setTimeout(() => {
-        copyBtn.textContent = 'Copy';
-        copyBtn.classList.remove('copied');
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function () {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
       }, 1800);
     });
-  }
+  });
 })();

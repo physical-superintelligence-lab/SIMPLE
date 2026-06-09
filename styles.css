@@ -348,6 +348,8 @@ main { width: 100%; }
   font-size: 0.98rem;
   margin: 0 0 8px;
 }
+.authors a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+.authors a:hover { border-bottom-color: var(--ink-dim); }
 .affil { color: var(--ink-mut); font-size: 0.88rem; margin: 0 0 30px; }
 .affil-note { font-size: 0.82rem; }
 
@@ -365,6 +367,16 @@ main { width: 100%; }
   position: relative;
 }
 .btn .ico { width: 18px; height: 18px; }
+.gh-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 10px;
+  border-left: 1px solid var(--glass-brd);
+  font-size: 0.82em;
+  opacity: 0.9;
+}
+.gh-stars .ico--star { width: 11px; height: 11px; color: #f5c518; }
 .btn:hover {
   transform: translateY(-2px);
   border-color: var(--glass-brd-2);
@@ -373,12 +385,91 @@ main { width: 100%; }
 
 /* Teaser */
 .hero__teaser { margin: 56px auto 0; max-width: var(--maxw); }
-.hero__teaser img {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: var(--radius);
+.hero__teaser img { width: 100%; height: auto; display: block; border-radius: var(--radius); }
+
+/* Custom video player */
+.video-wrap { border-radius: var(--radius); overflow: hidden; background: #000; }
+.video-wrap video { width: 100%; height: auto; display: block; cursor: pointer; }
+.vctr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
+.vctr__btn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+.vctr__btn:hover { opacity: 1; }
+.vctr__btn svg { width: 18px; height: 18px; }
+.vctr__btn .ico-pause  { display: none; }
+.vctr__btn.is-playing .ico-play  { display: none; }
+.vctr__btn.is-playing .ico-pause { display: block; }
+.vctr__btn .ico-muted  { display: none; }
+.vctr__btn.is-muted .ico-vol   { display: none; }
+.vctr__btn.is-muted .ico-muted { display: block; }
+.vctr__btn .ico-exit-fs { display: none; }
+.vctr__btn.is-fs .ico-fs      { display: none; }
+.vctr__btn.is-fs .ico-exit-fs { display: block; }
+.vctr__time {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.vctr__progress {
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+}
+.vctr__track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+  transition: height 0.15s;
+}
+.vctr__progress:hover .vctr__track { height: 6px; }
+.vctr__fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 0%;
+  background: var(--cyan);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.vctr__thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 13px;
+  height: 13px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.vctr__progress:hover .vctr__thumb { opacity: 1; }
 .hero__teaser figcaption,
 .media figcaption {
   margin-top: 16px;
