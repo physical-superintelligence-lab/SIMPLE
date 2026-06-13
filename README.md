@@ -1,10 +1,6 @@
 <h1 align="center">Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation
 </h1>
 
-<p align="center">
-  <img src="assets/teaser.webp" alt="SIMPLE teaser image" />
-</p>
-
 <div align="center">
 
 [![arXiv](https://img.shields.io/badge/arXiv-2606.08278-df2a2a.svg)](https://arxiv.org/abs/2606.08278)
@@ -14,6 +10,12 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
+
+
+<p align="center">
+  <img src="assets/teaser.webp" alt="SIMPLE teaser image" />
+</p>
+
 
 Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://nizhenhao-3.github.io/)\*, [Jie Liu](https://jie0530.github.io/)\*, [Zhenyu Zhao](https://zhenyuzhao.com/)\*, [Junjie Ye](https://junjieye.com/), [Hongyi Jing](https://hongyijing.me/), Junkai Xia, [Xiawei Liu](https://www.xiaweiliu.com/), [Michael Leong](https://leongmichael.github.io/), [Liang Heng](https://liangheng121.github.io/), Di Huang, [Yue Wang](https://yuewang.xyz/)†
 
