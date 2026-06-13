@@ -1,4 +1,4 @@
-<h1 align="center">Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation
+<h1 align="center">SIMPLE: Simulation-Based Policy Learning and Evaluation for Humanoid Loco-manipulation
 </h1>
 
 <div align="center">
