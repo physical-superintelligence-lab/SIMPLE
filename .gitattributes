@@ -1,0 +1,3 @@
+# Sphinx output is plain static HTML; never store it in LFS, GitHub Pages
+# serves LFS pointers verbatim and the images would break.
+docs/** -filter -diff -merge
