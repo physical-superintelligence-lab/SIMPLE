@@ -295,6 +295,37 @@ workspace:</p>
 </pre></div>
 </div>
 <p>Keep this terminal open for the duration of the evaluation.</p>
+<section id="from-docker">
+<h3>From Docker<a class="headerlink" href="#from-docker" title="Link to this heading">¶</a></h3>
+<p>Psi-0 ships the same server as the <code class="docutils literal notranslate"><span class="pre">serve-psi0-sonic-http</span></code> compose service, on
+the image built by <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">build</span> <span class="pre">psi</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RUN</span><span class="o">=</span>sonic-wbcbox.neckle.flow1000.cosine.lr1.0e-04.b256.gpus8.2608260223
+
+docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>serve-psi0-sonic-http<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--policy<span class="w"> </span>psi0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--port<span class="w"> </span><span class="m">8014</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ckpt-step<span class="w"> </span><span class="m">40000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--run-dir<span class="w"> </span>.runs/finetune/<span class="nv">$RUN</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--rtc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--action-exec-horizon<span class="w"> </span><span class="m">24</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">serve_psi0_sonic_http</span></code> is the service’s entrypoint, so these arguments replace
+its default argument list wholesale. <code class="docutils literal notranslate"><span class="pre">--run-dir</span></code> is relative to the container’s
+working directory, where the repo’s <code class="docutils literal notranslate"><span class="pre">.runs/</span></code> is bind-mounted, so a checkpoint
+downloaded on the host needs no path translation.</p>
+<p>The service already defaults to that run at port 8014, step 40000, <code class="docutils literal notranslate"><span class="pre">--rtc</span></code> and
+a horizon of 24, so</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>serve-psi0-sonic-http
+</pre></div>
+</div>
+<p>starts the same server; override single values from the shell or <code class="docutils literal notranslate"><span class="pre">.env</span></code>
+instead of repeating the list — <code class="docutils literal notranslate"><span class="pre">POLICY</span></code>, <code class="docutils literal notranslate"><span class="pre">PORT</span></code>, <code class="docutils literal notranslate"><span class="pre">CKPT_STEP</span></code>, <code class="docutils literal notranslate"><span class="pre">RUN</span></code> (or
+<code class="docutils literal notranslate"><span class="pre">RUN_DIR</span></code>), <code class="docutils literal notranslate"><span class="pre">RTC_FLAG</span></code>, <code class="docutils literal notranslate"><span class="pre">ACTION_EXEC_HORIZON</span></code>, and <code class="docutils literal notranslate"><span class="pre">GPUS</span></code> for the device.</p>
+<p>The service is host-networked and binds <code class="docutils literal notranslate"><span class="pre">0.0.0.0:8014</span></code>, which is exactly what
+<code class="docutils literal notranslate"><span class="pre">eval-sonic-wbc</span></code> below expects at <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8014</span></code> — both containers share the
+host network namespace.</p>
+</section>
 </section>
 <section id="run-the-evaluation-client">
 <h2>2. Run the evaluation client<a class="headerlink" href="#run-the-evaluation-client" title="Link to this heading">¶</a></h2>
@@ -320,8 +351,8 @@ ready, and tears it down on exit. It refuses to start if ports 5556, 5557 or
 13579 are already occupied, and requires the controller binary
 (<code class="docutils literal notranslate"><span class="pre">third_party/GR00T-WholeBodyControl/gear_sonic_deploy/target/release/g1_deploy_onnx_ref</span></code>)
 built by <a class="reference internal" href="setup.html"><span class="std std-doc">Setup</span></a>.</p>
-<section id="from-docker">
-<h3>From Docker<a class="headerlink" href="#from-docker" title="Link to this heading">¶</a></h3>
+<section id="id1">
+<h3>From Docker<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <p>The same client is wired up as the <code class="docutils literal notranslate"><span class="pre">eval-sonic-wbc</span></code> compose service. The
 controller binary is already built into the image, and <code class="docutils literal notranslate"><span class="pre">network_mode:</span> <span class="pre">host</span></code> lets
 the container reach a Psi-0 server running on the host at <code class="docutils literal notranslate"><span class="pre">127.0.0.1</span></code>:</p>
@@ -404,9 +435,12 @@ runs headless by default; add <code class="docutils literal notranslate"><span c
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Evaluation</a><ul>
-<li><a class="reference internal" href="#start-the-psi-0-server">1. Start the Psi-0 server</a></li>
-<li><a class="reference internal" href="#run-the-evaluation-client">2. Run the evaluation client</a><ul>
+<li><a class="reference internal" href="#start-the-psi-0-server">1. Start the Psi-0 server</a><ul>
 <li><a class="reference internal" href="#from-docker">From Docker</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#run-the-evaluation-client">2. Run the evaluation client</a><ul>
+<li><a class="reference internal" href="#id1">From Docker</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#results">3. Results</a></li>

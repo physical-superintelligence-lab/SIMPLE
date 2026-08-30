@@ -20,6 +20,43 @@ serve_psi0_sonic_http \
 
 Keep this terminal open for the duration of the evaluation.
 
+### From Docker
+
+Psi-0 ships the same server as the `serve-psi0-sonic-http` compose service, on
+the image built by `docker compose build psi`:
+
+```bash
+export RUN=sonic-wbcbox.neckle.flow1000.cosine.lr1.0e-04.b256.gpus8.2608260223
+
+docker compose run --rm serve-psi0-sonic-http \
+    --policy psi0 \
+    --port 8014 \
+    --ckpt-step 40000 \
+    --run-dir .runs/finetune/$RUN \
+    --rtc \
+    --action-exec-horizon 24
+```
+
+`serve_psi0_sonic_http` is the service's entrypoint, so these arguments replace
+its default argument list wholesale. `--run-dir` is relative to the container's
+working directory, where the repo's `.runs/` is bind-mounted, so a checkpoint
+downloaded on the host needs no path translation.
+
+The service already defaults to that run at port 8014, step 40000, `--rtc` and
+a horizon of 24, so
+
+```bash
+docker compose up serve-psi0-sonic-http
+```
+
+starts the same server; override single values from the shell or `.env`
+instead of repeating the list — `POLICY`, `PORT`, `CKPT_STEP`, `RUN` (or
+`RUN_DIR`), `RTC_FLAG`, `ACTION_EXEC_HORIZON`, and `GPUS` for the device.
+
+The service is host-networked and binds `0.0.0.0:8014`, which is exactly what
+`eval-sonic-wbc` below expects at `127.0.0.1:8014` — both containers share the
+host network namespace.
+
 ## 2. Run the evaluation client
 
 In a new terminal, from the SIMPLE repository root:

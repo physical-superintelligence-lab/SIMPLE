@@ -305,22 +305,48 @@ per camera plus a success rate.</p>
 <td><p>yes (Isaac Sim + MuJoCo)</p></td>
 </tr>
 <tr class="row-even"><td><p>Setup</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">uv</span></code> environment, <a class="reference internal" href="#step-1-set-up-the-psi-0-environment">step 1</a></p></td>
+<td><p>Docker <strong>or</strong> <code class="docutils literal notranslate"><span class="pre">uv</span></code>, <a class="reference internal" href="#step-1-set-up-the-psi-0-environment">step 1</a></p></td>
 <td><p>Docker <strong>or</strong> native <code class="docutils literal notranslate"><span class="pre">uv</span></code>, <a class="reference internal" href="#step-2-set-up-the-evaluation-client">step 2</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>The client can run <strong>either</strong> from the prebuilt Docker image (nothing to build,
-recommended for a first run) <strong>or</strong> natively in a <code class="docutils literal notranslate"><span class="pre">uv</span></code> environment. Both are
-documented below; pick one.</p>
+<p>Each side can run <strong>either</strong> from Docker (nothing to build, recommended for a
+first run) <strong>or</strong> natively in a <code class="docutils literal notranslate"><span class="pre">uv</span></code> environment. The two choices are
+independent — a containerised server happily serves a native client and vice
+versa, because both compose stacks use <code class="docutils literal notranslate"><span class="pre">network_mode:</span> <span class="pre">host</span></code>.</p>
 <section id="step-1-set-up-the-psi-0-environment">
 <h2>Step 1: Set up the Psi-0 environment<a class="headerlink" href="#step-1-set-up-the-psi-0-environment" title="Link to this heading">¶</a></h2>
 <p>Skip if you already have a working <span class="math notranslate nohighlight">\(\Psi_0\)</span>.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>git@github.com:physical-superintelligence-lab/Psi0.git
 <span class="nb">cd</span><span class="w"> </span>Psi0
-
-<span class="c1"># uv manages the Python dependencies</span>
+</pre></div>
+</div>
+<p>Copy <code class="docutils literal notranslate"><span class="pre">.env.sample</span></code> to <code class="docutils literal notranslate"><span class="pre">.env</span></code> and fill in at least <code class="docutils literal notranslate"><span class="pre">HF_TOKEN</span></code> (a read token, for
+the checkpoint download) and <code class="docutils literal notranslate"><span class="pre">PSI_HOME</span></code> (where checkpoints and data live by
+convention). Both options below read that file — the native server loads it on
+startup, and the compose services declare it as <code class="docutils literal notranslate"><span class="pre">env_file</span></code>.</p>
+<section id="option-a-docker">
+<h3>Option A — Docker<a class="headerlink" href="#option-a-docker" title="Link to this heading">¶</a></h3>
+<p>Build the image once:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>build<span class="w"> </span>psi
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">psi</span></code> is the only service that declares <code class="docutils literal notranslate"><span class="pre">build:</span></code>, so a bare <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">build</span></code> does the same thing. Every other service — including the server in
+<a class="reference internal" href="#step-5-serve-the-policy">step 5</a> — consumes the resulting <code class="docutils literal notranslate"><span class="pre">psi:train</span></code> image
+and never rebuilds it.</p>
+<p>Requirements: Docker with the NVIDIA Container Toolkit; the services run with
+<code class="docutils literal notranslate"><span class="pre">runtime:</span> <span class="pre">nvidia</span></code>. <code class="docutils literal notranslate"><span class="pre">src/</span></code>, <code class="docutils literal notranslate"><span class="pre">.runs/</span></code> and <code class="docutils literal notranslate"><span class="pre">$PSI_HOME</span></code> are bind-mounted, so
+checkpoints you download on the host are visible inside the container and code
+edits need only a restart, never a rebuild.</p>
+<p>Verify:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>serve-psi0-sonic-http<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+<section id="option-b-native-uv">
+<h3>Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code><a class="headerlink" href="#option-b-native-uv" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># uv manages the Python dependencies</span>
 curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 
 uv<span class="w"> </span>venv<span class="w"> </span>.venv-psi<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.11
@@ -338,10 +364,8 @@ uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </s
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import psi; print(psi.__version__)&quot;</span>
 </pre></div>
 </div>
-<p>Copy <code class="docutils literal notranslate"><span class="pre">.env.sample</span></code> to <code class="docutils literal notranslate"><span class="pre">.env</span></code> and fill in at least <code class="docutils literal notranslate"><span class="pre">HF_TOKEN</span></code> (a read token, for
-the checkpoint download) and <code class="docutils literal notranslate"><span class="pre">PSI_HOME</span></code> (where checkpoints and data live by
-convention). The server loads <code class="docutils literal notranslate"><span class="pre">.env</span></code> automatically on startup.</p>
 <p>See the <a class="reference external" href="https://github.com/physical-superintelligence-lab/Psi0#installation">Psi-0 README</a> for the full installation notes.</p>
+</section>
 </section>
 <section id="step-2-set-up-the-evaluation-client">
 <h2>Step 2: Set up the evaluation client<a class="headerlink" href="#step-2-set-up-the-evaluation-client" title="Link to this heading">¶</a></h2>
@@ -441,7 +465,36 @@ container, so anything outside it is invisible to the client.</p>
 </section>
 <section id="step-5-serve-the-policy">
 <h2>Step 5: Serve the policy<a class="headerlink" href="#step-5-serve-the-policy" title="Link to this heading">¶</a></h2>
-<p>Terminal <strong>A</strong>, from the Psi-0 workspace:</p>
+<p>Terminal <strong>A</strong>, from the Psi-0 workspace. Both options take the same flags and
+bind <code class="docutils literal notranslate"><span class="pre">0.0.0.0:8014</span></code>.</p>
+<section id="id1">
+<h3>Option A — Docker<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>serve-psi0-sonic-http<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--policy<span class="w"> </span>psi0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--port<span class="w"> </span><span class="m">8014</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ckpt-step<span class="w"> </span><span class="m">40000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--run-dir<span class="w"> </span>.runs/finetune/<span class="nv">$RUN</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--rtc<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--action-exec-horizon<span class="w"> </span><span class="m">24</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">serve_psi0_sonic_http</span></code> is the service’s entrypoint, so these arguments replace
+the compose defaults wholesale. <code class="docutils literal notranslate"><span class="pre">--run-dir</span></code> is relative to the container’s
+working directory, where the repo’s <code class="docutils literal notranslate"><span class="pre">.runs/</span></code> is bind-mounted — the same path
+works in both options.</p>
+<p>Those defaults already match the command above, so the short form is</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>serve-psi0-sonic-http
+</pre></div>
+</div>
+<p>and single values are overridable from the shell or <code class="docutils literal notranslate"><span class="pre">.env</span></code> without repeating
+the argument list: <code class="docutils literal notranslate"><span class="pre">POLICY</span></code>, <code class="docutils literal notranslate"><span class="pre">PORT</span></code>, <code class="docutils literal notranslate"><span class="pre">CKPT_STEP</span></code>, <code class="docutils literal notranslate"><span class="pre">RUN</span></code> (or <code class="docutils literal notranslate"><span class="pre">RUN_DIR</span></code>),
+<code class="docutils literal notranslate"><span class="pre">RTC_FLAG</span></code> and <code class="docutils literal notranslate"><span class="pre">ACTION_EXEC_HORIZON</span></code>. <code class="docutils literal notranslate"><span class="pre">GPUS</span></code> picks the device, e.g.
+<code class="docutils literal notranslate"><span class="pre">GPUS=1</span> <span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">up</span> <span class="pre">serve-psi0-sonic-http</span></code>.</p>
+<p>The service is host-networked, so the client reaches it at <code class="docutils literal notranslate"><span class="pre">127.0.0.1:8014</span></code>
+whether the client itself runs in Docker or natively.</p>
+</section>
+<section id="id2">
+<h3>Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code><a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>serve_psi0_sonic_http<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--policy<span class="w"> </span>psi0<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--port<span class="w"> </span><span class="m">8014</span><span class="w"> </span><span class="se">\</span>
@@ -451,6 +504,9 @@ container, so anything outside it is invisible to the client.</p>
 <span class="w">    </span>--action-exec-horizon<span class="w"> </span><span class="m">24</span>
 </pre></div>
 </div>
+</section>
+<section id="either-way">
+<h3>Either way<a class="headerlink" href="#either-way" title="Link to this heading">¶</a></h3>
 <p>Keep this terminal open — the server must stay up for the whole evaluation.
 Startup takes a minute or two while the VLM backbone and action head load; wait
 for <code class="docutils literal notranslate"><span class="pre">Server</span> <span class="pre">listens</span> <span class="pre">on</span> <span class="pre">0.0.0.0:8014</span></code> before starting the client.</p>
@@ -468,13 +524,14 @@ prefix if the checkpoint has one, otherwise test-time guidance),
 </pre></div>
 </div>
 </section>
+</section>
 <section id="step-6-run-the-evaluation">
 <h2>Step 6: Run the evaluation<a class="headerlink" href="#step-6-run-the-evaluation" title="Link to this heading">¶</a></h2>
 <p>Terminal <strong>B</strong>. Both options take the same arguments: the environment id, the
 policy name, then flags forwarded to the evaluation CLI. <code class="docutils literal notranslate"><span class="pre">--port</span></code> must match
 the server.</p>
-<section id="option-a-docker">
-<h3>Option A — Docker<a class="headerlink" href="#option-a-docker" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3>Option A — Docker<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>eval-sonic-wbc<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>simple/G1WholebodyXMoveBendCarryBoxSonic-v0<span class="w"> </span>psi0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--data-dir<span class="w"> </span>data/simple/G1WholebodyXMoveBendCarryBoxSonic-v0/dr-level-0<span class="w"> </span><span class="se">\</span>
@@ -489,8 +546,8 @@ the server.</p>
 <p>The service uses <code class="docutils literal notranslate"><span class="pre">network_mode:</span> <span class="pre">host</span></code>, so <code class="docutils literal notranslate"><span class="pre">127.0.0.1</span></code> reaches the server running
 on the host, and it runs headless by default.</p>
 </section>
-<section id="option-b-native-uv">
-<h3>Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code><a class="headerlink" href="#option-b-native-uv" title="Link to this heading">¶</a></h3>
+<section id="id4">
+<h3>Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code><a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">HEADLESS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>bash<span class="w"> </span>scripts/run_eval_wbc.sh<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>simple/G1WholebodyXMoveBendCarryBoxSonic-v0<span class="w"> </span>psi0<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--data-dir<span class="w"> </span>data/simple/G1WholebodyXMoveBendCarryBoxSonic-v0/dr-level-0<span class="w"> </span><span class="se">\</span>
@@ -605,7 +662,11 @@ Use <code class="docutils literal notranslate"><span class="pre">sudo</span></co
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Wholebody Loco-manipulation</a><ul>
-<li><a class="reference internal" href="#step-1-set-up-the-psi-0-environment">Step 1: Set up the Psi-0 environment</a></li>
+<li><a class="reference internal" href="#step-1-set-up-the-psi-0-environment">Step 1: Set up the Psi-0 environment</a><ul>
+<li><a class="reference internal" href="#option-a-docker">Option A — Docker</a></li>
+<li><a class="reference internal" href="#option-b-native-uv">Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#step-2-set-up-the-evaluation-client">Step 2: Set up the evaluation client</a><ul>
 <li><a class="reference internal" href="#option-a-docker-recommended">Option A — Docker (recommended)</a></li>
 <li><a class="reference internal" href="#option-b-native-uv-no-docker">Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code>, no Docker</a></li>
@@ -613,10 +674,15 @@ Use <code class="docutils literal notranslate"><span class="pre">sudo</span></co
 </li>
 <li><a class="reference internal" href="#step-3-download-the-checkpoint">Step 3: Download the checkpoint</a></li>
 <li><a class="reference internal" href="#step-4-download-the-evaluation-dataset">Step 4: Download the evaluation dataset</a></li>
-<li><a class="reference internal" href="#step-5-serve-the-policy">Step 5: Serve the policy</a></li>
+<li><a class="reference internal" href="#step-5-serve-the-policy">Step 5: Serve the policy</a><ul>
+<li><a class="reference internal" href="#id1">Option A — Docker</a></li>
+<li><a class="reference internal" href="#id2">Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code></a></li>
+<li><a class="reference internal" href="#either-way">Either way</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#step-6-run-the-evaluation">Step 6: Run the evaluation</a><ul>
-<li><a class="reference internal" href="#option-a-docker">Option A — Docker</a></li>
-<li><a class="reference internal" href="#option-b-native-uv">Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code></a></li>
+<li><a class="reference internal" href="#id3">Option A — Docker</a></li>
+<li><a class="reference internal" href="#id4">Option B — Native <code class="docutils literal notranslate"><span class="pre">uv</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#step-7-watch-the-results">Step 7: Watch the results</a></li>

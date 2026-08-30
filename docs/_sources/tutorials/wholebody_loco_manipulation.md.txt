@@ -15,11 +15,12 @@ per camera plus a success rate.
 |---|---|---|
 | Repository | [Psi-0](https://github.com/physical-superintelligence-lab/Psi0) | [SIMPLE](https://github.com/physical-superintelligence-lab/SIMPLE) |
 | Needs a GPU | yes (loads the checkpoint) | yes (Isaac Sim + MuJoCo) |
-| Setup | `uv` environment, [step 1](#step-1-set-up-the-psi-0-environment) | Docker **or** native `uv`, [step 2](#step-2-set-up-the-evaluation-client) |
+| Setup | Docker **or** `uv`, [step 1](#step-1-set-up-the-psi-0-environment) | Docker **or** native `uv`, [step 2](#step-2-set-up-the-evaluation-client) |
 
-The client can run **either** from the prebuilt Docker image (nothing to build,
-recommended for a first run) **or** natively in a `uv` environment. Both are
-documented below; pick one.
+Each side can run **either** from Docker (nothing to build, recommended for a
+first run) **or** natively in a `uv` environment. The two choices are
+independent — a containerised server happily serves a native client and vice
+versa, because both compose stacks use `network_mode: host`.
 
 ## Step 1: Set up the Psi-0 environment
 
@@ -28,7 +29,40 @@ Skip if you already have a working $\Psi_0$.
 ```bash
 git clone git@github.com:physical-superintelligence-lab/Psi0.git
 cd Psi0
+```
 
+Copy `.env.sample` to `.env` and fill in at least `HF_TOKEN` (a read token, for
+the checkpoint download) and `PSI_HOME` (where checkpoints and data live by
+convention). Both options below read that file — the native server loads it on
+startup, and the compose services declare it as `env_file`.
+
+### Option A — Docker
+
+Build the image once:
+
+```bash
+docker compose build psi
+```
+
+`psi` is the only service that declares `build:`, so a bare `docker compose
+build` does the same thing. Every other service — including the server in
+[step 5](#step-5-serve-the-policy) — consumes the resulting `psi:train` image
+and never rebuilds it.
+
+Requirements: Docker with the NVIDIA Container Toolkit; the services run with
+`runtime: nvidia`. `src/`, `.runs/` and `$PSI_HOME` are bind-mounted, so
+checkpoints you download on the host are visible inside the container and code
+edits need only a restart, never a rebuild.
+
+Verify:
+
+```bash
+docker compose run --rm serve-psi0-sonic-http --help
+```
+
+### Option B — Native `uv`
+
+```bash
 # uv manages the Python dependencies
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -48,10 +82,6 @@ Verify:
 ```bash
 python -c "import psi; print(psi.__version__)"
 ```
-
-Copy `.env.sample` to `.env` and fill in at least `HF_TOKEN` (a read token, for
-the checkpoint download) and `PSI_HOME` (where checkpoints and data live by
-convention). The server loads `.env` automatically on startup.
 
 See the [Psi-0 README](https://github.com/physical-superintelligence-lab/Psi0#installation) for the full installation notes.
 
@@ -166,7 +196,41 @@ container, so anything outside it is invisible to the client.
 
 ## Step 5: Serve the policy
 
-Terminal **A**, from the Psi-0 workspace:
+Terminal **A**, from the Psi-0 workspace. Both options take the same flags and
+bind `0.0.0.0:8014`.
+
+### Option A — Docker
+
+```bash
+docker compose run --rm serve-psi0-sonic-http \
+    --policy psi0 \
+    --port 8014 \
+    --ckpt-step 40000 \
+    --run-dir .runs/finetune/$RUN \
+    --rtc \
+    --action-exec-horizon 24
+```
+
+`serve_psi0_sonic_http` is the service's entrypoint, so these arguments replace
+the compose defaults wholesale. `--run-dir` is relative to the container's
+working directory, where the repo's `.runs/` is bind-mounted — the same path
+works in both options.
+
+Those defaults already match the command above, so the short form is
+
+```bash
+docker compose up serve-psi0-sonic-http
+```
+
+and single values are overridable from the shell or `.env` without repeating
+the argument list: `POLICY`, `PORT`, `CKPT_STEP`, `RUN` (or `RUN_DIR`),
+`RTC_FLAG` and `ACTION_EXEC_HORIZON`. `GPUS` picks the device, e.g.
+`GPUS=1 docker compose up serve-psi0-sonic-http`.
+
+The service is host-networked, so the client reaches it at `127.0.0.1:8014`
+whether the client itself runs in Docker or natively.
+
+### Option B — Native `uv`
 
 ```bash
 serve_psi0_sonic_http \
@@ -177,6 +241,8 @@ serve_psi0_sonic_http \
     --rtc \
     --action-exec-horizon 24
 ```
+
+### Either way
 
 Keep this terminal open — the server must stay up for the whole evaluation.
 Startup takes a minute or two while the VLM backbone and action head load; wait
