@@ -38,7 +38,24 @@ startup, and the compose services declare it as `env_file`.
 
 ### Option A — Docker
 
-Build the image once:
+Pull the official image from the GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/physical-superintelligence-lab/psi0:latest
+docker tag ghcr.io/physical-superintelligence-lab/psi0:latest psi:train
+```
+
+The retag is what lets `docker compose` find it — `docker-compose.yml` refers to
+the image as `psi:${PSI_TAG:-train}`, and `PSI_TAG` overrides the tag only, not
+the registry path. Pin an exact build with a dated tag such as `:260830`.
+
+Requirements: Docker with the NVIDIA Container Toolkit; the services run with
+`runtime: nvidia`. The image carries **dependencies only** — `src/`, `.runs/`
+and `$PSI_HOME` are bind-mounted, so checkpoints you download on the host are
+visible inside the container and code edits need only a restart, never a
+rebuild.
+
+To build it yourself instead:
 
 ```bash
 docker compose build psi
@@ -46,13 +63,7 @@ docker compose build psi
 
 `psi` is the only service that declares `build:`, so a bare `docker compose
 build` does the same thing. Every other service — including the server in
-[step 5](#step-5-serve-the-policy) — consumes the resulting `psi:train` image
-and never rebuilds it.
-
-Requirements: Docker with the NVIDIA Container Toolkit; the services run with
-`runtime: nvidia`. `src/`, `.runs/` and `$PSI_HOME` are bind-mounted, so
-checkpoints you download on the host are visible inside the container and code
-edits need only a restart, never a rebuild.
+[step 5](#step-5-serve-the-policy) — consumes the image and never rebuilds it.
 
 Verify:
 

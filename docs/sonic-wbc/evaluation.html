@@ -298,7 +298,8 @@ workspace:</p>
 <section id="from-docker">
 <h3>From Docker<a class="headerlink" href="#from-docker" title="Link to this heading">¶</a></h3>
 <p>Psi-0 ships the same server as the <code class="docutils literal notranslate"><span class="pre">serve-psi0-sonic-http</span></code> compose service, on
-the image built by <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">build</span> <span class="pre">psi</span></code>:</p>
+the official <code class="docutils literal notranslate"><span class="pre">ghcr.io/physical-superintelligence-lab/psi0</span></code> image (retagged
+<code class="docutils literal notranslate"><span class="pre">psi:train</span></code>, or built locally with <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">build</span> <span class="pre">psi</span></code>):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">RUN</span><span class="o">=</span>sonic-wbcbox.neckle.flow1000.cosine.lr1.0e-04.b256.gpus8.2608260223
 
 docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>serve-psi0-sonic-http<span class="w"> </span><span class="se">\</span>

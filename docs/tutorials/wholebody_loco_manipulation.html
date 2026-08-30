@@ -7,7 +7,7 @@
 
     <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
         <title>Wholebody Loco-manipulation - SIMPLE documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=55bf9381" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
@@ -328,17 +328,25 @@ convention). Both options below read that file — the native server loads it on
 startup, and the compose services declare it as <code class="docutils literal notranslate"><span class="pre">env_file</span></code>.</p>
 <section id="option-a-docker">
 <h3>Option A — Docker<a class="headerlink" href="#option-a-docker" title="Link to this heading">¶</a></h3>
-<p>Build the image once:</p>
+<p>Pull the official image from the GitHub Container Registry:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>ghcr.io/physical-superintelligence-lab/psi0:latest
+docker<span class="w"> </span>tag<span class="w"> </span>ghcr.io/physical-superintelligence-lab/psi0:latest<span class="w"> </span>psi:train
+</pre></div>
+</div>
+<p>The retag is what lets <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span></code> find it — <code class="docutils literal notranslate"><span class="pre">docker-compose.yml</span></code> refers to
+the image as <code class="docutils literal notranslate"><span class="pre">psi:${PSI_TAG:-train}</span></code>, and <code class="docutils literal notranslate"><span class="pre">PSI_TAG</span></code> overrides the tag only, not
+the registry path. Pin an exact build with a dated tag such as <code class="docutils literal notranslate"><span class="pre">:260830</span></code>.</p>
+<p>Requirements: Docker with the NVIDIA Container Toolkit; the services run with
+<code class="docutils literal notranslate"><span class="pre">runtime:</span> <span class="pre">nvidia</span></code>. The image carries <strong>dependencies only</strong> — <code class="docutils literal notranslate"><span class="pre">src/</span></code>, <code class="docutils literal notranslate"><span class="pre">.runs/</span></code>
+and <code class="docutils literal notranslate"><span class="pre">$PSI_HOME</span></code> are bind-mounted, so checkpoints you download on the host are
+visible inside the container and code edits need only a restart, never a
+rebuild.</p>
+<p>To build it yourself instead:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>build<span class="w"> </span>psi
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">psi</span></code> is the only service that declares <code class="docutils literal notranslate"><span class="pre">build:</span></code>, so a bare <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span> <span class="pre">build</span></code> does the same thing. Every other service — including the server in
-<a class="reference internal" href="#step-5-serve-the-policy">step 5</a> — consumes the resulting <code class="docutils literal notranslate"><span class="pre">psi:train</span></code> image
-and never rebuilds it.</p>
-<p>Requirements: Docker with the NVIDIA Container Toolkit; the services run with
-<code class="docutils literal notranslate"><span class="pre">runtime:</span> <span class="pre">nvidia</span></code>. <code class="docutils literal notranslate"><span class="pre">src/</span></code>, <code class="docutils literal notranslate"><span class="pre">.runs/</span></code> and <code class="docutils literal notranslate"><span class="pre">$PSI_HOME</span></code> are bind-mounted, so
-checkpoints you download on the host are visible inside the container and code
-edits need only a restart, never a rebuild.</p>
+<a class="reference internal" href="#step-5-serve-the-policy">step 5</a> — consumes the image and never rebuilds it.</p>
 <p>Verify:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>compose<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>serve-psi0-sonic-http<span class="w"> </span>--help
 </pre></div>

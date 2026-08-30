@@ -23,7 +23,8 @@ Keep this terminal open for the duration of the evaluation.
 ### From Docker
 
 Psi-0 ships the same server as the `serve-psi0-sonic-http` compose service, on
-the image built by `docker compose build psi`:
+the official `ghcr.io/physical-superintelligence-lab/psi0` image (retagged
+`psi:train`, or built locally with `docker compose build psi`):
 
 ```bash
 export RUN=sonic-wbcbox.neckle.flow1000.cosine.lr1.0e-04.b256.gpus8.2608260223
