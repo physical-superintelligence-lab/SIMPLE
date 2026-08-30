@@ -1,0 +1,554 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Developer Notes" href="developer.html"><link rel="prev" title="Domain Randomization" href="dr/index.html">
+
+    <!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
+        <title>Troubleshooting - SIMPLE documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">SIMPLE  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">SIMPLE  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="tutorials/index.html">Get Started</a><input aria-label="Toggle navigation of Get Started" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/run_env.html">Run an Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/wholebody_loco_manipulation.html">Wholebody Loco-manipulation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="docker.html">Docker Setup</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="nix-setup/index.html">Nix Setup</a><input aria-label="Toggle navigation of Nix Setup" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="nix-setup/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nix-setup/runtime.html">Nix Runtime</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="sonic-wbc/index.html">SONIC Wholebody</a><input aria-label="Toggle navigation of SONIC Wholebody" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="sonic-wbc/setup.html">Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sonic-wbc/teleoperation.html">Teleoperation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sonic-wbc/replay_render.html">Replay &amp; Render</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sonic-wbc/evaluation.html">Evaluation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="decoupled-wbc/index.html">GR00T Decoupled Wholebody</a><input aria-label="Toggle navigation of GR00T Decoupled Wholebody" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="decoupled-wbc/teleop_decoupled_setup.html">Teleop Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="decoupled-wbc/teleoperation.html">Teleoperation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="decoupled-wbc/replay_render.html">Replay &amp; Render</a></li>
+<li class="toctree-l2"><a class="reference internal" href="decoupled-wbc/evaluation.html">Evaluation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data_gen_mp.html">Motion Planning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user-guides/index.html">Advanced Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="core/index.html">Core Concepts</a><input aria-label="Toggle navigation of Core Concepts" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="core/architecture.html">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core/task.html">Task</a></li>
+<li class="toctree-l2"><a class="reference internal" href="core/robot.html">Robot</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="tasks/index.html">Built-In Tasks</a><input aria-label="Toggle navigation of Built-In Tasks" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="tasks/g1_mp_amo.html">G1 MP (AMO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/g1_decoupled.html">G1 Decoupled</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/g1_sonic.html">G1 SONIC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/franka_tabletop_grasp.html">Franka Tabletop Grasp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/aloha_tabletop_grasp.html">Aloha Tabletop Grasp</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dr/index.html">Domain Randomization</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developer.html">Developer Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">Citation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/troubleshooting.md.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section class="tex2jax_ignore mathjax_ignore" id="troubleshooting">
+<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h1>
+<ol class="arabic">
+<li><p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">run</span> <span class="pre">eval</span> <span class="pre">...</span></code> or <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-c</span> <span class="pre">'import</span> <span class="pre">torch'</span></code> fails inside <code class="docutils literal notranslate"><span class="pre">nix</span> <span class="pre">develop</span></code> with:</p>
+<blockquote>
+<div><p>ImportError: libstdc++.so.6: cannot open shared object file: No such file or directory</p>
+</div></blockquote>
+<p><strong>Cause</strong>
+A previous version of the Nix dev shell only prepended CUDA paths to <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code>. Fresh shells could then miss the rest of the Nix userspace runtime, including <code class="docutils literal notranslate"><span class="pre">libstdc++.so.6</span></code>, Python shared libraries, FFmpeg, and related native dependencies.</p>
+<p><strong>Fix</strong>
+Update to the current dev shell and reload it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/SIMPLE
+direnv<span class="w"> </span>reload
+</pre></div>
+</div>
+<p>Verify the full runtime is present:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;&#39;PY&#39;</span>
+<span class="s">import torch</span>
+<span class="s">print(torch.__version__)</span>
+<span class="s">PY</span>
+</pre></div>
+</div>
+<p>If you need to run <code class="docutils literal notranslate"><span class="pre">nix</span></code> from inside an already-loaded dev shell, prefer:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>env<span class="w"> </span>-u<span class="w"> </span>LD_LIBRARY_PATH<span class="w"> </span>nix<span class="w"> </span>--extra-experimental-features<span class="w"> </span><span class="s2">&quot;nix-command flakes&quot;</span><span class="w"> </span>develop
+</pre></div>
+</div>
+<p>This avoids making <code class="docutils literal notranslate"><span class="pre">nix</span></code> itself load the project runtime libraries.</p>
+<p>If this is a brand new host, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./scripts/nix/prereq-check.sh
+</pre></div>
+</div>
+<p>before debugging further.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nix</span> <span class="pre">develop</span></code> itself fails before entering the shell with:</p>
+<blockquote>
+<div><p>nix: …/libstdc++.so.6: version `CXXABI_1.3.15’ not found</p>
+</div></blockquote>
+<p><strong>Cause</strong>
+This is usually not a project dependency problem. It means the outer shell is exporting a polluted <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code>, so the <code class="docutils literal notranslate"><span class="pre">nix</span></code> binary is loading the wrong <code class="docutils literal notranslate"><span class="pre">libstdc++.so.6</span></code> before it can even enter the dev shell.</p>
+<p><strong>Fix</strong>
+Run <code class="docutils literal notranslate"><span class="pre">nix</span></code> with <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> cleared:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>env<span class="w"> </span>-u<span class="w"> </span>LD_LIBRARY_PATH<span class="w"> </span>nix<span class="w"> </span>--extra-experimental-features<span class="w"> </span><span class="s2">&quot;nix-command flakes&quot;</span><span class="w"> </span>develop
+</pre></div>
+</div>
+<p>For single-command entry:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>env<span class="w"> </span>-u<span class="w"> </span>LD_LIBRARY_PATH<span class="w"> </span>nix<span class="w"> </span>--extra-experimental-features<span class="w"> </span><span class="s2">&quot;nix-command flakes&quot;</span><span class="w"> </span>develop<span class="w"> </span>-c<span class="w"> </span>&lt;command&gt;
+</pre></div>
+</div>
+<p>To confirm the diagnosis:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LD_LIBRARY_PATH</span><span class="s2">&quot;</span>
+env<span class="w"> </span>-u<span class="w"> </span>LD_LIBRARY_PATH<span class="w"> </span>nix<span class="w"> </span>--version
+</pre></div>
+</div>
+<p>If clearing <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> fixes it, open a fresh shell or remove the global export from your shell startup files before re-entering the repo.</p>
+</li>
+<li><p>Isaac Sim fails to initialize the GPU or <code class="docutils literal notranslate"><span class="pre">vulkaninfo</span></code> shows:</p>
+<blockquote>
+<div><p>vkCreateInstance failed with ERROR_INCOMPATIBLE_DRIVER</p>
+<p>Failed to create any GPU devices</p>
+<p>libGLX_nvidia.so.0: cannot open shared object file</p>
+</div></blockquote>
+<p><strong>Cause</strong>
+The host Vulkan ICD JSON points to NVIDIA driver libraries such as <code class="docutils literal notranslate"><span class="pre">libGLX_nvidia.so.0</span></code>, but those driver libraries are not visible inside the dev shell runtime.</p>
+<p><strong>Fix</strong>
+The dev shell now stages required host NVIDIA driver libraries into <code class="docutils literal notranslate"><span class="pre">.runtime-state/host-libcuda</span></code> and prepends only that shim directory to <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code>.
+Reload the shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>~/SIMPLE
+direnv<span class="w"> </span>reload
+</pre></div>
+</div>
+<p>Verify Vulkan inside the dev shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>vulkaninfo<span class="w"> </span>--summary
+</pre></div>
+</div>
+<p>Expected result:</p>
+<ul class="simple">
+<li><p>Vulkan instance creation succeeds</p></li>
+<li><p>the NVIDIA GPU appears in the device list</p></li>
+</ul>
+<p>If this still fails after reload, check that the host actually provides the NVIDIA driver libraries:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>-l<span class="w"> </span>/usr/lib/x86_64-linux-gnu/libGLX_nvidia.so.0
+ls<span class="w"> </span>-l<span class="w"> </span>/usr/lib/x86_64-linux-gnu/libnvcuvid.so.1
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">sync</span></code> failed with error:</p>
+<blockquote>
+<div><p>× Failed to download <code class="docutils literal notranslate"><span class="pre">isaacsim-cortex==4.5.0.0</span></code>
+├─▶ Failed to extract archive: isaacsim_cortex-4.5.0.0-cp310-none-manylinux_2_34_x86_64.whl
+├─▶ I/O operation failed during extraction
+╰─▶ Failed to download distribution due to network timeout. Try increasing UV_HTTP_TIMEOUT (current value:30s).
+help: <code class="docutils literal notranslate"><span class="pre">isaacsim-cortex</span></code> (v4.5.0.0) was included because <code class="docutils literal notranslate"><span class="pre">simple</span></code> (v0.1.0) depends on <code class="docutils literal notranslate"><span class="pre">isaacsim[all]</span></code>
+(v4.5.0.0) which depends on `isaacsim-cortex</p>
+</div></blockquote>
+<p><strong>Solution</strong> set <code class="docutils literal notranslate"><span class="pre">uv</span></code> timeout and <code class="docutils literal notranslate"><span class="pre">sync</span></code> again.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">UV_HTTP_TIMEOUT</span><span class="o">=</span><span class="mi">300</span>
+<span class="n">uv</span> <span class="n">sync</span>
+</pre></div>
+</div>
+</li>
+<li><p>The dev shell exits early with:</p>
+<blockquote>
+<div><p>[simple-dev] error: LD_LIBRARY_PATH contains non-runtime paths: …</p>
+<p>[bootstrap] PYTHONPATH must be unset inside the Nix runtime</p>
+</div></blockquote>
+<p><strong>Cause</strong>
+The Nix runtime now enforces a strict boundary. Only <code class="docutils literal notranslate"><span class="pre">/nix/store</span></code> userspace and the required host NVIDIA driver paths are allowed. Inherited host Python overrides and injected loader state are rejected because they cause non-reproducible host-specific breakage.</p>
+<p><strong>Fix</strong>
+Remove the leaking variables from your outer shell and reload:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">unset</span><span class="w"> </span>PYTHONPATH<span class="w"> </span>PYTHONHOME<span class="w"> </span>LD_PRELOAD
+direnv<span class="w"> </span>reload
+</pre></div>
+</div>
+<p>To inspect the bad runtime entries before reload:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;%s\n&#39;</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">LD_LIBRARY_PATH</span><span class="k">:-</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tr<span class="w"> </span><span class="s1">&#39;:&#39;</span><span class="w"> </span><span class="s1">&#39;\n&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">curobo</span></code> installtion error:</p>
+<blockquote>
+<div><p>RuntimeError:
+The detected CUDA version (11.8) mismatches the version that was used to compile
+PyTorch (12.8). Please make sure to use the same CUDA versions.</p>
+</div></blockquote>
+<p><strong>Solution</strong> Install <a class="reference external" href="https://developer.nvidia.com/cuda-12-8-0-download-archive"><code class="docutils literal notranslate"><span class="pre">cuda</span></code></a> verison 12.8.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">developer</span><span class="o">.</span><span class="n">download</span><span class="o">.</span><span class="n">nvidia</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">compute</span><span class="o">/</span><span class="n">cuda</span><span class="o">/</span><span class="mf">12.8.0</span><span class="o">/</span><span class="n">local_installers</span><span class="o">/</span><span class="n">cuda_12</span><span class="mf">.8.0_570.86.10</span><span class="n">_linux</span><span class="o">.</span><span class="n">run</span>
+<span class="n">sudo</span> <span class="n">sh</span> <span class="n">cuda_12</span><span class="mf">.8.0_570.86.10</span><span class="n">_linux</span><span class="o">.</span><span class="n">run</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">curobo</span></code> installation error:</p>
+<blockquote>
+<div><p>RuntimeError: CUDA error: misaligned address
+CUDA kernel errors might be asynchronously reported at some other API call, so the stacktrace below might be incorrect.
+For debugging consider passing CUDA_LAUNCH_BLOCKING=1</p>
+</div></blockquote>
+<p><strong>Solution</strong> try install curobo again.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TORCH_CUDA_ARCH_LIST</span><span class="o">=</span><span class="mf">8.9</span><span class="o">+</span><span class="n">PTX</span> <span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">build</span><span class="o">-</span><span class="n">isolation</span> <span class="o">-</span><span class="n">e</span> <span class="s2">&quot;.[isaacsim]&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">uv</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">torch==2.7.0</span> <span class="pre">--extra-index-url</span> <span class="pre">https://pypi.nvidia.com</span></code></p>
+<blockquote>
+<div><p>❯ UV_HTTP_CONCURRENCY=1  uv pip install torch==2.7.0 –extra-index-url https://pypi.nvidia.com
+Resolved 25 packages in 808ms
+× Failed to download <code class="docutils literal notranslate"><span class="pre">torch==2.7.0</span></code>
+├─▶ Failed to write to the distribution cache
+├─▶ error decoding response body
+├─▶ request or response body error
+├─▶ error reading a body from connection
+╰─▶ connection reset</p>
+</div></blockquote>
+<p><strong>Solution</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rm</span> <span class="o">-</span><span class="n">rf</span> <span class="o">~/.</span><span class="n">cache</span><span class="o">/</span><span class="n">uv</span>
+<span class="c1"># install again</span>
+</pre></div>
+</div>
+</li>
+<li><p>Errors starts <code class="docutils literal notranslate"><span class="pre">IsaacSim</span></code></p>
+<blockquote>
+<div><p>2025-08-28 23:35:04 [8,352ms] [Error] [omni.ext.plugin] Could not load the dynamic library from /home/songlin/workspace/SIMPLE/.venv/lib/python3.10/site-packages/isaacsim/extscache/omni.iray.libs-0.0.0+d02c707b.lx64.r/bin/iray/libneuray.so. Error: libGLU.so.1: cannot open shared object file: No such file or directory (note that this may be caused by a dependent library)</p>
+</div></blockquote>
+<p><strong>Solution</strong> Install <code class="docutils literal notranslate"><span class="pre">libglu</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libglu1</span><span class="o">-</span><span class="n">mesa</span>
+</pre></div>
+</div>
+</li>
+<li><p>GLFWError: (65537) b’The GLFW library is not initialized’</p>
+<blockquote>
+<div><p>Usually, this happens on a headless server when running mujoco</p>
+</div></blockquote>
+<p><strong>Solution</strong> Use <code class="docutils literal notranslate"><span class="pre">EGL</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">MUJOCO_GL</span><span class="o">=</span><span class="n">egl</span>
+</pre></div>
+</div>
+</li>
+<li><p>Fatal Python error: Segmentation fault when calling <code class="docutils literal notranslate"><span class="pre">world.reset()</span></code></p>
+<blockquote>
+<div><p>It happens when you run IsaacSim on a headless Server with headless set to False.</p>
+</div></blockquote>
+<p><strong>Solution</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># make sure headless is True.</span>
+</pre></div>
+</div>
+</li>
+<li><p>Erorr install CuRobo</p>
+<blockquote>
+<div><p>fatal error: Python.h: No such file or directory
+12 | #include &lt;Python.h&gt;
+|          ^~~~~~~~~~</p>
+</div></blockquote>
+<p><strong>Solution</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python3</span><span class="o">-</span><span class="n">dev</span>
+</pre></div>
+</div>
+</li>
+<li><p>ImportError: libgmpxx.so.4: cannot open shared object file: No such file or directory</p>
+<p><strong>Solution</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span> <span class="n">install</span> <span class="n">libgmp</span><span class="o">-</span><span class="n">dev</span> <span class="n">libgmp10</span>
+</pre></div>
+</div>
+</li>
+<li><p>× No solution found when resolving dependencies for split (markers: python_full_version == ‘3.10.*’ and sys_platform == ‘darwin’): ╰─▶ Because only cmake==3.25.0 is available and lerobot==0.3.3 depends on cmake&gt;=3.29.0.1, we can conclude that lerobot==0.3.3 cannot be used. And because simple:lerobot depends on lerobot==0.3.3 and your project requires simple:lerobot, we can conclude that your project’s requirements are unsatisfiable.</p>
+<p><strong>Solution</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uv</span> <span class="n">sync</span> <span class="o">--</span><span class="n">group</span> <span class="n">lerobot</span> <span class="o">--</span><span class="n">index</span><span class="o">-</span><span class="n">strategy</span> <span class="n">unsafe</span><span class="o">-</span><span class="n">best</span><span class="o">-</span><span class="n">match</span>
+</pre></div>
+</div>
+</li>
+<li><p>2025-10-18 22:38:03 [33,607ms] [Error] [omni.kit.app._impl] [py stderr]: TypeError: array.<strong>init</strong>() got an unexpected keyword argument ‘owner’</p>
+<p><strong>Solution</strong>
+Downgrade warp-lang</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uv</span> <span class="n">pip</span> <span class="n">install</span> <span class="s2">&quot;warp-lang==1.7.0&quot;</span> <span class="o">--</span><span class="n">index</span><span class="o">-</span><span class="n">strategy</span> <span class="n">unsafe</span><span class="o">-</span><span class="n">best</span><span class="o">-</span><span class="n">match</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="developer.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Developer Notes</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="dr/index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Domain Randomization</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Songlin Wei
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>
