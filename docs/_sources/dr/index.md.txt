@@ -59,7 +59,73 @@ the authority for `--dr-level`: level 0 is fully randomized and higher levels
 remove variation.
 ```
 
-Datasets are written per level, e.g. `data/datagen/simple/<env_id>/level-0/`.
+## Generating evaluation datasets
+
+An evaluation dataset is a minimal LeRobot dataset: every episode contains one
+rendered initial frame and the corresponding `environment_config`. It describes
+the layouts used to start evaluation; it is not a demonstration trajectory.
+
+Run the generators from the repository root with the project virtual
+environment. The environment variables below match the `cli/dr` and
+`cli/dr_decoupled_wbc` entries in `.vscode/launch.json`; adjust the GPU and
+display for the local machine. For unattended generation, use `--headless`.
+
+```bash
+export MUJOCO_GL=egl
+export CUDA_VISIBLE_DEVICES=0
+export DISPLAY=:1
+```
+
+### Motion-planning tasks
+
+Use `src/simple/cli/dr.py` for an MP environment. With no
+`--env-config-dir`, every reset samples a new base layout. To derive a new DR
+level from existing layouts, point `--env-config-dir` either at a LeRobot
+dataset directory containing `meta/episodes.jsonl`, or directly at that JSONL
+file. The environment ID and source configurations must belong to the same
+task.
+
+```bash
+.venv/bin/python src/simple/cli/dr.py \
+  simple/G1WholebodyBendPickMP-v0 \
+  --render-hz=50 \
+  --sim-mode=mujoco_isaac \
+  --no-headless \
+  --dr-level=2 \
+  --env-config-dir=data/G1WholebodyBendPickMP-v0 \
+  --save-dir=data/evals \
+  --num-episodes=10
+```
+
+Remove `--env-config-dir=...` when there is no source dataset. If fewer source
+configurations than `--num-episodes` are available, the generator cycles through
+them. Output is written to
+`<save-dir>/<env-id>/level-<dr-level>/`, for example
+`data/evals/simple/G1WholebodyBendPickMP-v0/level-2/`.
+
+### Teleoperation and decoupled-WBC tasks
+
+Use `src/simple/cli/dr_decoupled_wbc.py` for Teleop/SONIC environments. Its
+`--data-dir` is required in practice: it must be an existing LeRobot dataset
+with episode Parquet files and an `environment_config` for every selected
+episode.
+
+```bash
+.venv/bin/python src/simple/cli/dr_decoupled_wbc.py \
+  simple/G1WholebodyPushOfficeChairTeleop-v0 \
+  --data-dir=data/G1WholebodyPushOfficeChairTeleop-v0 \
+  --dr-level=2 \
+  --num-episodes=10 \
+  --headless \
+  --save-dir=data/evals
+```
+
+Output is written to `<save-dir>/<env-id>/dr-level-<dr-level>/`, for example
+`data/evals/simple/G1WholebodyPushOfficeChairTeleop-v0/dr-level-2/`.
+Repeat the command with each required
+`--dr-level` to build multiple evaluation splits.
+
+
 
 On replay, `DRManager.load_state_dict(state_dict, dr_level)` controls how much of
 a recorded layout is overridden: level 0 re-randomizes distractors and table

@@ -386,11 +386,70 @@ distractors, then visual randomization, then spatial randomization. The code is
 the authority for <code class="docutils literal notranslate"><span class="pre">--dr-level</span></code>: level 0 is fully randomized and higher levels
 remove variation.</p>
 </div>
-<p>Datasets are written per level, e.g. <code class="docutils literal notranslate"><span class="pre">data/datagen/simple/&lt;env_id&gt;/level-0/</span></code>.</p>
+</section>
+<section id="generating-evaluation-datasets">
+<h2>Generating evaluation datasets<a class="headerlink" href="#generating-evaluation-datasets" title="Link to this heading">¶</a></h2>
+<p>An evaluation dataset is a minimal LeRobot dataset: every episode contains one
+rendered initial frame and the corresponding <code class="docutils literal notranslate"><span class="pre">environment_config</span></code>. It describes
+the layouts used to start evaluation; it is not a demonstration trajectory.</p>
+<p>Run the generators from the repository root with the project virtual
+environment. The environment variables below match the <code class="docutils literal notranslate"><span class="pre">cli/dr</span></code> and
+<code class="docutils literal notranslate"><span class="pre">cli/dr_decoupled_wbc</span></code> entries in <code class="docutils literal notranslate"><span class="pre">.vscode/launch.json</span></code>; adjust the GPU and
+display for the local machine. For unattended generation, use <code class="docutils literal notranslate"><span class="pre">--headless</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MUJOCO_GL</span><span class="o">=</span>egl
+<span class="nb">export</span><span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DISPLAY</span><span class="o">=</span>:1
+</pre></div>
+</div>
+<section id="motion-planning-tasks">
+<h3>Motion-planning tasks<a class="headerlink" href="#motion-planning-tasks" title="Link to this heading">¶</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">src/simple/cli/dr.py</span></code> for an MP environment. With no
+<code class="docutils literal notranslate"><span class="pre">--env-config-dir</span></code>, every reset samples a new base layout. To derive a new DR
+level from existing layouts, point <code class="docutils literal notranslate"><span class="pre">--env-config-dir</span></code> either at a LeRobot
+dataset directory containing <code class="docutils literal notranslate"><span class="pre">meta/episodes.jsonl</span></code>, or directly at that JSONL
+file. The environment ID and source configurations must belong to the same
+task.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.venv/bin/python<span class="w"> </span>src/simple/cli/dr.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>simple/G1WholebodyBendPickMP-v0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--render-hz<span class="o">=</span><span class="m">50</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--sim-mode<span class="o">=</span>mujoco_isaac<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-headless<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dr-level<span class="o">=</span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env-config-dir<span class="o">=</span>data/G1WholebodyBendPickMP-v0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save-dir<span class="o">=</span>data/evals<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num-episodes<span class="o">=</span><span class="m">10</span>
+</pre></div>
+</div>
+<p>Remove <code class="docutils literal notranslate"><span class="pre">--env-config-dir=...</span></code> when there is no source dataset. If fewer source
+configurations than <code class="docutils literal notranslate"><span class="pre">--num-episodes</span></code> are available, the generator cycles through
+them. Output is written to
+<code class="docutils literal notranslate"><span class="pre">&lt;save-dir&gt;/&lt;env-id&gt;/level-&lt;dr-level&gt;/</span></code>, for example
+<code class="docutils literal notranslate"><span class="pre">data/evals/simple/G1WholebodyBendPickMP-v0/level-2/</span></code>.</p>
+</section>
+<section id="teleoperation-and-decoupled-wbc-tasks">
+<h3>Teleoperation and decoupled-WBC tasks<a class="headerlink" href="#teleoperation-and-decoupled-wbc-tasks" title="Link to this heading">¶</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">src/simple/cli/dr_decoupled_wbc.py</span></code> for Teleop/SONIC environments. Its
+<code class="docutils literal notranslate"><span class="pre">--data-dir</span></code> is required in practice: it must be an existing LeRobot dataset
+with episode Parquet files and an <code class="docutils literal notranslate"><span class="pre">environment_config</span></code> for every selected
+episode.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>.venv/bin/python<span class="w"> </span>src/simple/cli/dr_decoupled_wbc.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>simple/G1WholebodyPushOfficeChairTeleop-v0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data-dir<span class="o">=</span>data/G1WholebodyPushOfficeChairTeleop-v0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dr-level<span class="o">=</span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num-episodes<span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--headless<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save-dir<span class="o">=</span>data/evals
+</pre></div>
+</div>
+<p>Output is written to <code class="docutils literal notranslate"><span class="pre">&lt;save-dir&gt;/&lt;env-id&gt;/dr-level-&lt;dr-level&gt;/</span></code>, for example
+<code class="docutils literal notranslate"><span class="pre">data/evals/simple/G1WholebodyPushOfficeChairTeleop-v0/dr-level-2/</span></code>.
+Repeat the command with each required
+<code class="docutils literal notranslate"><span class="pre">--dr-level</span></code> to build multiple evaluation splits.</p>
 <p>On replay, <code class="docutils literal notranslate"><span class="pre">DRManager.load_state_dict(state_dict,</span> <span class="pre">dr_level)</span></code> controls how much of
 a recorded layout is overridden: level 0 re-randomizes distractors and table
 material, level 1 also lighting and materials, level 2 also spatial poses; passing
 <code class="docutils literal notranslate"><span class="pre">None</span></code> restores the entire recorded layout.</p>
+</section>
 </section>
 </section>
 
@@ -452,6 +511,11 @@ material, level 1 also lighting and materials, level 2 also spatial poses; passi
 <li><a class="reference internal" href="#">Domain Randomization</a><ul>
 <li><a class="reference internal" href="#randomizers">Randomizers</a></li>
 <li><a class="reference internal" href="#dr-levels">DR levels</a></li>
+<li><a class="reference internal" href="#generating-evaluation-datasets">Generating evaluation datasets</a><ul>
+<li><a class="reference internal" href="#motion-planning-tasks">Motion-planning tasks</a></li>
+<li><a class="reference internal" href="#teleoperation-and-decoupled-wbc-tasks">Teleoperation and decoupled-WBC tasks</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
