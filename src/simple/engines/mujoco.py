@@ -785,6 +785,13 @@ class MujocoSimulator(Simulator):
     def close(self):
         # print("Closing Mujoco simulator...")
         if hasattr(self, "renderers") and self.renderers:
-            for renderer in self.renderers.values():
-                renderer.close()
+            errors = []
+            for cname, renderer in self.renderers.items():
+                try:
+                    renderer.close()
+                except Exception as e:
+                    # keep closing the remaining renderers even if one fails
+                    errors.append((cname, e))
             self.renderers = {}
+            for cname, e in errors:
+                print(f"Warning: failed to close MuJoCo renderer for camera '{cname}': {e}")
