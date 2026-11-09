@@ -1018,12 +1018,25 @@ class IsaacSimSimulator(Simulator):
             else:
                 raise ValueError(f"Unsupported camera mount: {cam_info.mount}")
 
+            prim_path = f"{cam_prim_path}/{cam_key}"
+            if not get_prim_at_path(cam_prim_path).IsValid():
+                raise RuntimeError(
+                    f"Cannot add camera {cam_key!r} (mount={cam_info.mount!r}): "
+                    f"parent prim {cam_prim_path!r} does not exist. Check the robot's camera link names."
+                )
+            carb.log_info(f"[SIMPLE] Adding camera {cam_key!r} at {prim_path} resolution={cam_info.resolution}")
             camera = IssacCamera(
                 name=cam_key,
-                prim_path=f"{cam_prim_path}/{cam_key}",
+                prim_path=prim_path,
                 resolution=cam_info.resolution,
             )
-            camera.initialize()
+            try:
+                camera.initialize()
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to initialize camera {cam_key!r} at {prim_path} "
+                    f"(resolution={cam_info.resolution}): {e}"
+                ) from e
             self.cameras[cam_key] = camera
 
     def add_lights(self):
