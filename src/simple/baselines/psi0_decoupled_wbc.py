@@ -148,6 +148,10 @@ class Psi0DecoupledWbcAgent(SonicDecoupledWbcAgent):
         self._global_step_idx += 1
         return action_cmd
     
+    def needs_render_next(self) -> bool:
+        # the image is only sent to the server when the queued action chunk runs out
+        return len(self._action_queue) == 0
+
     def reset(self, **kwargs):
         super().reset(**kwargs)  # clear queue
 

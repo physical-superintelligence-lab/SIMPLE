@@ -126,6 +126,23 @@ def _make_sonic_config() -> dict[str, Any]:
     return sonic_config
 
 
+def _set_render_isaac(sonic_env, agent, on_query: bool) -> int:
+    """In on-query mode, render Isaac for the next env.step only if the agent will read the images
+    of that step's observation (other steps get MuJoCo images). Returns 1 if Isaac renders."""
+    if not on_query:
+        return 0
+    sonic_env.render_isaac = getattr(agent, "needs_render_next", lambda: True)()
+    return int(sonic_env.render_isaac)
+
+
+def _pace(step_start: float, control_dt: float) -> None:
+    """Keep a control step from running faster than real time: the WBC interpolates its targets on
+    the wall clock (target_time = now + control_dt), so faster steps would change its behavior."""
+    sleep_time = control_dt - (time.monotonic() - step_start)
+    if sleep_time > 0:
+        time.sleep(sleep_time)
+
+
 def _run_eval_worker_entry(
     worker_result_path: str,
     worker_id: int,
@@ -184,6 +201,9 @@ def _run_eval_worker(
     rollout_save_dir: Annotated[str | None, typer.Option()] = None,
     success_criteria: Annotated[float, typer.Option()] = 0.5,
     save_video: Annotated[bool, typer.Option("--save-video/--no-save-video")] = True,
+    video_dir: Annotated[str, typer.Option()] = "data/evals",
+    trailing_episode_steps: Annotated[int, typer.Option()] = 50,
+    isaac_render: Annotated[str, typer.Option()] = "always",
     sonic_config: dict[str, Any] | None = None,
     worker_id: int = 0,
     num_workers: int = 1,
@@ -207,10 +227,10 @@ def _run_eval_worker(
     sim_dt = sonic_config["SIMULATE_DT"]
     control_dt = 4 * sim_dt  # = 0.02 s (50 Hz)
 
-    # eval videos -> data/evals/<policy>/<task>/<dr>, where <dr> is the trailing
-    # component of --data-dir (data/evals/simple-eval/<task>/<dr>). When the
+    # eval videos -> <video_dir>/<policy>/<task>/<dr>, where <dr> is the trailing
+    # component of --data-dir (data/SIMPLE-eval/<task>/<dr>). When the
     # policy server exposes /info, the <task> component is prefixed with the
-    # exact checkpoint it serves: data/evals/<policy>/<server_policy>-<timestamp>.<task>/<dr>.
+    # exact checkpoint it serves: <video_dir>/<policy>/<server_policy>-<timestamp>.<task>/<dr>.
     dr = Path(data_dir).name
     task_component = env_id.split("/")[1]
     policy_info = _fetch_policy_info(host, port)
@@ -218,7 +238,7 @@ def _run_eval_worker(
     server_timestamp = policy_info.get("timestamp")
     if server_policy and server_timestamp:
         task_component = f"{server_policy}-{server_timestamp}.{task_component}"
-    eval_output_dir = os.path.join("data/evals", policy, task_component, dr)
+    eval_output_dir = os.path.join(video_dir, policy, task_component, dr)
     os.makedirs(eval_output_dir, exist_ok=True)
 
     if rollout_save_dir and num_workers != 1:
@@ -308,6 +328,12 @@ def _run_eval_worker(
     )
     raw_env = gym.make(env_id, **make_kwargs)
     sonic_env = raw_env.unwrapped  # type: ignore
+    if isaac_render not in ("always", "on-query"):
+        raise ValueError(f"isaac_render must be 'always' or 'on-query', got {isaac_render!r}")
+    on_query = isaac_render == "on-query" and sonic_env.isaac is not None
+    if on_query:
+        # Isaac only mirrors MuJoCo for the images, so sync it once per rendered step, not per substep
+        sonic_env.sync_isaac_every_substep = False
     task = raw_env.unwrapped.task  # type: ignore[attr-defined]
 
     # Use provided max_episode_steps or fall back to task's metadata
@@ -344,7 +370,6 @@ def _run_eval_worker(
         status="ready",
         setup_seconds=setup_seconds,
         max_episode_steps=max_episode_steps,
-        video_path=eval_output_dir if save_video else None,
         global_total=len(global_episode_indices),
     )
 
@@ -365,6 +390,7 @@ def _run_eval_worker(
         task_id = f"episode_{eps_idx}"
         report("episode_start", episode=task_id)
 
+        sonic_env.render_isaac = True
         if save_video:
             env = VideoRecorder(
                 env=rollout_env,
@@ -397,6 +423,9 @@ def _run_eval_worker(
 
         # --- Wait for robot to stabilize (velocity-based) ---
         sim_cnt = 0
+        isaac_renders = 0
+        # on-query: stabilization doesn't need images; Isaac renders the settled state once below
+        sonic_env.render_isaac = not on_query
         while not robot.stabilized and sim_cnt < 300:
             step_start = time.monotonic()
             action = agent.get_stabilize_action(observation)
@@ -410,6 +439,10 @@ def _run_eval_worker(
             if sleep_time > 0:
                 time.sleep(sleep_time)
             sim_cnt += 1
+
+        if on_query:
+            sonic_env.render_isaac = True
+            observation = sonic_env.refresh_obs()
 
         if isinstance(env, VideoRecorder):
             # empty the initial frames with stabilization steps
@@ -433,24 +466,47 @@ def _run_eval_worker(
         )
 
         episode_over = False
+        trail = False  # only an episode that terminated (not truncated, not out of agent actions) trails
         while not episode_over:
             try:
+                step_start = time.monotonic()
                 action = agent.get_action(
                     observation, info=info, instruction=instruction
                 )
+                isaac_renders += _set_render_isaac(sonic_env, agent, on_query)
                 observation, reward, terminated, truncated, info = env.step(action)
+                if on_query:
+                    _pace(step_start, control_dt)
                 episode_over = terminated or truncated
+                trail = terminated and not truncated
                 frame_idx += 1
                 if frame_idx == 1 or frame_idx % step_update_every == 0 or episode_over:
                     report("episode_step", episode=task_id, step=frame_idx)
             except StopIteration:
-                episode_over = True
+                episode_over, trail = True, False
                 print("Episode finished.")
 
         is_success = raw_env.unwrapped._success  # type: ignore[attr-defined]
+        # keep the policy running (and the videos recording) a little after the episode terminates
+        # (never after a truncation, i.e. the time limit); the result is taken before, and restored
+        # so the video name (_success/_failed) agrees with it
+        for _ in range(trailing_episode_steps if trail else 0):
+            step_start = time.monotonic()
+            try:
+                action = agent.get_action(observation, info=info, instruction=instruction)
+            except StopIteration:
+                break
+            isaac_renders += _set_render_isaac(sonic_env, agent, on_query)
+            observation, *_, info = env.step(action)
+            if on_query:
+                _pace(step_start, control_dt)
+            frame_idx += 1
+        raw_env.unwrapped._success = is_success  # type: ignore[attr-defined]
         stats[task_id] = is_success
         episode_seconds = time.perf_counter() - episode_start_time
         _append_eval_stats_line(eval_dir, f"{task_id}: {is_success} \n")
+        print(f"{task_id}: {frame_idx} steps in {episode_seconds:.1f} s ({frame_idx / max(episode_seconds, 1e-9):.2f} steps/s), "
+              f"isaac_render={isaac_render}" + (f", {isaac_renders} Isaac-rendered steps" if on_query else ""), flush=True)
         report(
             "episode_end",
             episode=task_id,
@@ -510,6 +566,7 @@ def run_eval(
     success_criteria = config.success_criteria
     save_video = config.save_video
     num_workers = config.num_workers
+    video_dir = config.video_dir
 
     if rollout_save_dir and num_workers != 1:
         raise ValueError("LeRobot rollout recording only supports num_workers=1.")
@@ -552,6 +609,9 @@ def run_eval(
         rollout_save_dir=rollout_save_dir,
         success_criteria=success_criteria,
         save_video=save_video,
+        video_dir=video_dir,
+        trailing_episode_steps=config.trailing_episode_steps,
+        isaac_render=config.isaac_render,
         sonic_config=sonic_config,
     )
 
@@ -778,6 +838,9 @@ def main(
     success_criteria: Annotated[float | None, typer.Option()] = None,
     save_video: Annotated[bool, typer.Option("--save-video/--no-save-video")] = True,
     num_workers: Annotated[int, typer.Option()] = 1,
+    video_dir: Annotated[str, typer.Option(help="eval videos go to <video-dir>/<policy>/<task>/<dr>")] = "data/evals",
+    trailing_episode_steps: Annotated[int, typer.Option(help="control steps (50 Hz) to keep running and recording after an episode terminates (not after a truncation)")] = 50,
+    isaac_render: Annotated[str, typer.Option(help="always: Isaac renders every step; on-query: only steps whose images the agent reads (agent.needs_render_next), MuJoCo images fill the rest of the video")] = "always",
 ):
     run_eval(
         EvalConfig(
@@ -798,6 +861,9 @@ def main(
             success_criteria=success_criteria,
             save_video=save_video,
             num_workers=num_workers,
+            video_dir=video_dir,
+            trailing_episode_steps=trailing_episode_steps,
+            isaac_render=isaac_render,
         ),
         show_progress=True if not os.environ.get("DEBUG", 0) else False,
     )

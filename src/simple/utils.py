@@ -1,6 +1,7 @@
 # Copyright (c) 2025-2026 The SIMPLE Authors
 # SPDX-License-Identifier: MIT
 
+import fcntl
 import importlib.resources as res
 import json
 import os
@@ -102,6 +103,23 @@ def _parse_zip_file_from_rel_path(rel_path: str) -> str:
     raise FileNotFoundError(f"{rel_path}")
 
 
+@contextmanager
+def _zip_lock(data_dir, zip_file: str, exclusive: bool):
+    """flock on ``data/.<zip_file>.lock``, serializing download+extract of one asset zip.
+
+    ``data/`` is bind-mounted into every eval container, so the lock also holds across
+    parallel containers (same kernel, same inode), not just processes in one container.
+    """
+    lock_path = os.path.join(data_dir, f".{zip_file}.lock")
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    with open(lock_path, "a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
 def resolve_data_path(
     rel_path=None, create_if_not_exist=False, auto_download=False
 ) -> str:
@@ -110,35 +128,50 @@ def resolve_data_path(
         return data_dir
     with as_file(data_dir / rel_path) as res_path:
         # assert res_path.exists(), f"Data not found: {res_path}"
-        if not res_path.exists():
-            if not auto_download:
-                raise FileNotFoundError(res_path)
+        if res_path.exists():
+            # The path can appear while another process is still extracting its zip; if that
+            # zip has a lock file, wait (shared lock) until the extraction has finished.
+            if auto_download and not create_if_not_exist:
+                try:
+                    zip_file = _parse_zip_file_from_rel_path(rel_path)
+                except FileNotFoundError:
+                    zip_file = None
+                if zip_file and os.path.exists(os.path.join(data_dir, f".{zip_file}.lock")):
+                    with _zip_lock(data_dir, zip_file, exclusive=False):
+                        pass
+            return str(res_path)
 
-            if create_if_not_exist:
-                os.makedirs(res_path, exist_ok=True)
-            else:
-                zip_file = _parse_zip_file_from_rel_path(rel_path)
-                zip_path = os.path.join(data_dir, zip_file)
-                snapshot_download(
-                    repo_id="USC-PSI-Lab/SIMPLE",
-                    allow_patterns=[zip_file],
-                    local_dir=data_dir,
-                    repo_type="dataset",
-                    token=os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN"),
-                )
+        if not auto_download:
+            raise FileNotFoundError(res_path)
 
-                if not os.path.exists(zip_path):
-                    raise FileNotFoundError(
-                        f"Download did not materialize {zip_path} for {rel_path}"
-                    )
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(data_dir)
-                if os.path.exists(zip_path):
-                    os.remove(zip_path)
-                    print(f"Deleted {zip_path}")
+        if create_if_not_exist:
+            os.makedirs(res_path, exist_ok=True)
+            return str(res_path)
+
+        zip_file = _parse_zip_file_from_rel_path(rel_path)
+        zip_path = os.path.join(data_dir, zip_file)
+        with _zip_lock(data_dir, zip_file, exclusive=True):
+            # Another process may have downloaded+extracted it while we waited for the lock.
+            if res_path.exists():
                 return str(res_path)
+            snapshot_download(
+                repo_id="USC-PSI-Lab/SIMPLE",
+                allow_patterns=[zip_file],
+                local_dir=data_dir,
+                repo_type="dataset",
+                token=os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACE_HUB_TOKEN"),
+            )
 
-    return str(res_path)
+            if not os.path.exists(zip_path):
+                raise FileNotFoundError(
+                    f"Download did not materialize {zip_path} for {rel_path}"
+                )
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(data_dir)
+            if os.path.exists(zip_path):
+                os.remove(zip_path)
+                print(f"Deleted {zip_path}")
+        return str(res_path)
 
 
 def is_ffmpeg_installed():

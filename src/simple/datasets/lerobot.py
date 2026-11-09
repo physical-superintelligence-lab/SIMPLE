@@ -3,7 +3,7 @@
 
 import json
 
-def get_episode_lerobot(dataset, eps_idx, data_format=None):
+def get_episode_lerobot(dataset, eps_idx, data_format=None, load_videos=True):
     def _to_int(value):
         item = getattr(value, "item", None)
         if callable(item):
@@ -12,7 +12,11 @@ def get_episode_lerobot(dataset, eps_idx, data_format=None):
 
     from_idx = _to_int(dataset.episode_data_index["from"][eps_idx])
     to_idx = _to_int(dataset.episode_data_index["to"][eps_idx])
-    episode = [dataset[i] for i in range(from_idx, to_idx)]
+    if load_videos:
+        episode = [dataset[i] for i in range(from_idx, to_idx)]
+    else:
+        # parquet columns only: dataset[i] decodes every video frame, which dominates loading
+        episode = [dataset.hf_dataset[i] for i in range(from_idx, to_idx)]
 
     env_conf = json.loads(dataset.meta.episodes[eps_idx]['environment_config'])
     env_conf["dr_state_dict"]["scene"]["uid"] = env_conf["dr_state_dict"]["scene"]["uid"].replace("102344280", "scene3") # FIXME

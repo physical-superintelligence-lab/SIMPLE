@@ -61,6 +61,13 @@ from simple.utils import env_flag, resolve_data_path
 # import importlib.resources as res
 # from importlib.resources import as_file
 
+# RTX subframes for a render that follows a gap: when the MuJoCo state advanced by more than one
+# control step since the last Isaac render (e.g. the eval's --isaac-render=on-query renders once per
+# policy query, ~24 control steps apart). More than 1 lets the RTX temporal history settle on the new
+# state, closer to every-step rendering but slower: 16 cut the closed-loop eval from ~25 to ~9 steps/s
+# (see docs/plan_eval_render_on_query.md). Renders without a gap always use 1.
+_SPARSE_RENDER_RT_SUBFRAMES = 1
+
 
 
 def euler_angles_to_quats(euler_angles: np.ndarray, degrees: bool = False, extrinsic: bool = True, device=None
@@ -222,6 +229,7 @@ class IsaacSimSimulator(Simulator):
     def reset(self) -> None:
         self._config_isaac()
         self.step_id = 0
+        self._last_render_time = None  # MuJoCo time of the last render
         if hasattr(self, "cameras"):
             for camera in self.cameras.values():
                 camera.initialize()
@@ -351,8 +359,6 @@ class IsaacSimSimulator(Simulator):
                 raise NotImplementedError("ShowHouse scene is not implemented yet.")
             
             #### START adding HSSD scenes ####
-            from pxr import UsdGeom, UsdPhysics
-
             # data_dir = resolve_data_path
             try:
                 data_dir = resolve_data_path(scene.data_dir, auto_download=True) #f"scenes/hssd/{scene_name}" 
@@ -417,6 +423,11 @@ class IsaacSimSimulator(Simulator):
             scene_prim.GetAttribute("xformOp:translate").Set(tuple(surface_center_position))
 
         scene_prim.GetAttribute("visibility").Set("visible")
+        # Scene furniture a task replaces with its own asset (e.g. the dog bed it drops into)
+        for rel_path in getattr(self.task, "hidden_scene_prims", []):
+            hidden = self.world.stage.GetPrimAtPath(f"{scene_prim_path}/{rel_path}")
+            assert hidden.IsValid(), f"hidden_scene_prims: {rel_path} not found in {scene_prim_path}"
+            UsdGeom.Imageable(hidden).MakeInvisible()
 
         table_box = self.task.layout.actors.get("table")
         if table_box is not None:
@@ -781,12 +792,18 @@ class IsaacSimSimulator(Simulator):
                     zero = np.zeros(num_dofs_articulated, dtype=np.float32)
                     self.articulated_objects[obj_name]._articulation_view.set_joint_velocities(zero)
 
+        rt_subframes = 1
         if mujoco_env is not None:
             self.sync_states(mujoco_env)
+            now = float(mujoco_env.mjData.time)
+            last = getattr(self, "_last_render_time", None)
+            if last is not None and now - last > 1.5 / self.render_hz:
+                rt_subframes = _SPARSE_RENDER_RT_SUBFRAMES
+            self._last_render_time = now
 
         self.world.step(render=False)
         self.update_visuals()
-        rep.orchestrator.step(rt_subframes=1, pause_timeline=False)
+        rep.orchestrator.step(rt_subframes=rt_subframes, pause_timeline=False)
         self._update_collision_spheres()
         self.step_id += 1
 

@@ -328,12 +328,30 @@ class G1WholebodyBendHandoverTeleop(Task):
                 return True
         return False
 
+    def check_target_com_in_container(self, *args, **kwargs) -> bool:
+        """
+        Check if the target's center of mass is within the xy extent of the container's collision geoms, so a
+        target resting against the outside of the container doesn't count.
+        """
+        mujoco_env = kwargs.get("mujoco_env", None)
+        m, d = mujoco_env.mjModel, mujoco_env.mjData
+        container = mujoco_env.mj_objects["container"].id
+        target = mujoco_env.mj_objects["target"].id
+
+        geoms = [g for g in range(m.ngeom) if m.geom_bodyid[g] == container and (m.geom_contype[g] or m.geom_conaffinity[g])]
+        corners = np.array([[x, y, z] for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)])
+        pts = np.concatenate([(corners * m.geom_aabb[g][3:] + m.geom_aabb[g][:3]) @ d.geom_xmat[g].reshape(3, 3).T
+                              + d.geom_xpos[g] for g in geoms])
+        xy = d.xipos[target][:2]
+        return bool(np.all(xy >= pts[:, :2].min(axis=0)) and np.all(xy <= pts[:, :2].max(axis=0)))
+
     def check_success(self,  info: dict[str, Any], *args, **kwargs) -> bool:
         reward =  self.compute_reward(info, *args, **kwargs)
         return reward >= self.metadata["success_criteria"]
     
     def compute_reward(self, info: dict[str, Any] ,*args, **kwargs) -> float:
-        is_object_in_container = self.check_object_in_container(*args, **kwargs)
+        is_object_in_container = (self.check_object_in_container(*args, **kwargs)
+                                  and self.check_target_com_in_container(*args, **kwargs))
 
         if is_object_in_container:
            self.reward += 0.015

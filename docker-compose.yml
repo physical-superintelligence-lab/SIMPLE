@@ -21,17 +21,77 @@ x-default-isaacsim-volumes: &default-isaacsim-volumes
   - type: bind
     source: ${DATA_DIR:-./data}
     target: /workspace/simple/data
+  # Run logs and eval outputs (e.g. scripts/launch_psi0_eval_pair.sh writes logs/<stamp>/).
+  - type: bind
+    source: ./logs
+    target: /workspace/simple/logs
   - type: bind
     source: /tmp/.X11-unix
     target: /tmp/.X11-unix
   - type: bind
     source: ${PWD}/.uv-cache
     target: /workspace/.uv-cache
+  # Isaac Sim runtime caches, kept on the host so containers (all run with --rm)
+  # don't recompile shaders / CUDA kernels on every start.  Shared by concurrent
+  # containers; Kit guards its caches with lock files.  Delete
+  # ${ISAAC_CACHE_DIR:-./.isaac-cache} to force a cold start.
+  #   kit:     shader caches (rtx/gl), DerivedDataCache, generated OmniGraph nodes
+  #            (Isaac Sim runs from the pip wheel, so Kit's cache lives in the venv;
+  #            the python3.10 path must follow the image's Python)
+  #   ov:      texture cache
+  #   compute: CUDA JIT cache
+  #   warp:    Warp kernel cache
+  - type: bind
+    source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/kit
+    target: /workspace/simple/.venv/lib/python3.10/site-packages/omni/cache
+    bind:
+      create_host_path: true
+  - type: bind
+    source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/ov
+    target: /root/.cache/ov
+    bind:
+      create_host_path: true
+  - type: bind
+    source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/computecache
+    target: /root/.nv/ComputeCache
+    bind:
+      create_host_path: true
+  - type: bind
+    source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/warp
+    target: /root/.cache/warp
+    bind:
+      create_host_path: true
+
+# Runtime config shared by every service.  Only isaac-sim builds the image; the
+# run services never pull or build, so a missing simple:${DATE} tag fails fast
+# with "No such image" instead of starting a ~1 h build.  Build with
+# `docker compose build isaac-sim`.
+x-isaac-sim: &isaac-sim
+  # user: ${MY_UID}:${MY_GID}
+  image: simple:${DATE:-latest}
+  pull_policy: never
+  network_mode: "host"
+  # privileged: true # conflicts with runtime: nvidia
+  runtime: nvidia
+  environment:
+    - DISPLAY=${DISPLAY:-:0}
+    - OMNI_KIT_ACCEPT_EULA=Y
+    - MUJOCO_GL=egl
+    - NVIDIA_VISIBLE_DEVICES=${GPUs:-0}  # which GPUs to expose
+    - NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+    # set it in .env
+    - HF_TOKEN=${HF_TOKEN:-}
+  volumes: *default-isaacsim-volumes
+  shm_size: "16gb"
+  mem_limit: "0"          # 0 = unlimited
+  memswap_limit: "0"
+
+  stdin_open: true # docker run -i
+  tty: true  # Keeps the container running interactively
 
 services:
-  isaac-sim: &isaac-sim
-    # user: ${MY_UID}:${MY_GID}
-    image: simple:${DATE:-latest}
+  isaac-sim:
+    <<: *isaac-sim
     build:
       context: .
       dockerfile: Dockerfile
@@ -45,28 +105,10 @@ services:
         - SIMPLE_BUILD_SONIC_WBC=${SIMPLE_BUILD_SONIC_WBC:-1}
         # 1 = bake the SONIC ONNX checkpoints in (default), 0 = fetch at runtime
         - SIMPLE_DOWNLOAD_SONIC_CKPT=${SIMPLE_DOWNLOAD_SONIC_CKPT:-1}
-    network_mode: "host"
     x-bake:
       platforms:
         - linux/amd64
         - linux/arm64
-    # privileged: true # conflicts with runtime: nvidia
-    runtime: nvidia
-    environment:
-      - DISPLAY=${DISPLAY:-:0}
-      - OMNI_KIT_ACCEPT_EULA=Y
-      - MUJOCO_GL=egl
-      - NVIDIA_VISIBLE_DEVICES=${GPUs:-0}  # which GPUs to expose
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
-      # set it in .env
-      - HF_TOKEN=${HF_TOKEN:-}
-    volumes: *default-isaacsim-volumes
-    shm_size: "16gb"
-    mem_limit: "0"          # 0 = unlimited
-    memswap_limit: "0"
-
-    stdin_open: true # docker run -i
-    tty: true  # Keeps the container running interactively
 
   sim:
     <<: *isaac-sim
@@ -99,6 +141,7 @@ services:
 
   gpu-test:
     image: simple:${DATE:-latest}
+    pull_policy: never
     command: /workspace/simple/.venv/bin/python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.device_count())"
     environment:
       - NVIDIA_VISIBLE_DEVICES=${GPUs:-0}  # which GPUs to expose

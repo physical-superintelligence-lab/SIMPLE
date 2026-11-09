@@ -189,7 +189,10 @@ def main(
     headless: Annotated[bool, typer.Option()] = False,
     max_episode_steps: Annotated[int, typer.Option()] = 30000,
     render_hz: Annotated[int, typer.Option()] = 50,
-    data_format: Annotated[str, typer.Option()] = "lerobot",
+    # lerobot: raw decoupled-WBC LeRobot export (43-D joint action, teleop commands, base/object poses);
+    # psi0: the psi0 training format (states/action 32/36-D, as SIMPLE-decoupled-wbc); both: the raw export
+    # in <save-dir>/<env>/level-<dr> and the psi0 dataset next to it in .../level-<dr>-psi0
+    data_format: Annotated[str, typer.Option()] = "both",
     save_dir: Annotated[str, typer.Option()] = "data/teleop_decoupled_wbc",
     num_episodes: Annotated[int, typer.Option()] = 100,
     shard_size: Annotated[int, typer.Option()] = 100,
@@ -198,6 +201,7 @@ def main(
     success_criteria: Annotated[float, typer.Option()] = 3,
 ):
     assert sim_mode in ["mujoco"], f"Invalid sim_mode {sim_mode} for teleop."
+    assert data_format in ("lerobot", "psi0", "both"), f"unsupported --data-format {data_format!r} (lerobot | psi0 | both)"
     sim_cnt = 0
 
     sonic_config = _load_sonic_config()
@@ -226,6 +230,7 @@ def main(
 
     # --- Recording setup ---
     exporter = None
+    psi0_writer = None
     rec_state = RecordingState.WAITING_FOR_LANDING
     initial_target_z = None
     episodes_saved = 0
@@ -279,17 +284,52 @@ def main(
         run_save_dir = (
             f"{os.path.abspath(save_dir)}/{sonic_env.spec.id}/level-{dr_level}" #_{timestamp}
         )
-        exporter = _init_exporter(
-            run_save_dir,
-            task.instruction, 
-            agent._dwbc_robot_model, 
-            obj_names,
-            robot.joint_names,
-            observation["head_stereo_left"].shape,
-        )
-        print(f"\n[Record] Exporter initialized, saving to {run_save_dir}")
+        if data_format in ("lerobot", "both"):
+            exporter = _init_exporter(
+                run_save_dir,
+                task.instruction,
+                agent._dwbc_robot_model,
+                obj_names,
+                robot.joint_names,
+                observation["head_stereo_left"].shape,
+            )
+            print(f"\n[Record] Exporter initialized, saving to {run_save_dir}")
+        if data_format in ("psi0", "both"):
+            from simple.datasets.psi0 import Psi0DatasetWriter
+            psi0_dir = run_save_dir if data_format == "psi0" else f"{run_save_dir}-psi0"
+            psi0_writer = Psi0DatasetWriter(psi0_dir, fps=render_hz, controller="decoupled_wbc")
+            print(f"[Record] psi0 dataset: {psi0_dir} ({psi0_writer.num_episodes} existing episodes)")
         print(f"[Record] Ego view shape: {observation['head_stereo_left'].shape}")
         print(f"[Record] Recording {len(obj_names)} objects: {obj_names}")
+
+    def _add_psi0_frame(frame, observation, action):
+        """The psi0 frame of the step _build_frame recorded: the pre-step observation and the command sent."""
+        rm = agent._dwbc_robot_model
+        navigate_cmd = np.asarray(action["navigate_cmd"], dtype=np.float64).reshape(-1)  # vx, vy, vyaw, target_yaw
+        psi0_writer.add_frame(
+            image=observation["head_stereo_left"],
+            qpos=dict(zip(robot.joint_names, np.asarray(observation["joint_qpos"], dtype=np.float64))),
+            targets=dict(zip(rm.joint_names, frame["action"])),  # waist = the IK waist the lower body received
+            base_height=float(np.asarray(action["base_height_command"]).reshape(-1)[0]),
+            vx=float(navigate_cmd[0]),
+            vy=float(navigate_cmd[1]),
+            vyaw_or_turning_flag=float(navigate_cmd[2]),
+            target_yaw=float(navigate_cmd[3]),
+        )
+
+    def _save_recorded_episode():
+        if exporter is not None:
+            ep_idx = exporter.episode_buffer["episode_index"]
+            exporter.save_episode()
+            _save_episode_env_config(exporter, task, ep_idx)
+        if psi0_writer is not None:
+            psi0_writer.save_episode(task.instruction, task.state_dict())
+
+    def _discard_recorded_episode():
+        if exporter is not None:
+            exporter.skip_and_start_new_episode()
+        if psi0_writer is not None:
+            psi0_writer.discard_episode()
 
     try:
         while True:
@@ -315,9 +355,9 @@ def main(
 
             if agent.reset_requested:
                 # Discard any in-progress recording
-                if exporter is not None and rec_state == RecordingState.RECORDING:
+                if record and rec_state == RecordingState.RECORDING:
                     print("[Record] Reset requested, discarding in-progress episode")
-                    exporter.skip_and_start_new_episode()
+                    _discard_recorded_episode()
                     # Close progress bar for discarded episode
                     if step_pbar is not None:
                         step_pbar.close()
@@ -356,7 +396,7 @@ def main(
 
             with telemetry.timer("recode_data"):
                 # --- Recording logic (runs at 50Hz) ---
-                if exporter is not None:
+                if record:
                     if rec_state == RecordingState.WAITING_FOR_LANDING:
                         # Check if robot has landed (elastic band done) AND
                         # teleop policy is active (operator has re-aligned and
@@ -368,6 +408,8 @@ def main(
                         teleop_active = agent._teleop_policy.is_active
                         if elastic_done and teleop_active and robot.stabilized and agent._cached_target_q is not None:
                             rec_state = RecordingState.RECORDING
+                            if psi0_writer is not None:
+                                psi0_writer.start_episode()
                             initial_target_z = None
                             sim_cnt = 0  # Reset sim counter for new episode
                             # Create progress bar for this recording episode
@@ -377,7 +419,10 @@ def main(
 
                     if rec_state == RecordingState.RECORDING:
                         frame = _build_frame(agent, obj_names, **data_frame)
-                        exporter.add_frame(frame)
+                        if exporter is not None:
+                            exporter.add_frame(frame)
+                        if psi0_writer is not None:
+                            _add_psi0_frame(frame, data_frame["observation"], data_frame["action"])
                         if step_pbar is not None:
                             step_pbar.update(1)
 
@@ -400,9 +445,7 @@ def main(
                             step_pbar.close()
                             step_pbar = None
 
-                        ep_idx = exporter.episode_buffer["episode_index"]
-                        exporter.save_episode()
-                        _save_episode_env_config(exporter, task, ep_idx)
+                        _save_recorded_episode()
                         episodes_saved += 1
                         agent.episodes_saved = episodes_saved
                         print(
@@ -437,12 +480,10 @@ def main(
         # Close progress bar if active
         if step_pbar is not None:
             step_pbar.close()
-        if exporter is not None and rec_state == RecordingState.RECORDING:
+        if record and rec_state == RecordingState.RECORDING:
             print("[Record] Saving in-progress episode before exit...")
             try:
-                ep_idx = exporter.episode_buffer["episode_index"]
-                exporter.save_episode()
-                _save_episode_env_config(exporter, task, ep_idx)
+                _save_recorded_episode()
                 episodes_saved += 1
                 agent.episodes_saved = episodes_saved
                 print(f"[Record] Episode {episodes_saved} saved (interrupted)")
@@ -454,7 +495,10 @@ def main(
             step_pbar.close()
         if exporter is not None:
             exporter.stop_video_writers()
-            print(f"[Record] Done. {episodes_saved} episodes saved to {run_save_dir}")
+        if psi0_writer is not None:
+            psi0_writer.close()  # drops an unsaved in-progress episode
+        if record:
+            print(f"[Record] Done. {episodes_saved} episodes saved to {run_save_dir}" + ("-psi0" if data_format == "both" else ""))
         env.close()
         agent.close()
 

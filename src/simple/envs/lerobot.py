@@ -41,6 +41,44 @@ from simple.robots.protocols import DualArm, Wholebody
 GRIPPER_OPEN = 0
 GRIPPER_CLOSE = 1
 
+
+class _LeRobotDataset(LeRobotDataset):
+    """LeRobotDataset with shape-(1,) features saved as scalars, as in create_gr00t_exporter: LeRobot stores
+    them as scalar hf ``Value`` columns but buffers (1,) arrays, and numpy>=2.5 refuses ``float()`` on those.
+
+    Also lets the caller pick the video codec (``vcodec``): LeRobot's encode_episode_videos always encodes
+    with its default (libsvtav1, AV1), which e.g. VS Code cannot play; "h264" or "hevc" are the other
+    choices encode_video_frames accepts."""
+
+    vcodec: str = "libsvtav1"  # LeRobot's default
+
+    def _save_episode_table(self, episode_buffer: dict, episode_index: int) -> None:
+        episode_buffer = dict(episode_buffer)
+        for key, ft in self.features.items():
+            if ft["dtype"] not in ("image", "video") and tuple(ft["shape"]) == (1,):
+                episode_buffer[key] = episode_buffer[key].reshape(-1)
+        super()._save_episode_table(episode_buffer, episode_index)
+
+    def encode_episode_videos(self, episode_index: int) -> None:
+        # Same as LeRobotDataset.encode_episode_videos (lerobot 0.3.3), with vcodec passed through.
+        from lerobot.datasets.utils import write_info
+        from lerobot.datasets.video_utils import encode_video_frames
+
+        for key in self.meta.video_keys:
+            video_path = self.root / self.meta.get_video_file_path(episode_index, key)
+            if video_path.is_file():  # already encoded, e.g. when resuming
+                continue
+            img_dir = self._get_image_file_path(
+                episode_index=episode_index, image_key=key, frame_index=0
+            ).parent
+            encode_video_frames(img_dir, video_path, self.fps, vcodec=self.vcodec, overwrite=True)
+            shutil.rmtree(img_dir)
+
+        # video info (incl. the codec) is read from episode 0's files
+        if len(self.meta.video_keys) > 0 and episode_index == 0:
+            self.meta.update_video_info()
+            write_info(self.meta.info, self.meta.root)
+
 from gymnasium import spaces
 
 def _from_gym_action_space(space: spaces.Space) -> dict:
@@ -80,6 +118,9 @@ class LerobotRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
         agent: Optional[Agent] = None,
         debug: bool = False,
         dr_level: int | None = None,
+        auto_save: bool = True, # False: the caller decides per episode with finish_episode()
+        exclude_cameras: tuple[str, ...] = (), # camera observation keys not recorded as videos (e.g. "front_stereo_left")
+        vcodec: str = "libsvtav1", # video codec: libsvtav1 (AV1, LeRobot's default), h264 or hevc
     ):
         gym.utils.RecordConstructorArgs.__init__(
             self, root_dir=root_dir, shard_size=shard_size
@@ -117,8 +158,11 @@ class LerobotRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
             "action": _from_gym_action_space(self.task.action_space)
         }
 
+        self.exclude_cameras = set(exclude_cameras)
         for key, space in self.task.observation_space.items():
             if len(space.shape) == 3 and space.shape[2] == 3: # image
+                if key in self.exclude_cameras:
+                    continue
                 features_dict[f"observation.rgb_{key}"] = {
                     "dtype": "video",
                     "shape": space.shape,
@@ -163,23 +207,26 @@ class LerobotRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
                 "names": ["amo_policy_target_yaw"],
             }
 
-        self.dataset = LeRobotDataset.create(
+        self.dataset = _LeRobotDataset.create(
             repo_id=task_name,
             root=dataset_root_dir,
             fps=self.task.metadata["render_hz"],
-            features=features_dict  
+            features=features_dict
         )
+        self.dataset.vcodec = vcodec
 
         self.env_cfgs = []
         self.agent = agent
         self.root_dir = dataset_root_dir
         self.episode_index = 0
+        self.auto_save = auto_save
 
     def reset(self, **kwargs):
         obs, info = super().reset(**kwargs)
         self.dataset.clear_episode_buffer()
-        self.agent.reset()
-        self.env_conf = self.task.state_dict() 
+        if self.agent is not None:
+            self.agent.reset()
+        self.env_conf = self.task.state_dict()
         # self.env_cfgs.append(env_conf)
         return obs, info
         
@@ -201,7 +248,8 @@ class LerobotRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
         frame = {}
         for key, value in obs.items():
             if value.ndim == 3:  # image HWC
-                frame[f"observation.rgb_{key}"] = value
+                if key not in self.exclude_cameras:
+                    frame[f"observation.rgb_{key}"] = value
             elif value.ndim == 1:
                 frame[f"observation.{key}"] = value
 
@@ -268,24 +316,28 @@ class LerobotRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
 
         self.dataset.add_frame(frame, task=self.unwrapped.task.instruction)
 
-        if terminated or truncated:
-            if float(reward) > 0.9:
-                # self.env_cfgs.append(self.env_conf)
-                self.dataset.save_episode()
-                self.write_env_config(self.env_conf, self.episode_index)
-                self.episode_index += 1
-                self.dataset.clear_episode_buffer()
-            else:
-                self.dataset.clear_episode_buffer()
-                for cam_key in self.dataset.meta.camera_keys:
-                    img_dir = self.dataset._get_image_file_path(
-                        episode_index=self.dataset.episode_buffer["episode_index"], image_key=cam_key, frame_index=0
-                    ).parent
-                    if img_dir.is_dir():
-                        shutil.rmtree(img_dir)
-                self.env_cfgs.pop() if len(self.env_cfgs) > 0 else None
+        if self.auto_save and (terminated or truncated):
+            self.finish_episode(float(reward) > 0.9)
 
         return obs, reward, terminated, truncated, info
+
+    def finish_episode(self, success: bool):
+        """Save the buffered episode (with its environment_config) on success, else discard it."""
+        if success:
+            # self.env_cfgs.append(self.env_conf)
+            self.dataset.save_episode()
+            self.write_env_config(self.env_conf, self.episode_index)
+            self.episode_index += 1
+            self.dataset.clear_episode_buffer()
+        else:
+            self.dataset.clear_episode_buffer()
+            for cam_key in self.dataset.meta.camera_keys:
+                img_dir = self.dataset._get_image_file_path(
+                    episode_index=self.dataset.episode_buffer["episode_index"], image_key=cam_key, frame_index=0
+                ).parent
+                if img_dir.is_dir():
+                    shutil.rmtree(img_dir)
+            self.env_cfgs.pop() if len(self.env_cfgs) > 0 else None
 
     def close(self):      
         super().close()

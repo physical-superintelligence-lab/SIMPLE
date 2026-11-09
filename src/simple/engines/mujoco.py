@@ -353,7 +353,8 @@ class MujocoSimulator(Simulator):
                 # stiff contact and no oscillation
                 solref = [0.005, 2]
             )
-        mj_obj.add_freejoint(name=f'{label}_joint')
+        if not getattr(actor.asset, "static", False):  # furniture such as the dog bed stays fixed
+            mj_obj.add_freejoint(name=f'{label}_joint')
 
     def _build_primitive_object(self, mjSpec, mjWorld, actor: ObjectActor):
         """Build a movable box geom for a primitive target (e.g. a cube).

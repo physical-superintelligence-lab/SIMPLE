@@ -63,18 +63,21 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
     hand_names = LEFT_HAND_JOINTS + RIGHT_HAND_JOINTS
     robot_eef_offset: float = 0
     #TODO May have problem here,not all joint are pd control
+    # Spawn joint pose = the AMO policy's standing stance after the 60-step stand warm-up
+    # (StandStabilizationWrapper) from the old all-zero init, measured once in MuJoCo; arms stay at 0.
+    # Re-measure if the policy or the warm-up changes.
     controller_cfg: ControllerCfg = WholeBodyEEFControllerCfg(
         left_leg=PDJointPosControllerCfg(
             joint_names=LEFT_LEG_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            init_qpos=[-0.2602, -0.0066, -0.0389, 0.4464, -0.1595, -0.0099],
         ),
         right_leg=PDJointPosControllerCfg(
             joint_names=RIGHT_LEFT_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            init_qpos=[-0.2475, 0.0023, 0.0127, 0.4350, -0.1613, 0.0145],
         ),
         waist =PDJointPosControllerCfg(
             joint_names=WAIST_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0],
+            init_qpos=[0.0103, -0.0159, 0.0094],
         ),
         left_arm=PDJointPosControllerCfg(
             joint_names=LEFT_ARM_JOINTS,
@@ -101,6 +104,12 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
     wrist_cam_link: str ="right_hand_camera_base_link"
     z_offset= 0.785
 
+    # The settled pelvis is tilted (roll, pitch in degrees): the spawn applies that tilt on top of the
+    # spawn yaw so the feet start flat.
+    stance_pelvis_roll_pitch_deg: Tuple[float, float] = (-0.279, -1.638)
+    # the AMO policy starts as if it had been holding that stance (AMO_Policy.warm_start)
+    amo_warm_start: bool = True
+
     LEFT_ARM_EE_LINK: str = "left_hand_palm_link"
     RIGHT_ARM_EE_LINK: str = "right_hand_palm_link"
 
@@ -116,6 +125,7 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
         super().__init__(self.uid, self.dof)
         self.joint_names = self.joints_names
         self.amo_policy = AMO_Policy(robot_type="g1_dex3_wholebody", device="cuda",joint_names=self.joint_names)
+        self.amo_policy.warm_start = self.amo_warm_start
 
         self.stiffness = np.array([
                 150, 150, 150, 300, 80, 20,
@@ -123,8 +133,10 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
                 400, 400, 400,
                 80, 80, 40, 60,40,40,40,
                 80, 80, 40, 60,40,40,40,
-                80, 40, 40, 60, 40, 40, 40,
-                80, 40, 40, 60, 40, 40, 40, 
+                # Dex3 hands (thumb 0-2, index 0-1, middle 0-1): kp as the decoupled WBC (g1_sonic) hand PD,
+                # thumb 2x the fingers (index + middle work together against the thumb)
+                5, 5, 5, 2.5, 2.5, 2.5, 2.5,
+                5, 5, 5, 2.5, 2.5, 2.5, 2.5,
             ])
         self.damping = np.array([
                 2, 2, 2, 4, 2, 1,
@@ -141,8 +153,11 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
                 88, 50, 50,
                 25, 25, 25, 25,25,25,25,
                 25, 25, 25, 25,25,25,25,
-                5, 5, 3, 5, 3, 5, 3,
-                5, 5, 3, 5, 3, 5, 3,
+                # Dex3 hands (thumb 0-2, middle 0-1, index 0-1): Unitree's limits, as in g1_sonic's
+                # g1_29dof_with_hand.xml; 5 / 3 made a closing hand swat light objects off the table
+                # index/middle capped at 0.7 (as g1_sonic), so at the caps the thumb (1.4) matches index + middle
+                2.45, 1.4, 1.4, 0.7, 0.7, 0.7, 0.7,
+                2.45, 1.4, 1.4, 0.7, 0.7, 0.7, 0.7,
             ])
         self.count = 0
         self.sim_decimation = 1
@@ -161,6 +176,7 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
     def reset(self):
         self.joint_names = self.joints_names
         self.amo_policy = AMO_Policy(robot_type="g1_dex3_wholebody", device="cuda",joint_names=self.joint_names)
+        self.amo_policy.warm_start = self.amo_warm_start
         self.count = 0
         self.sim_decimation = 1
         self.command = None
@@ -222,13 +238,32 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
         self.mjdata = mjData
         self.mjdata.qvel = 0
         self.mjmodel = mjModel
+        self._place_feet_on_ground()
 
         if not self.joint_limits:
             for j,v in self.joints.items():
                 limits = mjModel.jnt_range[v.id]
                 self.joint_limits[j] = (limits[0], limits[1])
         return self.joints, self.actuators
-    
+
+    def _place_feet_on_ground(self) -> None:
+        """Tilt the floating base to the settled stance roll/pitch (keeping the spawn yaw), then lower
+        (or raise) it so the lowest sole collision sphere touches the surface below it; x and y stay
+        at the spawn pose."""
+        m, d = self.mjmodel, self.mjdata
+        yaw = t3d.euler.quat2euler(d.qpos[3:7])[2]
+        roll, pitch = np.radians(self.stance_pelvis_roll_pitch_deg)
+        d.qpos[3:7] = t3d.euler.euler2quat(roll, pitch, yaw)
+        mujoco.mj_kinematics(m, d)
+        feet = {m.body(n).id for n in ("left_ankle_roll_link", "right_ankle_roll_link")}
+        soles = [g for g in range(m.ngeom) if m.geom_bodyid[g] in feet and m.geom_type[g] == mujoco.mjtGeom.mjGEOM_SPHERE]
+        lowest = min(soles, key=lambda g: d.geom_xpos[g][2] - m.geom_size[g][0])
+        geomid = np.zeros(1, dtype=np.int32)
+        dist = mujoco.mj_ray(m, d, d.geom_xpos[lowest], np.array([0.0, 0.0, -1.0]), None, 1, m.geom_bodyid[lowest], geomid)
+        assert dist >= 0, "no ground below the robot's feet"
+        d.qpos[2] -= dist - m.geom_size[lowest][0]
+        d.qvel[:6] = 0
+        mujoco.mj_kinematics(m, d)
 
     def get_actuators_action(self) -> dict[str, float]:
         """ Get the current actuator actions of the robot. """
@@ -359,8 +394,10 @@ class G1Wholebody(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
             self.command = action_cmd.parameters["action_command"]
             self.target_qpos = action_cmd.parameters["target_qpos"]  # hand+arm
             self.waist_qpos = action_cmd.parameters["waist_qpos"] # waist 3 dof
-            self.target_waist_qpos = [self.waist_qpos["waist_yaw_joint"],self.waist_qpos["waist_roll_joint"],self.waist_qpos["waist_pitch_joint"]]     
-            self._debug_ctrl_err[self.count] = {} 
+            self.target_waist_qpos = [self.waist_qpos["waist_yaw_joint"],self.waist_qpos["waist_roll_joint"],self.waist_qpos["waist_pitch_joint"]]
+            # hand targets for LerobotRecorder (hand_target_qpos), as move_qpos does
+            self.target_hand_qpos = {jname: self.target_qpos[jname] for jname in self.hand_names if jname in self.target_qpos}
+            self._debug_ctrl_err[self.count] = {}
             # print("Line 371", self.count in self._debug_ctrl_err)
             # exit(0)
             for jname ,ctrl in action_cmd.parameters["target_qpos"].items():

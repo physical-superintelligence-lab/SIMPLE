@@ -52,6 +52,10 @@ class SonicLocoManipEnv(BaseDualSim):
 
         self.sim_thread = None
         self.viewer = None
+        # False: step MuJoCo only, and fill the observation from MuJoCo (camera images and joint_qpos)
+        # instead of syncing and rendering Isaac. Set it per step when only some observations need
+        # Isaac images, e.g. a policy that reads an image once per action chunk.
+        self.render_isaac = True
         self.timing_event_sink = None
         self.timing_context = None
 
@@ -91,7 +95,7 @@ class SonicLocoManipEnv(BaseDualSim):
 
     def _get_obs(self):
         qpos = np.asarray(list(self.mujoco.get_robot_qpos().values()), dtype=np.float32)
-        if self.isaac:
+        if self.isaac and self.render_isaac:
             isaacsim_joint_indices = []
             for jname, _ in self.mujoco.get_robot_qpos().items():
                 isaac_jname = self.task.robot.jname_mujoco_to_isaac(jname)
@@ -184,7 +188,7 @@ class SonicLocoManipEnv(BaseDualSim):
             # controller's lowstate heartbeat.
             if getattr(self, "substep_callback", None) is not None:
                 self.substep_callback()
-            if self.isaac and (getattr(self, "sync_isaac_every_substep", True) or i == self.control_decimal - 1):
+            if self.isaac and self.render_isaac and (getattr(self, "sync_isaac_every_substep", True) or i == self.control_decimal - 1):
                 self._emit_timing("isaac_step_begin")
                 self.isaac.step(self.mujoco)
                 self._emit_timing("isaac_step_end")
@@ -224,11 +228,18 @@ class SonicLocoManipEnv(BaseDualSim):
     def render(self):
         return self._render_frame()
 
+    def refresh_obs(self):
+        """Sync Isaac to the current MuJoCo state and return a fresh observation, e.g. after steps
+        taken with render_isaac off."""
+        if self.isaac and self.render_isaac:
+            self.isaac.step(self.mujoco)
+        return self._get_obs()
+
     def _render_frame(self):
         self._emit_timing("render_readback_begin")
         frame_mujoco = self.mujoco.render()
 
-        if self.isaac:
+        if self.isaac and self.render_isaac:
             frame_isaac = self.isaac.render()
             if "debug" in self.task.metadata and self.task.metadata["debug"]:
                 # tile frame_mujoco and frame isaac together

@@ -66,6 +66,10 @@ def quatToEuler(quat):
 
 
 class AMO_Policy:
+    # Start from the spawn pose instead of zero history, for a robot that spawns in its settled stance
+    # (G1Wholebody turns it on); False is the start from the all-zero pose.
+    warm_start: bool = False
+
     def __init__(self, robot_type="g1", device="cuda", joint_names:list[str] | None = None):
         self.robot_type = robot_type
         self.device = device
@@ -267,8 +271,14 @@ class AMO_Policy:
     def get_observation(self, joints, actuators, mjdata, commands):
         self.dof_pos = np.array([joints[j].qpos.item() for j in self.action_joint_names], dtype=np.float32)
         self.dof_vel = np.array([joints[j].qvel.item() for j in self.action_joint_names], dtype=np.float32)
-        if self._initial_quat is None:
-            self._initial_quat = mjdata.sensor('orientation').data.astype(np.float32)#get initial quat
+        first_step = self._initial_quat is None
+        if first_step:
+            # heading reference: the initial yaw only, so a spawn tilted to the settled stance reads as tilted
+            init_yaw = t3d.euler.quat2euler(mjdata.sensor('orientation').data)[2]
+            self._initial_quat = np.asarray(t3d.euler.euler2quat(0.0, 0.0, init_yaw), dtype=np.float32)
+            # warm start: as if the policy had been holding the spawn pose (the robot spawns in its stance)
+            if self.warm_start:
+                self.last_action_for_policy = (self.dof_pos - self.default_dof_pos_for_policy) / self.action_scale
         #get quat relative to initial quat
         self.quat = t3d.quaternions.qmult(t3d.quaternions.qinverse(self._initial_quat), mjdata.sensor('orientation').data.astype(np.float32))
         self.ang_vel = mjdata.sensor('angular-velocity').data.astype(np.float32)
@@ -352,6 +362,11 @@ class AMO_Policy:
         #for lerobot 
         self.obs_command = obs_demo.copy()[self._n_demo_dof:]
 
+        if first_step and self.warm_start:
+            for _ in range(self.history_len):
+                self.proprio_history_buf.append(self.obs_prop)
+            for _ in range(self.extra_history_len):
+                self.extra_history_buf.append(self.obs_prop)
         self.proprio_history_buf.append(self.obs_prop)
         self.extra_history_buf.append(self.obs_prop)
         self._last_target_yaw = self.target_yaw
@@ -385,8 +400,14 @@ class AMO_Policy:
     def get_eval_observation(self, joints, actuators, mjdata, commands):
         self.dof_pos = np.array([joints[j].qpos.item() for j in self.action_joint_names], dtype=np.float32)
         self.dof_vel = np.array([joints[j].qvel.item() for j in self.action_joint_names], dtype=np.float32)
-        if self._initial_quat is None:
-            self._initial_quat = mjdata.sensor('orientation').data.astype(np.float32)#get initial quat
+        first_step = self._initial_quat is None
+        if first_step:
+            # heading reference: the initial yaw only, so a spawn tilted to the settled stance reads as tilted
+            init_yaw = t3d.euler.quat2euler(mjdata.sensor('orientation').data)[2]
+            self._initial_quat = np.asarray(t3d.euler.euler2quat(0.0, 0.0, init_yaw), dtype=np.float32)
+            # warm start: as if the policy had been holding the spawn pose (the robot spawns in its stance)
+            if self.warm_start:
+                self.last_action_for_policy = (self.dof_pos - self.default_dof_pos_for_policy) / self.action_scale
         #get quat relative to initial quat
         self.quat = t3d.quaternions.qmult(t3d.quaternions.qinverse(self._initial_quat), mjdata.sensor('orientation').data.astype(np.float32))
         self.ang_vel = mjdata.sensor('angular-velocity').data.astype(np.float32)
@@ -397,6 +418,7 @@ class AMO_Policy:
 
         # TODO add command control input
         self.target_yaw = commands[1]
+        self.obs_target_yaw = np.array([self.target_yaw], dtype=np.float32)
         # if self._init_yaw is None:
         #     self._init_yaw = rpy[2]
         
@@ -463,6 +485,11 @@ class AMO_Policy:
         #for lerobot 
         self.obs_command = obs_demo.copy()[8:]
 
+        if first_step and self.warm_start:
+            for _ in range(self.history_len):
+                self.proprio_history_buf.append(self.obs_prop)
+            for _ in range(self.extra_history_len):
+                self.extra_history_buf.append(self.obs_prop)
         self.proprio_history_buf.append(self.obs_prop)
         self.extra_history_buf.append(self.obs_prop)
         self._last_target_yaw = self.target_yaw

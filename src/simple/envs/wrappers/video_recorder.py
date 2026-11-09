@@ -16,8 +16,9 @@ class VideoRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
         video_folder:str = "video",
         framerate:int = 10,
         # camera: List[str] = ["mujoco", "front_left", "wrist"],
-        name_prefix:str|None = None, 
+        name_prefix:str|None = None,
         write_png:bool = False,
+        video_keys: list[str] | None = None, # image observations to record; None records all
     ):
         gym.utils.RecordConstructorArgs.__init__(
             self, video_folder=video_folder, name_prefix=name_prefix, write_png=write_png 
@@ -38,6 +39,7 @@ class VideoRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
 
         self.name_prefix = name_prefix
         self.write_png = write_png
+        self.video_keys = video_keys
         self.framerate = framerate
         self.video_writers = {}
         self._is_released = False
@@ -73,6 +75,8 @@ class VideoRecorder(gym.Wrapper, gym.utils.RecordConstructorArgs):
                 pass
         self.video_writers = {}
         for key, subspace in self.unwrapped.observation_space.items():
+            if self.video_keys is not None and key not in self.video_keys:
+                continue
             if len(subspace.shape) == 3 and subspace.shape[-1] == 3: # only record image observations
                 self.video_writers[key] = VideoWriter(
                     f"{self.work_dir}/{self.name_prefix}/{key}.mp4",

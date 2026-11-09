@@ -370,20 +370,42 @@ class G1WholebodyBendPickAndPlaceOnSofaMP(Task):
                 return True
         return False
 
-       
+    def check_hand_object_contact(self, *args, **kwargs) -> bool:
+        """True if any hand link touches the target, i.e. it has not been dropped yet."""
+        mujoco_env = kwargs.get("mujoco_env", None)
+        if mujoco_env is None:
+            return False
+
+        target_name = str(self.target.asset.label)
+
+        mj_physics_data = mujoco_env.mjData
+        mj_physics_model = mujoco_env.mjModel
+
+        for i_contact in range(mj_physics_data.ncon):
+            contact = mj_physics_data.contact[i_contact]
+            g1 = mj_physics_model.geom(contact.geom1)
+            g2 = mj_physics_model.geom(contact.geom2)
+            body1 = mj_physics_model.body(g1.bodyid).name
+            body2 = mj_physics_model.body(g2.bodyid).name
+
+            if (target_name in body1 and "_hand_" in body2) or \
+               (target_name in body2 and "_hand_" in body1):
+                return True
         return False
 
     def check_success(self,  info: dict[str, Any], *args, **kwargs) -> bool:
-        
+
         return self.reward >= self.success_criteria
-    
+
     def compute_reward(self, info: dict[str, Any], *args, **kwargs) -> float:
 
-        
+
         object_on_sofa = self.check_object_on_table2(info=info, *args, **kwargs)
-        if object_on_sofa :
-            # Successfully placed object on table2
-            self.reward += 0.1
+        object_dropped = not self.check_hand_object_contact(*args, **kwargs)
+        if object_on_sofa and object_dropped:
+            # Dropped onto table2 (the sofa) and resting there, no longer held: 9 consecutive steps reach 0.9
+            # round so N steps sum exactly to N * step (raw float additions drift below the threshold)
+            self.reward = round(self.reward + 0.1, 6)
         else:
             self.reward = 0.0
         return self.reward
