@@ -5,8 +5,8 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2606.08278-df2a2a.svg)](https://arxiv.org/abs/2606.08278)
 [![Documentation](https://img.shields.io/badge/Documentation-a)](https://psi-lab.ai/SIMPLE/docs/)
-[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE)
-[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc)
+[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/collections/USC-PSI-Lab/simple)
+[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/collections/USC-PSI-Lab/simple)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
@@ -23,11 +23,21 @@ Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://
 
 
 ## 📢 News & Updates
-+ [x] [2026-11-02] We release the [Psi0 multi-task checkpoint](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE) for the dataset `SIMPLE-decoupled-wbc`.
-+ [x] [2026-11-01] We merged and released the 17 decoupled wbc dataset [SIMPLE-decoupled-wbc](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc) and updated the eval episodes [SIMPLE-decouple-wbc-eval](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-eval). 
++ [x] [2026-11-09] Stability and evaluation fixes for decoupled-WBC tasks and Psi0 eval tooling (PR #33). See [Release Notes](#-release-notes).
++ [x] [2026-11-02] We release the [Psi0 multi-task checkpoint](https://huggingface.co/collections/USC-PSI-Lab/simple) for the dataset `SIMPLE-decoupled-wbc`.
++ [x] [2026-11-01] We released the 17 decoupled wbc tasks as two separate datasets, [SIMPLE-decoupled-wbc-Teleop](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-Teleop) and [SIMPLE-decoupled-wbc-MP](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-MP), and updated the eval episodes [SIMPLE-decouple-wbc-eval](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-eval).
 + [x] [2026-08-30] [Integrate SONIC whole-body controller](#quick-start-for-sonic-wholebody-vla).
 + [x] [2026-07-14] We released support for World Action Models: [Cosmos3](https://github.com/songlin/cosmos-framework/blob/main/docs/action_policy_simple_posttrain.md) and [DreamZero](https://github.com/physical-superintelligence-lab/Psi0/blob/main/baselines/dreamzero/README.md). 
 
+
+## 📝 Release Notes
+**2026-11-09** (PR #33)
+- Fixed AMO/GR00T decoupled controller to initialize more stably.
+- Fixed MP tasks' contact parameters for stable grasping and no slipping.
+- Fixed Docker Compose to enable Isaac Sim caching between launches.
+- Added support for fast VLA evaluation by skipping unneeded renderings.
+- Fixed some episodes' eval spawning positions to avoid self-collision.
+- Fixed some tasks' success checker to avoid false positives.
 
 ## Table of Contents
 - [What is SIMPLE?](#what～is～SIMPLE)
