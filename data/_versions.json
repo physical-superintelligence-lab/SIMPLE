@@ -1,0 +1,4 @@
+{
+  "_comment": "Bump a zip's version after re-uploading it to the HF dataset USC-PSI-Lab/SIMPLE; local copies extracted from an older version are re-downloaded on next use. Zips not listed are version 1.",
+  "robots_g1.zip": 2
+}

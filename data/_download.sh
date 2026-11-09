@@ -21,7 +21,8 @@
 #   materials  vMaterials_2.zip                dr/material.py
 #
 # Everything is idempotent: an entry whose extracted directory is already present is
-# skipped, so the script can be re-run to top up a partial data/ tree.
+# skipped, so the script can be re-run to top up a partial data/ tree. An entry whose
+# version in data/_versions.json is newer than its local stamp is fetched again.
 
 set -uo pipefail
 
@@ -234,6 +235,20 @@ build_plan() {  # -> lines "<zip>|<dir>" for the selected groups
 # Plan
 # ============================================================================
 
+# A zip re-uploaded to HF gets its version bumped in data/_versions.json; an
+# extracted copy whose data/.<zip>.version stamp is older counts as missing.
+VERSIONS_FILE="$DATA_DIR/_versions.json"
+expected_version() {
+    local v
+    v=$(grep -oE "\"$1\"[[:space:]]*:[[:space:]]*[0-9]+" "$VERSIONS_FILE" 2>/dev/null | grep -oE '[0-9]+$' | head -n1)
+    echo "${v:-1}"
+}
+local_version() {
+    local v
+    v=$(tr -dc '0-9' 2>/dev/null < "$DATA_DIR/.$1.version")
+    echo "${v:-1}"
+}
+
 PLAN=()
 while IFS= read -r line; do
     [[ -n "$line" ]] && PLAN+=("$line")
@@ -250,7 +265,8 @@ SKIPPED=0
 for entry in "${PLAN[@]}"; do
     zip_name="${entry%%|*}"
     target="${entry##*|}"
-    if ! $FORCE && [[ -d "$DATA_DIR/$target" ]]; then
+    if ! $FORCE && [[ -d "$DATA_DIR/$target" ]] \
+        && (( $(local_version "$zip_name") >= $(expected_version "$zip_name") )); then
         SKIPPED=$((SKIPPED + 1))
         continue
     fi
@@ -389,6 +405,7 @@ for i in "${!TODO_ZIPS[@]}"; do
 
     if unzip -q -o "$zip_path" -d "$DATA_DIR"; then
         EXTRACTED=$((EXTRACTED + 1))
+        expected_version "$zip_name" > "$DATA_DIR/.$zip_name.version"
         $KEEP_ZIPS || rm -f "$zip_path"
         if [[ ! -d "$DATA_DIR/$target" ]]; then
             echo "  ⚠️  $zip_name extracted but $target is missing"

@@ -103,6 +103,36 @@ def _parse_zip_file_from_rel_path(rel_path: str) -> str:
     raise FileNotFoundError(f"{rel_path}")
 
 
+def _expected_zip_version(data_dir, zip_file: str) -> int:
+    """Version of ``zip_file`` on HF, from ``data/_versions.json`` (unlisted zips are 1)."""
+    try:
+        with open(os.path.join(data_dir, "_versions.json")) as f:
+            return int(json.load(f).get(zip_file, 1))
+    except (OSError, ValueError):
+        return 1
+
+
+def _local_zip_version(data_dir, zip_file: str) -> int:
+    """Version stamped at extraction time; copies extracted before stamping existed are 1."""
+    try:
+        with open(os.path.join(data_dir, f".{zip_file}.version")) as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return 1
+
+
+def _zip_is_stale(data_dir, zip_file: str) -> bool:
+    return _local_zip_version(data_dir, zip_file) < _expected_zip_version(data_dir, zip_file)
+
+
+def _write_zip_version(data_dir, zip_file: str) -> None:
+    try:
+        with open(os.path.join(data_dir, f".{zip_file}.version"), "w") as f:
+            f.write(f"{_expected_zip_version(data_dir, zip_file)}\n")
+    except OSError as e:
+        print(f"Warning: could not record version for {zip_file}: {e}")
+
+
 @contextmanager
 def _zip_lock(data_dir, zip_file: str, exclusive: bool):
     """flock on ``data/.<zip_file>.lock``, serializing download+extract of one asset zip.
@@ -129,6 +159,7 @@ def resolve_data_path(
     with as_file(data_dir / rel_path) as res_path:
         # assert res_path.exists(), f"Data not found: {res_path}"
         if res_path.exists():
+            stale = False
             # The path can appear while another process is still extracting its zip; if that
             # zip has a lock file, wait (shared lock) until the extraction has finished.
             if auto_download and not create_if_not_exist:
@@ -139,7 +170,9 @@ def resolve_data_path(
                 if zip_file and os.path.exists(os.path.join(data_dir, f".{zip_file}.lock")):
                     with _zip_lock(data_dir, zip_file, exclusive=False):
                         pass
-            return str(res_path)
+                stale = zip_file is not None and _zip_is_stale(data_dir, zip_file)
+            if not stale:
+                return str(res_path)
 
         if not auto_download:
             raise FileNotFoundError(res_path)
@@ -152,8 +185,10 @@ def resolve_data_path(
         zip_path = os.path.join(data_dir, zip_file)
         with _zip_lock(data_dir, zip_file, exclusive=True):
             # Another process may have downloaded+extracted it while we waited for the lock.
-            if res_path.exists():
+            if res_path.exists() and not _zip_is_stale(data_dir, zip_file):
                 return str(res_path)
+            if res_path.exists():
+                print(f"{zip_file} was updated upstream; re-downloading")
             snapshot_download(
                 repo_id="USC-PSI-Lab/SIMPLE",
                 allow_patterns=[zip_file],
@@ -168,6 +203,7 @@ def resolve_data_path(
                 )
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(data_dir)
+            _write_zip_version(data_dir, zip_file)
             if os.path.exists(zip_path):
                 os.remove(zip_path)
                 print(f"Deleted {zip_path}")

@@ -52,6 +52,7 @@ data/*
 !data/README.md
 !data/_download.py
 !data/_download.sh
+!data/_versions.json
 !.env.sample
 
 # Sphinx build artifacts
