@@ -32,6 +32,34 @@ def from_psi0_upper_joints(psi0_action):
         psi0_action[7:14], # right hand
     ])
 
+def psi0_action_to_cmd(robot, psi0_action) -> ActionCmd:
+    """One psi0 action (the model output, also the `action` of the psi0 training data, 36 dims) ->
+    the g1_wholebody command: upper-body joint targets, waist joints and the AMO lower-body command.
+    Shared by Psi0Agent and ReplayAgent so replaying psi0 data executes exactly what eval executes."""
+    target_qpos = dict(zip(robot.joint_names[15:], from_psi0_upper_joints(psi0_action[:28])))
+    target_waist_qpos = {
+        "waist_yaw_joint": psi0_action[30],
+        "waist_roll_joint": psi0_action[28],
+        "waist_pitch_joint": psi0_action[29],
+    }
+    command = [
+        psi0_action[32],  # vx
+        psi0_action[35],  # target yaw
+        psi0_action[33],  # vy
+        psi0_action[31] - 0.75,  # d_height
+        psi0_action[30],  # torso yaw
+        psi0_action[29],  # torso pitch
+        psi0_action[28],  # torso roll
+        psi0_action[34],  # turning flag
+    ]
+    return ActionCmd(
+        "eval_move_actuators",
+        target_qpos=target_qpos,
+        action_command=command,
+        waist_qpos=target_waist_qpos,
+    )
+
+
 class Psi0Agent(PrimitiveAgent):
 
     def __init__(
@@ -57,6 +85,10 @@ class Psi0Agent(PrimitiveAgent):
         # last command (high level input to lower policy)
         self._last_cmd_torso_rpyh = np.array([0, 0, 0, 0.75]) # FIXME hardcoded for g1 wholebody, need to be more general in the future
         self._reset_history = True
+
+    def needs_render_next(self) -> bool:
+        # the image is only sent to the server when the queued action chunk runs out
+        return len(self._action_queue) == 0
 
     def _make_session_id(self) -> str:
         return f"psi0-{os.getpid()}-{self._session_idx}"
@@ -112,36 +144,9 @@ class Psi0Agent(PrimitiveAgent):
             print(f"Received {pred_action.shape[0]} actions from server.")
             for i in range(pred_action.shape[0]):
                 for _ in range(self.upsample_factor): # account for upsampling during training
-                    target_qpos = dict(
-                        zip(
-                            self.robot.joint_names[15:],
-                            from_psi0_upper_joints(pred_action[i][:28])
-                        )
-                    )
-
-                    target_waist_qpos = {
-                        "waist_yaw_joint": pred_action[i][30], 
-                        "waist_roll_joint": pred_action[i][28], 
-                        "waist_pitch_joint": pred_action[i][29] 
-                    }
-                    # FIXME very ugly code here!
-
-                    command = [
-                        pred_action[i][32], # vx
-                        pred_action[i][35], # target yaw
-                        pred_action[i][33], # vy
-                        pred_action[i][31] - 0.75,  # d_height
-                        pred_action[i][30], # torso yaw
-                        pred_action[i][29], # torso pitch
-                        pred_action[i][28],  # torso roll
-                        pred_action[i][34], #turing flag 
-                    ]
-                    self.queue_action(ActionCmd(
-                        "eval_move_actuators", 
-                        target_qpos=target_qpos,
-                        action_command=command,
-                        waist_qpos=target_waist_qpos
-                    ))
+                    action_cmd = psi0_action_to_cmd(self.robot, pred_action[i])
+                    self.queue_action(action_cmd)
+                    command = action_cmd["action_command"]
                     print(f"step:{self._global_step_idx},vx:{command[0]},target_yaw:{command[1]}")
 
         action_cmd = super().get_action(observation, instruction, **kwargs)

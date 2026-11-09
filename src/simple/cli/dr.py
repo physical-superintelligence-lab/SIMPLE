@@ -91,7 +91,16 @@ def main(
                 f"{len(env_configs)} env configs found; will loop."
             )
 
-    recorder = LerobotRecorder(env=env, root_dir=save_dir, agent=None, debug=True, dr_level=dr_level)
+    # Record only the head cameras in the eval episodes: eval and the policies only use those (see
+    # cli/eval.py), so the front / side / wrist videos the MP tasks also define are skipped. The cameras
+    # stay in task.sensor_cfgs, so the saved environment_config and the camera DR are unchanged.
+    exclude_cameras = tuple(
+        k for k, space in task.observation_space.items()
+        if len(space.shape) == 3 and space.shape[2] == 3 and not k.startswith("head")
+    )
+    # h264 (not LeRobot's default AV1) so the episode videos open in common players such as VS Code.
+    recorder = LerobotRecorder(env=env, root_dir=save_dir, agent=None, debug=True, dr_level=dr_level,
+                               exclude_cameras=exclude_cameras, vcodec="h264")
 
     for i in tqdm(range(num_episodes), desc="Generating eval env configs"):
         if env_configs:

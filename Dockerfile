@@ -210,5 +210,13 @@ RUN --mount=type=cache,target=/workspace/.uv-cache \
     fi && \
     rm -rf /tmp/* /var/tmp/*
 
+# --- Make the venv the default Python (`python`, `python3`, its console scripts) ---
+#     PATH, not a symlink in /usr/local/bin: Python finds pyvenv.cfg next to the path it
+#     was launched from, so a symlink elsewhere would start without the venv's packages.
+#     Last in the file so the build steps above keep the system cmake / ninja, which
+#     this shadows with the venv's at runtime.
+ENV VIRTUAL_ENV=/workspace/simple/.venv
+ENV PATH=${VIRTUAL_ENV}/bin:$PATH
+
 ENTRYPOINT ["/usr/bin/env"]
 CMD ["/bin/bash"]

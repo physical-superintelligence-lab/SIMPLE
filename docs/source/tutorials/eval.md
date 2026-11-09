@@ -19,12 +19,10 @@ export task=G1WholebodyBendPickMP-v0
 ```
 
 ```
-hf download USC-PSI-Lab/psi-data \
-    simple-eval/$task.zip \
-    --local-dir=data/evals \
+hf download USC-PSI-Lab/SIMPLE-eval \
+    --include="$task/*" \
+    --local-dir=data/SIMPLE-eval \
     --repo-type=dataset
-
-unzip data/evals/simple-eval/$task.zip -d data/evals/simple-eval
 ```
 
 ## Start Server

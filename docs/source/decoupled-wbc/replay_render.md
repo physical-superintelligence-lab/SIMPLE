@@ -25,6 +25,12 @@ python -m simple.cli.replay_decoupled_wbc \
   --success-criteria=0.2
 ```
 
+`--record` keeps the source's format: a raw teleop dataset is re-exported with the new images, while
+a psi0-format dataset such as `SIMPLE-decoupled-wbc` is recorded in psi0 format from the live rollout,
+so the recording can be replayed the same way. `--save-failed` (the default) also saves episodes that
+did not succeed, so check `meta/replay.txt` for each episode's outcome, or pass `--no-save-failed` to keep
+only successes. To replay a recording, use `--no-record` or another `--save-dir`.
+
 The `replay-decoupled-wbc` entry point runs the same command.
 
 > 💡 **Tip:** If the replay success rate is low, try lowering
@@ -33,11 +39,11 @@ The `replay-decoupled-wbc` entry point runs the same command.
 ## Post-processing
 
 To make the rendered data compatible with the [Psi-0](https://github.com/physical-superintelligence-lab/Psi0)
-training pipeline, run `postprocess_psi0_sonic.py`. It accepts wildcards (`*`)
+training pipeline, run `postprocess_psi0_decoupled_wbc.py`. It accepts wildcards (`*`)
 so several replay sessions can be merged into one dataset.
 
 ```bash
-python scripts/postprocess_psi0_sonic.py \
+python scripts/postprocess_psi0_decoupled_wbc.py \
   --sim-root="data/replay_decoupled_wbc_output*/simple/G1WholebodyPushOfficeChairTeleop-v0/level-0/" \
   --out-dir=data/processed_psi0/G1WholebodyPushOfficeChairTeleop-v0 \
   --skip=0 \

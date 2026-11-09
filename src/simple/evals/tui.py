@@ -18,21 +18,6 @@ from rich.text import Text
 _ACTIVE_STATUSES = {"creating_env", "ready", "running", "closing"}
 
 
-def _shorten_video_path(path: str) -> str:
-    """Shorten a video path for display only.
-
-    Truncates at the "<policy>-<timestamp>" checkpoint prefix, e.g.
-    "data/evals/psi0_decoupled_wbc/psi0-2606192151.G1...-v0/level-0"
-    -> "data/evals/psi0_decoupled_wbc/psi0-2606192151...".
-    Paths without that prefix (no "." in any component) are returned unchanged.
-    """
-    parts = path.split(os.sep)
-    for i, part in enumerate(parts):
-        head, sep, _ = part.partition(".")
-        if sep and "-" in head:
-            return os.sep.join(parts[:i] + [head]) + "..."
-    return path
-
 # Persistent spinner per worker row so the animation frame (derived from each
 # spinner's start_time) advances on Live auto-refresh instead of resetting to
 # frame 0 on every render.
@@ -52,7 +37,6 @@ class WorkerProgress:
     setup_seconds: float | None = None
     last_episode_seconds: float | None = None
     last_steps_per_second: float | None = None
-    video_path: str | None = None
 
 
 def make_console(stream=None) -> Console:
@@ -170,8 +154,6 @@ def update_progress(
             state.setup_seconds = float(payload["setup_seconds"])  # type: ignore[arg-type]
         if payload.get("max_episode_steps") is not None:
             state.max_episode_steps = int(payload["max_episode_steps"])  # type: ignore[arg-type]
-        if payload.get("video_path") is not None:
-            state.video_path = str(payload["video_path"])
     elif event == "worker_status":
         state.status = str(payload["status"])
     elif event == "episode_start":
@@ -229,11 +211,6 @@ def render_progress(
         if state.status in {"creating_env", "ready", "running", "closing"}
     )
 
-    video_path = next(
-        (state.video_path for state in worker_states.values() if state.video_path),
-        None,
-    )
-
     avg_setup = f"{sum(setup_values) / len(setup_values):.1f}s" if setup_values else "-"
     avg_episode = f"{sum(episode_values) / len(episode_values):.1f}s" if episode_values else "-"
     avg_sps = f"{sum(sps_values) / len(sps_values):.1f}" if sps_values else "-"
@@ -260,8 +237,11 @@ def render_progress(
     )
     summary.add_row(
         f"[dim]setup[/dim] {avg_setup}  [dim]ep[/dim] {avg_episode}  [dim]step/s[/dim] {avg_sps}",
-        f"[dim]video[/dim] {_shorten_video_path(video_path)}" if video_path else f"[dim]log[/dim] {log_path}",
+        "",
     )
+    # Own full-width line: in a grid cell a long path widens its whole column and squeezes the
+    # others. log_path is <--eval-dir>/eval_latest.log, so show only the eval dir.
+    eval_dir_line = Text.assemble(("eval-dir ", "dim"), os.path.dirname(log_path) or ".", overflow="fold")
 
     workers = Table(
         expand=True,
@@ -316,4 +296,4 @@ def render_progress(
             f"[dim]{step_text}[/dim]",
         )
 
-    return Panel(Group(summary, workers), title=Text("SIMPLE Eval"), border_style="cyan")
+    return Panel(Group(summary, eval_dir_line, workers), title=Text("SIMPLE Eval"), border_style="cyan")

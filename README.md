@@ -5,8 +5,8 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2606.08278-df2a2a.svg)](https://arxiv.org/abs/2606.08278)
 [![Documentation](https://img.shields.io/badge/Documentation-a)](https://psi-lab.ai/SIMPLE/docs/)
-[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/USC-PSI-Lab/psi-model)
-[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/datasets/USC-PSI-Lab/psi-data)
+[![Model](https://img.shields.io/badge/Hugging%20Face-Model-yellow)](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE)
+[![Data](https://img.shields.io/badge/Hugging%20Face-Data-pink)](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
@@ -23,6 +23,8 @@ Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://
 
 
 ## 📢 News & Updates
++ [x] [2026-11-02] We release the [Psi0 multi-task checkpoint](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE) for the dataset `SIMPLE-decoupled-wbc`.
++ [x] [2026-11-01] We merged and released the 17 decoupled wbc dataset [SIMPLE-decoupled-wbc](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc) and updated the eval episodes [SIMPLE-decouple-wbc-eval](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-eval). 
 + [x] [2026-08-30] [Integrate SONIC whole-body controller](#quick-start-for-sonic-wholebody-vla).
 + [x] [2026-07-14] We released support for World Action Models: [Cosmos3](https://github.com/songlin/cosmos-framework/blob/main/docs/action_policy_simple_posttrain.md) and [DreamZero](https://github.com/physical-superintelligence-lab/Psi0/blob/main/baselines/dreamzero/README.md). 
 
@@ -231,7 +233,7 @@ tree is bind-mounted. Per-episode videos land in
 
 ---
 
-## ⚙️ Data Generation & Pipeline
+## ⚙️ Data Generation & Pipeline [Decouple Wholebody]
 
 SIMPLE provides a scalable pipeline to generate, process, and train policies using synthesized simulation data — covering data collection (teleoperation and automated motion planning), post-processing, and fine-tuning.
 
@@ -305,14 +307,14 @@ Open a **new terminal window** to launch the environment. The execution paramete
 ```bash
 export task=G1WholebodyXMovePickTeleop-v0
 export agent=psi0_decoupled_wbc
-export dr=level-0
+export dr=dr-level-0
 
 TASK_NAME=$task uv run eval-decoupled-wbc \
     simple/$task \
     $agent \
     train \
     --data-format lerobot \
-    --data-dir data/evals/simple-eval/$task/$dr \
+    --data-dir data/SIMPLE-eval/$task/$dr \
     --host 127.0.0.1 \
     --port 21000 \
     --headless
@@ -324,7 +326,7 @@ TASK_NAME=$task uv run eval-decoupled-wbc \
 export task=G1WholebodyXMovePickTeleop-v0
 export entry=eval_decoupled_wbc
 export agent=psi0_decoupled_wbc
-export dr=level-0
+export dr=dr-level-0
 
 env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' develop -c \
   python -m simple.cli.$entry \
@@ -332,7 +334,7 @@ env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' de
   $agent \
   train \
   --data-format lerobot \
-  --data-dir data/evals/simple-eval/$task/$dr \
+  --data-dir data/SIMPLE-eval/$task/$dr \
   --host 127.0.0.1 \
   --port 21000 \
   --headless
@@ -353,10 +355,10 @@ Visual records of each episode are automatically rendered and saved. The files a
 
 ```bash
 # Example: Play a successful teleop evaluation video
-mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/level-0/episode_0/head_stereo_left_success.mp4
+mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/dr-level-0/episode_0/head_stereo_left_success.mp4
 
 # Example: Play a successful motion planning evaluation video
-mpv data/evals/psi0/G1WholebodyBendPickMP-v0/level-0/episode_0/front_stereo_left_success.mp4
+mpv data/evals/psi0/G1WholebodyBendPickMP-v0/dr-level-0/episode_0/front_stereo_left_success.mp4
 
 ```
 

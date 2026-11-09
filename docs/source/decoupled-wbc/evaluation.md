@@ -59,14 +59,14 @@ Open a new terminal to launch the environment.
 ```bash
 export task=G1WholebodyXMovePickTeleop-v0
 export agent=psi0_decoupled_wbc
-export dr=level-0
+export dr=dr-level-0
 
 TASK_NAME=$task uv run eval-decoupled-wbc \
     simple/$task \
     $agent \
     train \
     --data-format lerobot \
-    --data-dir data/evals/simple-eval/$task/$dr \
+    --data-dir data/SIMPLE-eval/$task/$dr \
     --host 127.0.0.1 \
     --port 21000 \
     --headless
@@ -78,7 +78,7 @@ TASK_NAME=$task uv run eval-decoupled-wbc \
 export task=G1WholebodyXMovePickTeleop-v0
 export entry=eval_decoupled_wbc
 export agent=psi0_decoupled_wbc
-export dr=level-0
+export dr=dr-level-0
 
 env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' develop -c \
   python -m simple.cli.$entry \
@@ -86,7 +86,7 @@ env -u LD_LIBRARY_PATH nix --extra-experimental-features 'nix-command flakes' de
   $agent \
   train \
   --data-format lerobot \
-  --data-dir data/evals/simple-eval/$task/$dr \
+  --data-dir data/SIMPLE-eval/$task/$dr \
   --host 127.0.0.1 \
   --port 21000 \
   --headless
@@ -104,5 +104,5 @@ Per-episode videos are rendered automatically, named
 `episode_id/cam_name_{success_flag}.mp4`:
 
 ```bash
-mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/level-0/episode_0/head_stereo_left_success.mp4
+mpv data/evals_decoupled_wbc/psi0_decoupled_wbc/G1WholebodyXMovePickTeleop-v0/dr-level-0/episode_0/head_stereo_left_success.mp4
 ```

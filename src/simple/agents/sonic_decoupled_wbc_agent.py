@@ -172,6 +172,12 @@ class SonicDecoupledWbcAgent(WholeBodyControlAgent):
         
     def __len__(self):
         return len(self._action_queue)
+
+    def needs_render_next(self) -> bool:
+        """Whether the next get_action reads the camera images (default: always). Policies that
+        only look at images when they query a new action chunk override this, so the eval can skip
+        Isaac rendering on the other steps."""
+        return True
     
     def reset(self, **kwargs):
         # Clearing the cached joint targets re-arms get_stabilize_action's

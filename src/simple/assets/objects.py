@@ -16,8 +16,18 @@ from typing import List, Any
 
 Objects_Names = {
     0: "brasket",
-   
+    1: "dog bed",  # scene19's lounge_silhouette_latte_medium_dog_bed (HSSD), fixed in place
 }
+
+# Stable pose [x, y, z, qw, qx, qy, qz] of each object; z is above the placement surface.
+Objects_Stable_Poses = {
+    0: [4.99879344e-01, -3.56605453e-05, 0.012, 0.7071, 0.7071, 0, 0],
+    # The dog bed USD/meshes are Z-up with the origin at the bed's bottom centre; it rests on the floor,
+    # 0.762 m below the scene19 table surface it is placed relative to.
+    1: [0.0, 0.0, -0.762, 1.0, 0.0, 0.0, 0.0],
+}
+# Furniture that must not move (MuJoCo builds it without a free joint).
+Objects_Static = {1}
 
 class ObjectsAsset(Asset, SemanticAnnotated,SpatialAnnotated):
     
@@ -31,7 +41,7 @@ class ObjectsAsset(Asset, SemanticAnnotated,SpatialAnnotated):
         collision_meshes_mujoco: list[str],
         description: str | None = None,
         stable_poses: dict[str, Pose] | None = None,
-        
+        static: bool = False,
     ) -> None:
         super().__init__(uid=uid, usd_path=usd_path, collision_mesh_curobo = collision_mesh_curobo, collision_meshes_mujoco=collision_meshes_mujoco)
         
@@ -41,6 +51,7 @@ class ObjectsAsset(Asset, SemanticAnnotated,SpatialAnnotated):
         self.label = label
         self.description = description
         self.stable_poses = stable_poses
+        self.static = static
 
 
     def __repr__(self) -> str:
@@ -90,8 +101,7 @@ class ObjectsAssetManager(AssetManager):
         for dir, dirs, files in os.walk(collision_mesh_new_dir):
             collision_meshes_mujoco = [dir + "/" + file for file in files if file.startswith('convex_piece')]
     
-        stable_poses = np.array([[ 4.99879344e-01, -3.56605453e-05,  0.012,
-         0.7071, 0.7071, 0, 0]])
+        stable_poses = np.array([Objects_Stable_Poses[asset_id_int]])
         
         name = Objects_Names[asset_id_int]
         return ObjectsAsset(
@@ -105,8 +115,8 @@ class ObjectsAssetManager(AssetManager):
             collision_mesh_curobo=collision_mesh_curobo,
             collision_meshes_mujoco=collision_meshes_mujoco,
             description="todo",
-            stable_poses = stable_poses
-
+            stable_poses = stable_poses,
+            static=asset_id_int in Objects_Static,
         )
 
     def sample(self, exclude: list[str] | None = None) -> Asset:

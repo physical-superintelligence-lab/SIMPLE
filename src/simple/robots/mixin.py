@@ -22,8 +22,10 @@ try:
     from curobo.types.robot import RobotConfig
     from curobo.util_file import join_path
     from curobo.cuda_robot_model.cuda_robot_model import CudaRobotModel
+    _CUROBO_AVAILABLE = True
 except ImportError:
-    raise RuntimeError("curobo not installed, uv pip install --groups curobo")
+    # Defer the failure so robots that don't need curobo (e.g. G1) stay importable.
+    _CUROBO_AVAILABLE = False
 
 
 class CuRoboMixin(BatchPlannable, Controllable, Graspable, HasKinematics):
@@ -34,6 +36,8 @@ class CuRoboMixin(BatchPlannable, Controllable, Graspable, HasKinematics):
         *args: Any, 
         **kwds: Any
     ) -> None:
+        if not _CUROBO_AVAILABLE:
+            raise RuntimeError("curobo not installed, uv pip install --groups curobo")
         super().__init__(*args, **kwds)
         self._kin_model = None
         self._ik_solver = None

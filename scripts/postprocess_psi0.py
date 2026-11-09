@@ -6,7 +6,6 @@ import argparse
 import subprocess
 import json
 import math
-import shutil
 from pathlib import Path
 
 import numpy as np
@@ -201,14 +200,15 @@ def write_downsampled_video(src_video: Path, dst_video: Path, skip: int, downsam
     if fps <= 0:
         raise ValueError(f"fps must be > 0, got {fps}")
 
-    if skip == 0 and downsample == 1:
-        shutil.copyfile(src_video, dst_video)
-        return
-
-    vf = (
-        f"select='gte(n\\,{skip})*not(mod(n-{skip}\\,{downsample}))',"
-        f"setpts=N/({fps}*TB)"
-    )
+    # Always re-encode, even without skip/downsample: LeRobot records AV1 with a keyframe every 2 frames
+    # (g=2), ~5x the size of the teleop exporter's H.264. libx264 crf 23 (default) matches it.
+    vf = []
+    if skip > 0 or downsample > 1:
+        vf = [
+            "-vf",
+            f"select='gte(n\\,{skip})*not(mod(n-{skip}\\,{downsample}))',"
+            f"setpts=N/({fps}*TB)",
+        ]
     cmd = [
         "ffmpeg",
         "-y",
@@ -217,12 +217,14 @@ def write_downsampled_video(src_video: Path, dst_video: Path, skip: int, downsam
         "-i",
         str(src_video),
         "-an",
-        "-vf",
-        vf,
+        *vf,
         "-r",
         str(fps),
         "-c:v",
         "libx264",
+        # keyframe every 10 frames, no B-frames: training samples random frames, and with
+        # x264's default keyint=250 each lookup decodes ~125 frames (~10x slower).
+        "-g", "10", "-keyint_min", "10", "-sc_threshold", "0", "-bf", "0",
         "-pix_fmt",
         "yuv420p",
         str(dst_video),
@@ -476,7 +478,7 @@ def main():
                 "dtype": video_feat.get("dtype", "video"),
                 "shape": video_feat.get("shape", [360, 640, 3]),
                 "names": ["height", "width", "channel"],
-                "video_info": video_feat.get("info", video_feat.get("video_info", {})),
+                "video_info": {**video_feat.get("info", video_feat.get("video_info", {})), "video.codec": "h264"},
             },
             "observation.hand_joints": {"dtype": "float32", "shape": [14], "names": ["hand_joints"]},
             "observation.arm_joints": {"dtype": "float32", "shape": [14], "names": ["arm_joints"]},

@@ -4,6 +4,7 @@
 import os
 import numpy as np
 import mujoco
+import transforms3d as t3d
 import xml.etree.ElementTree as ET
 from typing import Any, List, Dict, Tuple
 from threading import Lock, Thread
@@ -69,27 +70,29 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
     robot_eef_offset: float = 0
     #TODO May have problem here,not all joint are pd control
 
+    # Spawn joint pose = the SONIC policy's settled standing stance (base height command 0.74) with
+    # the WBC default arms (shoulder roll +-0.2, low elbow), measured once in MuJoCo: starting here
+    # the stabilization moves the feet < 1 mm. Re-measure if the policy or its height command changes.
     controller_cfg: ControllerCfg = WholeBodyEEFControllerCfg(
         left_leg=PDJointPosControllerCfg(
             joint_names=LEFT_LEG_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            init_qpos=[-0.4062, 0.0146, 0.0038, 0.7404, -0.3284, -0.0116],
         ),
         right_leg=PDJointPosControllerCfg(
             joint_names=RIGHT_LEFT_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            init_qpos=[-0.4181, -0.0050, -0.0009, 0.7423, -0.3185, -0.0006],
         ),
         waist =PDJointPosControllerCfg(
             joint_names=WAIST_JOINTS,
-            init_qpos=[0.0, 0.0, 0.0],
+            init_qpos=[0.0009, -0.0125, 0.0667],
         ),
         left_arm=PDJointPosControllerCfg(
             joint_names=LEFT_ARM_JOINTS,
-            # init_qpos=[0.09,  -0.02,   0.0,   1.43,   0.0,     0.0,     0.0],
-            init_qpos=[0.5,      0.,       0.2,       0.55,     0.,       0.,       0.,],
+            init_qpos=[0.0306, 0.1881, -0.0158, 0.0821, -0.0001, 0.0565, -0.0047],
         ),
         right_arm=PDJointPosControllerCfg(
             joint_names=RIGHT_ARM_JOINTS,
-            init_qpos=[0.5,      0.,      -0.2,      0.55,     0.,       0.,       0.],
+            init_qpos=[0.0310, -0.1868, 0.0193, 0.0815, 0.0001, 0.0565, 0.0048],
         ),
         left_eef=DexHandEEFControllerCfg(
             joint_names=LEFT_HAND_JOINTS,
@@ -102,6 +105,10 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
             close_qpos=[ 0.02331954, -0.02398408, -0.22170663,  0.25662386,  1.3371105 , 0.3085137 ,  0.9805285]
         ),
     )
+
+    # The settled pelvis is tilted (roll, pitch in degrees): the spawn applies that tilt on top of the
+    # spawn yaw so the feet start flat.
+    stance_pelvis_roll_pitch_deg: Tuple[float, float] = (0.154, -0.379)
 
     hand_prim_path="right_hand_base_link"
     eef_prim_path: str ="right_hand_palm_link"
@@ -259,6 +266,7 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
         self.actuators=actuators
         # self.last_action=[0 for _ in range(len(actuators))]
         self.controller.set_initial_qpos(actuators, joints)
+        self._place_feet_on_ground()
 
         if not self.joint_limits:
             for j,v in self.joints.items():
@@ -266,6 +274,25 @@ class G1Sonic(CuRoboMixin,Humanoid,Robot,HeadCamMountable,HasDexterousHand):
                 self.joint_limits[j] = (limits[0], limits[1])
         return self.joints, self.actuators
     
+    def _place_feet_on_ground(self) -> None:
+        """Tilt the floating base to the settled stance roll/pitch (keeping the spawn yaw), then lower
+        (or raise) it so the lowest sole collision sphere touches the surface below it; x and y stay
+        at the spawn pose."""
+        m, d = self.mjModel, self.mjData
+        yaw = t3d.euler.quat2euler(d.qpos[3:7])[2]
+        roll, pitch = np.radians(self.stance_pelvis_roll_pitch_deg)
+        d.qpos[3:7] = t3d.euler.euler2quat(roll, pitch, yaw)
+        mujoco.mj_kinematics(m, d)
+        feet = {m.body(n).id for n in ("left_ankle_roll_link", "right_ankle_roll_link")}
+        soles = [g for g in range(m.ngeom) if m.geom_bodyid[g] in feet and m.geom_type[g] == mujoco.mjtGeom.mjGEOM_SPHERE]
+        lowest = min(soles, key=lambda g: d.geom_xpos[g][2] - m.geom_size[g][0])
+        geomid = np.zeros(1, dtype=np.int32)
+        dist = mujoco.mj_ray(m, d, d.geom_xpos[lowest], np.array([0.0, 0.0, -1.0]), None, 1, m.geom_bodyid[lowest], geomid)
+        assert dist >= 0, "no ground below the robot's feet"
+        d.qpos[2] -= dist - m.geom_size[lowest][0]
+        d.qvel[:6] = 0
+        mujoco.mj_kinematics(m, d)
+
     def _get_dof_indices_by_class(self, mjSpec, mjModel) -> dict[str, List[int]]:
         import tempfile
         with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".xml") as f:

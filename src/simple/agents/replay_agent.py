@@ -6,23 +6,30 @@ from simple.agents.primitive_agent import PrimitiveAgent
 from simple.constants import GripperAction
 from simple.envs.wrappers.episode_extractor import EpisodeExtractor
 from simple.core.action import ActionCmd
+from simple.baselines.psi0 import psi0_action_to_cmd
 from simple.robots.protocols import Humanoid, DualArm, Wholebody
 from PIL import Image
 
 class ReplayAgent(PrimitiveAgent):
-    def __init__(self, episode, robot, data_format="rlds", upsample_factor=1, is_postprocess=False):
+    def __init__(self, episode, robot, data_format="rlds", upsample_factor=1):
         super().__init__(robot)
         self._gt_step_idx = 0
         self._episode = EpisodeExtractor(episode, data_format)
         self._last_gripper_value = None
         self._upsample_factor = upsample_factor
-        self._is_postprocess = is_postprocess
         self._preload_episode()
-
-
 
     def _preload_episode(self):
         episode_length = len(self._episode)
+
+        if isinstance(self.robot, Humanoid) and self._episode.is_psi0_format():
+            # psi0 training data (36-dim `action`): execute each action exactly as Psi0Agent does in eval
+            print(f"Preloading psi0-format episode with {episode_length} steps.")
+            for step_idx in range(episode_length):
+                psi0_action = self._episode.get_postprocess_action(step_idx)
+                for _ in range(self._upsample_factor): # account for upsampling during training
+                    self.queue_action(psi0_action_to_cmd(self.robot, psi0_action))
+            return
 
         # Stand-warmup is now performed inside env.reset by StandStabilizationWrapper.
         # The agent's queue holds only dataset actions so step 0 = first dataset action.
@@ -54,40 +61,20 @@ class ReplayAgent(PrimitiveAgent):
                     target_qpos=target_ctrl
                 ))"""
 
-                # use command
-                if not self._is_postprocess:
-                    gt_ctrl = self._episode.get_proprio_actuators_action(step_idx) # FIXME bad naming
-                    target_qpos = dict(zip(self.robot.joint_names[15:], gt_ctrl[15:])) # FIXME bad naming
+                # raw recording: the AMO command and joint targets are stored directly
+                gt_ctrl = self._episode.get_proprio_actuators_action(step_idx) # FIXME bad naming
+                target_qpos = dict(zip(self.robot.joint_names[15:], gt_ctrl[15:])) # FIXME bad naming
 
-                    target_yaw = self._episode.get_amo_policy_target_yaw(step_idx).item()
-                    
-                    amo_command = self._episode.get_amo_policy_command(step_idx)
-                    command = [amo_command[0],target_yaw,amo_command[1],amo_command[-1]-0.75,amo_command[3],amo_command[4],amo_command[5]]
-                    
+                target_yaw = self._episode.get_amo_policy_target_yaw(step_idx).item()
 
-                    target_waist_qpos =  gt_ctrl[12:15]
-                    target_waist_qpos = dict(zip(self.robot.joint_names[12:15], target_waist_qpos))
-                else:
-                    ACTION_SLICES = [
-                        ("left_arm",14, 21),
-                        ("right_arm",21, 28),
-                        ("left_hand_thumb",0, 3),
-                        ("left_hand_index",3, 5),
-                        ("left_hand_middle",5, 7),
-                        ("right_hand",7, 14),]
-                    postprocess_action = self._episode.get_postprocess_action(step_idx)
-                    unprocessed_action = np.concatenate([postprocess_action[s:e] for _, s,e in ACTION_SLICES])
-                    target_qpos = dict(zip(self.robot.joint_names[15:], unprocessed_action))
-                    target_yaw = self._episode.get_amo_policy_target_yaw(step_idx).item()
-                    vx , vy = postprocess_action[32:34]
-                    height = postprocess_action[31]
-                    state = self._episode.get_postprocess_states(step_idx)
-                    torso_rpy = state[28:31]
-                    turning_flag = postprocess_action[34]
-                    command=[vx,target_yaw,vy,height-0.75,torso_rpy[0],torso_rpy[1],torso_rpy[2],turning_flag]
+                amo_command = self._episode.get_amo_policy_command(step_idx)
+                turning_flag = self._episode.get_amo_policy_turning_flag(step_idx)
+                # [vx, target_yaw, vy, d_height, torso_yaw, torso_pitch, torso_roll, turning_flag]: AMO reads
+                # commands[7] (the turning flag), so a 7-element command raises IndexError in env.step
+                command = [amo_command[0],target_yaw,amo_command[1],amo_command[-1]-0.75,amo_command[3],amo_command[4],amo_command[5],turning_flag]
 
-                    target_waist_qpos = np.concatenate([np.array([postprocess_action[30]]), postprocess_action[28:30]])
-                    target_waist_qpos = dict(zip(self.robot.joint_names[12:15], target_waist_qpos))
+                target_waist_qpos =  gt_ctrl[12:15]
+                target_waist_qpos = dict(zip(self.robot.joint_names[12:15], target_waist_qpos))
 
                 for _ in range(self._upsample_factor): # account for upsampling during training
                     self.queue_action(ActionCmd(
@@ -179,6 +166,5 @@ class ReplayAgent(PrimitiveAgent):
         self._last_pred_action = None
         self._last_gripper_value = None
         self._finger_state = None
-        self._upsample_factor = 1
         
         self._preload_episode()

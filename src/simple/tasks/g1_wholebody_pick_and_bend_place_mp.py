@@ -33,6 +33,8 @@ _PLACE_HEIGHT = 0.3
 @TaskRegistry.register("g1_wholebody_pick_and_bend_place_mp")
 class G1WholebodyPickAndBendPlaceMP(Task):
     uid:str = "g1_wholebody_pick_and_bend_place_mp"
+    # The container is objects:1, scene19's dog bed as its own asset; hide the scene's copy of it
+    hidden_scene_prims: list[str] = ["furniture/xxxx4182074fx5da9x4d19xac7dx30196c9cf450"]
     label: str = "G1 Wholebody Pick and Bend Place MP"
     description: str = "A task where the G1 robot must pick an object from table1, locomote to target position, and place it ."
 
@@ -136,7 +138,7 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             asset_id="graspnet1b:0" # e.g., "primitive:cube"
         ),
         container = TargetDRCfg(
-            asset_id="objects:0"  # or used "graspnet1b:6"
+            asset_id="objects:1"  # dog bed
         ),
 
         distractors = DistractorDRCfg(
@@ -152,7 +154,7 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             robot_orientation_region=Box(low=[0.717, 0, 0, -0.717], high=[0.717, 0, 0, -0.717]),
 
             target_region=Box(low=[-0.05, 0.65], high=[0.01, 0.69]),
-            container_region=Box(low=[-1.06, 3.1], high=[-1.15, 3.15]),
+            container_region=Box(low=[-0.5533, 3.3949], high=[-0.5533, 3.3949]),  # where scene19 has the bed
             container_rotate_z = Box(low=0, high=0),
             
             distractors_region=[
@@ -165,7 +167,7 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             target_rotate_z = Box(low=-1.57, high=-1.59),
             obj_surface_map={
                 "target": "table",
-                "container": "table2",
+                "container": "table",
                 "distractor": ["table", "table", "table", "table2"] 
             }
         ),
@@ -371,18 +373,20 @@ class G1WholebodyPickAndBendPlaceMP(Task):
     
     def check_object_in_container(self, *args, **kwargs) -> bool:
         """
-        Check if the target object is successfully placed in the container.
+        Check if the target object rests in the container: it touches the container and nothing static
+        (the floor is part of the "world" body), so it is not lying beside it.
         """
         mujoco_env = kwargs.get("mujoco_env", None)
         if mujoco_env is None:
             return False
             
         target_name = str(self.target.asset.label)
-        container_name = "world"
+        container_name = str(self.container.asset.label)
 
         mj_physics_data = mujoco_env.mjData
         mj_physics_model = mujoco_env.mjModel
 
+        touches_container = touches_world = False
         for i_contact in range(mj_physics_data.ncon):
             contact = mj_physics_data.contact[i_contact]
             g1 = mj_physics_model.geom(contact.geom1)
@@ -390,11 +394,15 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             body1 = mj_physics_model.body(g1.bodyid).name
             body2 = mj_physics_model.body(g2.bodyid).name
 
-            # Check if target and container are in contact
-            if (target_name in body1 and container_name in body2) or \
-               (target_name in body2 and container_name in body1):
-                return True
-        return False
+            if target_name in body1:
+                other = body2
+            elif target_name in body2:
+                other = body1
+            else:
+                continue
+            touches_container |= container_name in other
+            touches_world |= other == "world"
+        return touches_container and not touches_world
     
     def check_hand_object_contact(self, *args, **kwargs) -> bool:
         mujoco_env = kwargs.get("mujoco_env", None)

@@ -236,6 +236,9 @@ def write_downsampled_video(src_video: Path, dst_video: Path, skip: int, downsam
         str(fps),
         "-c:v",
         "libx264",
+        # keyframe every 10 frames, no B-frames: training samples random frames, and with
+        # x264's default keyint=250 each lookup decodes ~125 frames (~10x slower).
+        "-g", "10", "-keyint_min", "10", "-sc_threshold", "0", "-bf", "0",
         "-pix_fmt",
         "yuv420p",
         str(dst_video),

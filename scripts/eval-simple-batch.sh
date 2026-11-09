@@ -2,7 +2,7 @@
 # Copyright (c) 2025-2026 The SIMPLE Authors
 # SPDX-License-Identifier: MIT
 
-# Run the SIMPLE eval CLI over every downloaded simple-eval task, dr-levels 0-2.
+# Run the SIMPLE eval CLI over every downloaded SIMPLE-eval task, dr-levels 0-2.
 #
 # Usage:
 #   scripts/eval-simple-batch.sh                      # all tasks, dr-levels 0 1 2
@@ -57,7 +57,7 @@ restore_terminal() {
 trap restore_terminal EXIT INT TERM
 
 PYTHON=${PYTHON:-.venv/bin/python}
-DATA_ROOT=${DATA_ROOT:-data/evals/simple-eval}
+DATA_ROOT=${DATA_ROOT:-data/SIMPLE-eval}
 # Per README: MP (motion-planning) tasks use standard eval, the rest decoupled WBC.
 TELEOP_CLI=${TELEOP_CLI:-src/simple/cli/eval_decoupled_wbc.py}
 TELEOP_POLICY=${TELEOP_POLICY:-psi0_decoupled_wbc}

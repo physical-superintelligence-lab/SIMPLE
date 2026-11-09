@@ -29,6 +29,15 @@ class EpisodeExtractor():
 
         return 0
 
+    def is_psi0_format(self) -> bool:
+        """psi0 training data (scripts/postprocess_psi0.py, also the simple-archive MP data): 32-dim `states`
+        and a 36-dim `action` (upper-body joints, waist, height, base velocity, turning flag, target yaw);
+        the raw AMO fields (observation.amo_policy_command, ...) are not stored."""
+        if self.format != "lerobot" or len(self.episode) == 0:
+            return False
+        frame = self.episode[0]
+        return "states" in frame and "observation.amo_policy_command" not in frame and frame["action"].shape[-1] == 36
+
     def get_proprio_actuators_action(self, idx):
         #FIXME Now it's only for g1
         if self.format == "h5py":
@@ -70,13 +79,21 @@ class EpisodeExtractor():
         elif self.format == "rlds_numpy":
             return self.episode["observation"]["amo_policy_obs_dyaw"][idx, 0, 8:]
         elif self.format == "lerobot":
-            try:
-                return self.episode[idx]["observation.amo_policy_target_yaw"].numpy()
-            except:
-                return self.episode[idx]["action"][-1].numpy()
+            frame = self.episode[idx]
+            if "observation.amo_policy_target_yaw" in frame:
+                return frame["observation.amo_policy_target_yaw"].numpy()
+            return frame["action"][-1].numpy() # psi0 data: target yaw is action[35]
         raise ValueError
 
 
+
+    def get_amo_policy_turning_flag(self, idx) -> float:
+        """AMO turning flag recorded by LerobotRecorder; 0 for recordings made before the flag existed."""
+        if self.format == "lerobot":
+            frame = self.episode[idx]
+            if "observation.amo_policy_turning_flag" in frame:
+                return float(np.asarray(frame["observation.amo_policy_turning_flag"]).reshape(-1)[0])
+        return 0.0
 
     def get_proprio_joint_position(self, idx):
         if self.format == "h5py":

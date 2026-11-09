@@ -38,7 +38,7 @@ git submodules or git-LFS blobs itself, so populate them on the host first:
 git submodule update --init --depth 1 third_party/GR00T-WholeBodyControl
 git -C third_party/GR00T-WholeBodyControl lfs install --local
 git -C third_party/GR00T-WholeBodyControl lfs pull --include="gear_sonic_deploy/**"
-docker compose build sim          # add SIMPLE_FULL_INSTALL=1 for real-robot / GUI teleop
+docker compose build isaac-sim        # add SIMPLE_FULL_INSTALL=1 for real-robot / GUI teleop
 ```
 
 The controller binary lands at its usual path

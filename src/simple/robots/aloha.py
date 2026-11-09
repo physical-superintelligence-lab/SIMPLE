@@ -27,7 +27,7 @@ try:
     from curobo.cuda_robot_model.cuda_robot_model import CudaRobotModel
     from curobo.util_file import join_path
 except ImportError:
-    raise RuntimeError("curobo not installed, uv pip install --groups curobo")
+    pass  # CuRoboMixin raises on construction if curobo is missing
 
 @RobotRegistry.register("aloha")
 class Aloha(CuRoboMixin, WristCamMountable, Robot, DualArm):

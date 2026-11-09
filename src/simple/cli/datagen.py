@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import typer
+from typing import Optional
 from typing_extensions import Annotated
 import gymnasium as gym
 from tqdm import tqdm
@@ -9,6 +10,8 @@ import simple.envs as _# import all envs
 from simple.mp.curobo import CuRoboPlanner
 from simple.agents.mp import MotionPlannerAgent
 from simple.envs.lerobot import LerobotRecorder
+from simple.envs.psi0_recorder import Psi0Recorder
+from simple.envs.wrappers import StandStabilizationWrapper
 import traceback
 import sys
 import os
@@ -26,7 +29,9 @@ def main(
     headless: Annotated[bool, typer.Option()] = False,
     webrtc: Annotated[bool, typer.Option()] = True,  # Enable WebRTC streaming
     max_episode_steps: Annotated[int, typer.Option()] = 1000,
-    render_hz: Annotated[int, typer.Option()] = 30, # FIXME
+    render_hz: Annotated[Optional[int], typer.Option()] = None, # default: 50 for psi0 (the psi0 data fps), else 30
+    # lerobot: raw LeRobot recording (LerobotRecorder); psi0: G1 wholebody (AMO) data in the psi0 training
+    # format (states/action 32/36-D, as SIMPLE-decoupled-wbc), replayable with simple.cli.replay
     data_format: Annotated[str, typer.Option()] = "lerobot",
     save_dir: Annotated[str, typer.Option()] = "data/datagen",
     num_episodes: Annotated[int, typer.Option()] = 100,
@@ -37,6 +42,9 @@ def main(
     debug: Annotated[bool, typer.Option()] = False,
     easy_motion_gen: Annotated[bool, typer.Option()] = False,
 ):
+    assert data_format in ("lerobot", "psi0"), f"unsupported --data-format {data_format!r} (lerobot | psi0)"
+    if render_hz is None:
+        render_hz = 50 if data_format == "psi0" else 30
     # create environment
     make_kwargs = dict(
         scene_uid=scene_uid,
@@ -73,7 +81,10 @@ def main(
     if data_format == "lerobot":
         env = LerobotRecorder(env=env, agent=mp_agent, shard_size=shard_size, root_dir=save_dir, debug=debug) # +"."+env.unwrapped.task.uid
     else:
-        raise NotImplementedError
+        # stand warm-up inside reset (as eval and replay do), not recorded: frame 0 is the stabilized robot
+        env = Psi0Recorder(env=StandStabilizationWrapper(env), agent=mp_agent, root_dir=save_dir)
+        print(f"[Datagen] psi0 dataset: {env.root_dir} ({env.writer.num_episodes} existing episodes)")
+    recorder = env
     
     if os.path.exists(PRERESET_TASK_STATE):
         # load task state dict if exists
@@ -100,13 +111,11 @@ def main(
                 if stage == "phase":
                     return "phase_done"
                 print("Motion plan exhausted before episode end.")
-                if isinstance(env, LerobotRecorder):
-                    env.clear_episode_buffer()
+                recorder.clear_episode_buffer()
                 return "episode_end"
             except Exception as e:
                 print(f"Error during action execution: {e}", file=sys.stderr)
-                if isinstance(env, LerobotRecorder):
-                    env.clear_episode_buffer()
+                recorder.clear_episode_buffer()
                 traceback.print_exc()
                 if sys.gettrace() is not None:
                     raise

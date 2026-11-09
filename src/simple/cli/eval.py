@@ -166,6 +166,7 @@ def _run_eval_worker(
     rollout_save_dir: Annotated[str | None, typer.Option()] = None,
     success_criteria: Annotated[float, typer.Option()] = 0.9,
     save_video: Annotated[bool, typer.Option("--save-video/--no-save-video")] = True,
+    isaac_render: Annotated[str, typer.Option()] = "always",
     worker_id: int = 0,
     num_workers: int = 1,
     worker_result_path: str | None = None,
@@ -271,6 +272,17 @@ def _run_eval_worker(
     )
     raw_env = gym.make(env_id, **make_kwargs)
     task = raw_env.unwrapped.task  # type: ignore[attr-defined]
+    # Render only the head cameras (what the policies read; e.g. the MP tasks also define front_stereo):
+    # the layout, and so the sim's cameras and the observations, come from task.sensor_cfgs.
+    # Same as cli/replay.py.
+    task.sensor_cfgs = {k: v for k, v in task.sensor_cfgs.items() if k.startswith("head")}
+    raw_env.unwrapped.observation_space = task.observation_space  # type: ignore[attr-defined]
+    base_env = raw_env.unwrapped
+    if isaac_render not in ("always", "on-query"):
+        raise ValueError(f"isaac_render must be 'always' or 'on-query', got {isaac_render!r}")
+    on_query = isaac_render == "on-query" and getattr(base_env, "isaac", None) is not None
+    if on_query and not hasattr(base_env, "render_isaac"):
+        raise ValueError(f"--isaac-render=on-query is not supported by {type(base_env).__name__}")
 
     # Run a 60-step "stand" warmup inside env.reset for Humanoid robots so the
     # rollout starts from a stabilized pose. No-op for non-Humanoid robots.
@@ -339,7 +351,16 @@ def _run_eval_worker(
         else:
             env = rollout_env
 
+        # on-query: the stand warm-up in reset doesn't need images; Isaac renders the settled state once
+        if on_query:
+            base_env.render_isaac = False
         observation, info = env.reset(options={"state_dict": env_conf})
+        if on_query:
+            base_env.render_isaac = True
+            observation = base_env.refresh_obs()
+            if isinstance(env, VideoRecorder):
+                env._init_writers(observation)
+        isaac_renders = 0
         frame_idx = 0
         episode_start_time = time.perf_counter()
         instruction = task.instruction
@@ -361,6 +382,10 @@ def _run_eval_worker(
                 action = agent.get_action(
                     observation, info=info, instruction=instruction
                 )
+                if on_query:
+                    # render Isaac for this step only if the agent reads the images of its observation
+                    base_env.render_isaac = getattr(agent, "needs_render_next", lambda: True)()
+                    isaac_renders += int(base_env.render_isaac)
                 observation, reward, terminated, truncated, info = env.step(action)
                 episode_over = terminated or truncated
                 frame_idx += 1
@@ -374,6 +399,8 @@ def _run_eval_worker(
         stats[task_id] = is_success
         episode_seconds = time.perf_counter() - episode_start_time
         _append_eval_stats_line(eval_dir, f"{task_id}: {is_success} \n")
+        print(f"{task_id}: {frame_idx} steps in {episode_seconds:.1f} s ({frame_idx / max(episode_seconds, 1e-9):.2f} steps/s), "
+              f"isaac_render={isaac_render}" + (f", {isaac_renders} Isaac-rendered steps" if on_query else ""), flush=True)
         report(
             "episode_end",
             episode=task_id,
@@ -475,6 +502,7 @@ def run_eval(
         rollout_save_dir=rollout_save_dir,
         success_criteria=success_criteria,
         save_video=save_video,
+        isaac_render=config.isaac_render,
     )
 
     console.print(f"Writing eval logs to [bold]{log_path}[/bold]")
@@ -700,6 +728,7 @@ def main(
     success_criteria: Annotated[float, typer.Option()] = 0.9,
     save_video: Annotated[bool, typer.Option("--save-video/--no-save-video")] = True,
     num_workers: Annotated[int, typer.Option()] = 1,
+    isaac_render: Annotated[str, typer.Option(help="always: Isaac renders every step; on-query: only steps whose images the agent reads (agent.needs_render_next), MuJoCo images fill the rest of the video")] = "always",
 ):
     run_eval(
         EvalConfig(
@@ -720,6 +749,7 @@ def main(
             success_criteria=success_criteria,
             save_video=save_video,
             num_workers=num_workers,
+            isaac_render=isaac_render,
         ),
         show_progress=True if not os.environ.get("DEBUG", 0) else False,
     )

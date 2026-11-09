@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 os.environ["_TYPER_STANDARD_TRACEBACK"] = "1"
 
+import copy
 import json
 import time
 from datetime import datetime
@@ -24,6 +25,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import simple.envs as _  # import all envs
+from simple.cli._replay_checks import require_episode_task
+from simple.datasets.psi0 import Psi0DatasetWriter
 from tqdm import tqdm
 import transforms3d as t3d
 import mujoco
@@ -101,15 +104,14 @@ def _save_episode_env_config(exporter, env_conf: dict, episode_index: int):
             f.write(json.dumps(entry) + "\n")
 
 
-def _validate_and_repair_dataset(save_dir: str, data_dir: str):
+def _validate_and_repair_dataset(save_dir: str):
     """Validate consistency between episodes.jsonl and video files.
 
     Removes episodes from episodes.jsonl if their corresponding MP4 video is missing.
     Also removes corresponding results from replay.txt.
 
     Args:
-        save_dir: Path to dataset with episodes.jsonl
-        data_dir: Path to source data directory with replay.txt
+        save_dir: Path to dataset with meta/episodes.jsonl and meta/replay.txt
 
     Returns:
         (num_valid_episodes, num_removed_episodes, episodes_to_skip_indices)
@@ -117,7 +119,7 @@ def _validate_and_repair_dataset(save_dir: str, data_dir: str):
     run_save_dir = Path(save_dir)
     episodes_jsonl = run_save_dir / "meta" / "episodes.jsonl"
     video_dir = run_save_dir / "videos" / "chunk-000" / "observation.images.ego_view"
-    replay_txt = Path(data_dir) / "meta" / "replay.txt"
+    replay_txt = run_save_dir / "meta" / "replay.txt"
 
     if not episodes_jsonl.exists():
         return 0, 0, set()
@@ -205,6 +207,25 @@ def _build_frame(observation, source_row, registered_features: set = None):
     return frame
 
 
+def _add_psi0_frame(writer: Psi0DatasetWriter, agent: ReplayDecoupledAgent, robot, observation) -> None:
+    """Record one control step of a psi0-format source in the same format: the pre-step observation
+    and the goal the WBC received, which is what a replay of the recording reads back."""
+    rm = agent._dwbc_robot_model
+    goal = agent.last_goal
+    upper_body_joints = [rm.joint_names[i] for i in agent._upper_body_indices]
+    navigate_cmd = np.asarray(goal["navigate_cmd"], dtype=np.float64)  # vx, vy, vyaw, target_yaw
+    writer.add_frame(
+        image=observation["head_stereo_left"],
+        qpos=dict(zip(robot.joint_names, np.asarray(observation["joint_qpos"], dtype=np.float64))),
+        targets=dict(zip(upper_body_joints, np.asarray(goal["target_upper_body_pose"], dtype=np.float64))),
+        base_height=float(np.asarray(goal["base_height_command"]).reshape(-1)[0]),
+        vx=float(navigate_cmd[0]),
+        vy=float(navigate_cmd[1]),
+        vyaw_or_turning_flag=float(navigate_cmd[2]),
+        target_yaw=float(navigate_cmd[3]),
+    )
+
+
 def main(
     env_id: Annotated[str, typer.Argument()] = "simple/G1WholebodyBendPick-v1",
     data_dir: Annotated[str, typer.Option()] = "data/render_decoupled_wbc/simple/G1WholebodyBendPick-v1/level-0",
@@ -220,12 +241,18 @@ def main(
     save_dir: Annotated[str, typer.Option()] = "data/replay_decoupled_wbc",
     dr_level: Annotated[int | None, typer.Option()] = None,
     success_criteria: Annotated[float | None, typer.Option()] = None,
-    resume: Annotated[bool, typer.Option()] = False
+    resume: Annotated[bool, typer.Option()] = False,
+    stop_on_success: Annotated[bool, typer.Option()] = True,
+    save_failed: Annotated[bool, typer.Option()] = True,
 ):
     """Physics-based replay of recorded teleop through decoupled WBC pipeline with dataset recording.
 
     Args:
         resume: If True, resume from last interrupted replay without re-processing already saved episodes.
+        stop_on_success: If True, stop the episode as soon as the task succeeds; otherwise execute every
+            recorded frame of the episode (no extra frames are appended after the data ends).
+        save_failed: If True, --record also saves episodes that did not succeed; meta/replay.txt lists
+            each source episode's outcome, in the order the episodes were saved.
     """
     import tyro
     from gear_sonic.utils.mujoco_sim.configs import SimLoopConfig
@@ -247,6 +274,11 @@ def main(
     if not loop_episodes:
         num_episodes = min(num_episodes, total_episodes)
     print(f"Loaded {total_episodes} episodes, will replay {num_episodes}")
+    # A raw decoupled-WBC source is re-exported with the Gr00t exporter (source columns + new image);
+    # a psi0-format source has no such columns, so it is recorded in psi0 format from the live rollout.
+    psi0_source = "observation.state" not in episodes[episode_ids[0]].columns
+    if resume and record and psi0_source:
+        raise SystemExit("error: --resume is not supported when recording a psi0-format dataset.")
 
     # Load per-episode environment configs
     episode_configs = _load_episode_configs(data_dir)
@@ -284,17 +316,19 @@ def main(
     if success_criteria is not None:
         task.success_criteria = success_criteria
         task.metadata["success_criteria"] = success_criteria
-    if replay_dir:
-        env = VideoRecorder(env, video_folder=replay_dir, framerate=render_hz)
 
     # Create agent once (WBC policy persists across episodes)
-    agent = ReplayDecoupledAgent(robot, sonic_config)
+    agent = ReplayDecoupledAgent(robot, sonic_config, num_pad_frames=0)
 
     # Recording setup
     exporter = None
+    psi0_writer = None
     episodes_saved = 0
     results = {}
     run_save_dir = None
+    # Per-run results live with the output, so concurrent shards sharing one
+    # data_dir don't overwrite each other.
+    replay_txt = Path(os.path.abspath(save_dir)) / sonic_env.spec.id / "level-0" / "meta" / "replay.txt"
 
     # Check for resume - load already saved episodes
     episodes_to_skip = set()
@@ -306,7 +340,7 @@ def main(
         if episodes_jsonl.exists():
             # Validate dataset consistency before loading
             print("[Resume] Validating dataset consistency...")
-            num_valid, num_removed, _ = _validate_and_repair_dataset(run_save_dir, data_dir)
+            num_valid, num_removed, _ = _validate_and_repair_dataset(run_save_dir)
 
             with open(episodes_jsonl, "r") as f:
                 saved_episodes = [json.loads(line) for line in f]
@@ -316,7 +350,6 @@ def main(
                 print(f"[Resume] Removed {num_removed} corrupted episodes during validation")
 
             # Load results from replay.txt if it exists
-            replay_txt = Path(data_dir) / "meta" / "replay.txt"
             if replay_txt.exists():
                 with open(replay_txt, "r") as f:
                     for line in f:
@@ -330,15 +363,13 @@ def main(
             print(f"[Resume] No existing dataset found at {run_save_dir}, starting fresh")
 
     try:
-        # Calculate initial progress for resume mode
-        initial_progress = len(results) if resume else 0
+        # resumed (already replayed) episodes advance the bar as they are skipped below
         pbar = tqdm(
             range(episode_start, episode_start + num_episodes),
             desc="Episodes",
             unit="ep",
             position=0,
             leave=True,
-            initial=initial_progress
         )
         for ep_idx in pbar:
             # if ep_idx <= 66:
@@ -360,19 +391,15 @@ def main(
 
             # Skip if already processed in resume mode
             if resume and ep_idx in results:
-                pbar.update(1)
                 continue
 
             ep_data = episodes[src_ep_id]
 
             # Reset environment with the exact scene configuration
             env_conf = episode_configs[src_ep_id]
-            if env_conf.get("uid") != task.uid:
-                print(
-                    f"[warn] env/dataset task mismatch: dataset uid={env_conf.get('uid')!r} "
-                    f"vs task.uid={task.uid!r} - overriding env_conf uid"
-                )
-                env_conf["uid"] = task.uid
+            require_episode_task(env_conf, task, src_ep_id, data_dir, env_id)
+            # Saved with the recording; copied now, while it's intact (reset clears the lighting state)
+            saved_env_conf = copy.deepcopy(env_conf)
             observation, info = env.reset(
                 options={
                     "state_dict": env_conf,
@@ -381,15 +408,12 @@ def main(
                 }
             )
 
-            # Save env_conf immediately while it's intact (before lighting state gets cleared)
-            saved_env_conf = env_conf
-
             # # Skip elastic band, engage RL policy (same as teleop_decoupled._on_episode_reset)
             # if robot.elastic_band is not None:
             #     robot.elastic_band.enable = False
 
             # Initialize exporter on first episode
-            if record and exporter is None:
+            if record and exporter is None and psi0_writer is None:
                 obj_names = list(sonic_env.mujoco.mj_objects.keys())
                 if run_save_dir is None:
                     run_save_dir = f"{os.path.abspath(save_dir)}/{sonic_env.spec.id}/level-0"
@@ -397,20 +421,29 @@ def main(
                 # Clean up corrupted dataset only in non-resume mode
                 run_save_path = Path(run_save_dir)
                 if not resume and run_save_path.exists():
+                    if run_save_path.resolve() == Path(data_dir).resolve():
+                        raise SystemExit(
+                            f"error: --save-dir would overwrite the dataset being replayed ({data_dir}); "
+                            "pass another --save-dir or --no-record."
+                        )
                     print(f"[Record] Removing corrupted dataset at {run_save_dir}")
                     shutil.rmtree(run_save_path)
 
-                exporter = _init_exporter(
-                    run_save_dir,
-                    task.instruction,
-                    agent._dwbc_robot_model,
-                    obj_names,
-                    robot.joint_names,
-                    observation["head_stereo_left"].shape,
-                )
-                print(f"[Record] Exporter initialized, saving to {run_save_dir}")
+                if psi0_source:
+                    psi0_writer = Psi0DatasetWriter(run_save_dir, fps=render_hz, controller="decoupled_wbc")
+                    print(f"[Record] Source is psi0-format; recording psi0-format to {run_save_dir}")
+                else:
+                    exporter = _init_exporter(
+                        run_save_dir,
+                        task.instruction,
+                        agent._dwbc_robot_model,
+                        obj_names,
+                        robot.joint_names,
+                        observation["head_stereo_left"].shape,
+                    )
+                    print(f"[Record] Exporter initialized, saving to {run_save_dir}")
+                    print(f"[Record] Recording {len(obj_names)} objects: {obj_names}")
                 print(f"[Record] Ego view shape: {observation['head_stereo_left'].shape}")
-                print(f"[Record] Recording {len(obj_names)} objects: {obj_names}")
 
                 # Verify exporter state matches saved episodes in resume mode
                 if resume and episodes_saved > 0:
@@ -448,6 +481,9 @@ def main(
                     sim_cnt += 1
             finally:
                 stab_pbar.close()
+
+            if psi0_writer is not None:
+                psi0_writer.start_episode()
 
             # Reset video so it starts at the first dataset action (skip stabilization).
             if isinstance(env, VideoRecorder):
@@ -550,22 +586,12 @@ def main(
 
                 # Image.fromarray(observation["head_stereo_left"]).save(f"{ep_idx}_steady.png")
 
-                # Load and save first frame from episode video
-                video_dir = Path(data_dir) / "videos" / "chunk-000" / "observation.images.ego_view"
-                video_path = video_dir / f"episode_{ep_idx:06d}.mp4"
-
-                cap = cv2.VideoCapture(str(video_path))
-                _, frame = cap.read()
-                cap.release()
-
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                # Image.fromarray(frame_rgb).save(f"{ep_idx}_loaded.png")
-
             agent._wbc_policy.lower_body_policy.gait_indices = torch.zeros((1), dtype=torch.float32)
             agent._data_row_index = 0  # Start from beginning of episode data (now synchronized)
             sim_cnt = 0  # Reset sim counter for new episode
             eef_pos_errors = []  # Track EEF position errors for this episode
             max_lower_body_vels = []  # Track max lower body joint velocities for this episode
+            rewards = []  # task reward per step (rewards.jsonl next to replay.txt)
 
             # Sim step loop (50Hz) with frame progress bar
             episode_steps = len(ep_data)
@@ -593,6 +619,7 @@ def main(
                     action_before_step = action.copy()
 
                     observation, reward, terminated, truncated, info = env.step(action)
+                    rewards.append(float(reward))
 
                     # Track max lower body joint velocity
                     body_dq = info["proprio"]["body_dq"]
@@ -613,7 +640,7 @@ def main(
                     current_eef_pos = rm.frame_placement(right_hand_frame_name).translation
 
                     # Recorded right hand pose from dataset using observation.state (43D joint config)
-                    if 0 <= agent._data_row_index < len(ep_data):
+                    if 1 <= agent._data_row_index <= len(ep_data):
                         current_row = ep_data.iloc[agent._data_row_index-1] # -1 because data index is incremented after getting action
                         if "observation.state" in current_row:
                             recorded_state = np.array(current_row["observation.state"], dtype=np.float64)
@@ -633,13 +660,16 @@ def main(
                     sonic_env.update_reward()
 
                     # Record frame with newly rendered image
-                    if exporter is not None and 0 <= agent._data_row_index < len(ep_data):
-                        source_row = ep_data.iloc[agent._data_row_index]
+                    # get_action consumed row _data_row_index - 1: pair it with the observation it was applied to
+                    if exporter is not None and 1 <= agent._data_row_index <= len(ep_data):
+                        source_row = ep_data.iloc[agent._data_row_index - 1]
                         registered_features = set(exporter.features.keys())
                         frame = _build_frame(observation_before_step, source_row, registered_features)
                         exporter.add_frame(frame)
+                    if psi0_writer is not None:
+                        _add_psi0_frame(psi0_writer, agent, robot, observation_before_step)
 
-                    if terminated or truncated:
+                    if (terminated and stop_on_success) or truncated:
                         break
 
                     # Update step progress bar at control rate (50Hz)
@@ -655,13 +685,21 @@ def main(
             finally:
                 step_pbar.close()
 
-            # Save episode only if successful
+            # Save the episode if it succeeded, or regardless with --save-failed
             success = getattr(sonic_env, "_success", False)
-            if exporter is not None and success:
+            if psi0_writer is not None:
+                if success or save_failed:
+                    psi0_writer.save_episode(task.instruction, saved_env_conf)
+                    episodes_saved += 1
+                    print(f"[Record] Episode {episodes_saved} saved (success={success})")
+                else:
+                    psi0_writer.discard_episode()
+                    print(f"[Record] Episode {ep_idx} failed - skipping recording")
+            elif exporter is not None and (success or save_failed):
                 exporter.save_episode()
                 _save_episode_env_config(exporter, saved_env_conf, episodes_saved)
                 episodes_saved += 1
-                print(f"[Record] Episode {episodes_saved} saved")
+                print(f"[Record] Episode {episodes_saved} saved (success={success})")
             elif exporter is not None and not success:
                 exporter.skip_and_start_new_episode()
                 # Clean up failed episode's MP4 file
@@ -707,10 +745,17 @@ def main(
             results[ep_idx] = success
 
             # Save result immediately to replay.txt
-            replay_txt = Path(data_dir) / "meta" / "replay.txt"
             replay_txt.parent.mkdir(parents=True, exist_ok=True)
             with open(replay_txt, "a") as f:
                 f.write(f"{ep_idx}: {success}\n")
+            # reward trace summary, to see how close a failed replay came (e.g. lift height ratio)
+            with open(replay_txt.with_name("rewards.jsonl"), "a") as f:
+                f.write(json.dumps({
+                    "episode": ep_idx, "success": bool(success), "steps": len(rewards), "data_rows": len(ep_data),
+                    "max": max(rewards, default=0.0), "argmax": int(np.argmax(rewards)) if rewards else -1,
+                    "final": rewards[-1] if rewards else 0.0,
+                    "at_data_end": rewards[min(len(ep_data), len(rewards)) - 1] if rewards else 0.0,
+                }) + "\n")
 
             completed = len(results)
             sr = sum(results.values()) / completed
@@ -728,7 +773,6 @@ def main(
             print(f"{'='*50}")
 
             # Rewrite replay.txt with sorted results to ensure consistency
-            replay_txt = Path(data_dir) / "meta" / "replay.txt"
             with open(replay_txt, "w") as f:
                 for idx, success in sorted(results.items()):
                     f.write(f"{idx}: {success}\n")
@@ -743,6 +787,9 @@ def main(
     finally:
         if exporter is not None:
             exporter.stop_video_writers()
+        if psi0_writer is not None:
+            psi0_writer.close()
+        if exporter is not None or psi0_writer is not None:
             print(f"[Record] Done. {episodes_saved} episodes saved to {save_dir}")
         env.close()
         agent.close()
