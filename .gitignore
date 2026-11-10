@@ -92,3 +92,6 @@ MUJOCO_LOG.TXT
 .claude/*
 .runtime-state/
 .robo-nix/
+
+.isaac-cache/
+logs

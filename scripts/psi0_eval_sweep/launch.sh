@@ -19,7 +19,9 @@
 #   LEVELS           space separated dr levels (default: dr-level-0 dr-level-1 dr-level-2 dr-level-hard)
 #   GPUS             comma separated GPUs for servers and clients (default: all). Pass the free ones
 #                    when a training run is using the others.
-#   LANES            number of server + client pairs (default: 2 per GPU)
+#   LANES            number of server + client pairs (default: 1 per GPU; 2 per GPU oversubscribed a
+#                    128-core host with the decoupled-WBC clients)
+#   CLIENT_THREADS   OMP_NUM_THREADS / MKL_NUM_THREADS inside each eval client container (default: 8)
 #   BASE_PORT        lane w listens on BASE_PORT + w (default: 22100)
 #   EPISODES         episodes per job; fewer finished ones mark the cell failed (default: 10)
 #   SERVER_ARGS      serve_psi0_simple options (default: --action-exec-horizon=24 --rtc)
@@ -48,7 +50,8 @@ LEVELS=${LEVELS:-dr-level-0 dr-level-1 dr-level-2 dr-level-hard}
 GPUS=${GPUS:-$(nvidia-smi --query-gpu=index --format=csv,noheader | paste -sd,)}
 IFS=, read -ra GPU_LIST <<<"$GPUS"
 N_GPUS=${#GPU_LIST[@]}
-LANES=${LANES:-$((2 * N_GPUS))}
+LANES=${LANES:-$N_GPUS}
+CLIENT_THREADS=${CLIENT_THREADS:-8}
 BASE_PORT=${BASE_PORT:-22100}
 EPISODES=${EPISODES:-10}
 SERVER_ARGS=${SERVER_ARGS:---action-exec-horizon=24 --rtc}
@@ -93,7 +96,7 @@ printf '%s\n' "${JOBS[@]}" > "$LOG_ROOT/jobs.txt"
 cp "$LOG_ROOT/jobs.txt" "$LOG_ROOT/queue.txt"
 
 LANE_ENV=$(printf '%q=%q ' ROOT_DIR "$ROOT_DIR" LOG_ROOT "$LOG_ROOT" EVAL_SRC "$EVAL_SRC" IMAGE_DATE "$IMAGE_DATE" \
-  ISAAC_RENDER "$ISAAC_RENDER" EXTRA_EVAL_ARGS "$EXTRA_EVAL_ARGS")
+  ISAAC_RENDER "$ISAAC_RENDER" EXTRA_EVAL_ARGS "$EXTRA_EVAL_ARGS" CLIENT_THREADS "$CLIENT_THREADS")
 
 for ((w = 0; w < LANES; w++)); do
   PORT=$((BASE_PORT + w)); SGPU=${GPU_LIST[w % N_GPUS]}; CGPU=${GPU_LIST[(w + N_GPUS / 2) % N_GPUS]}

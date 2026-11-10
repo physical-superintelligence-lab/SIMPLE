@@ -10,6 +10,7 @@
 set -uo pipefail
 LANE=$1 PORT=$2 CLIENT_GPU=$3 SERVER_PANE=$4
 EXTRA_EVAL_ARGS=${EXTRA_EVAL_ARGS:-}
+CLIENT_THREADS=${CLIENT_THREADS:-8}
 : "${ROOT_DIR:?}" "${LOG_ROOT:?}" "${EVAL_SRC:?}" "${IMAGE_DATE:?}" "${ISAAC_RENDER:?}"
 cd "$ROOT_DIR"
 QUEUE=$LOG_ROOT/queue.txt
@@ -47,6 +48,7 @@ while true; do
   echo "running lane=$LANE port=$PORT gpu=$CLIENT_GPU eval_dir=$EVAL_DIR start=$(date -u +%FT%TZ)" > "$STATUS/${TASK}__${DR}"
   echo "[lane $LANE] $(date -u +%T) START $TASK $DR"
   script -qfec "DATE=$IMAGE_DATE GPUs=$CLIENT_GPU docker compose run --rm \
+-e OMP_NUM_THREADS=$CLIENT_THREADS -e MKL_NUM_THREADS=$CLIENT_THREADS \
 -v $EVAL_SRC:/workspace/simple/data/evals/simple-eval:ro $ARGS $EXTRA_EVAL_ARGS" "$LOG_DIR/eval_client_$DR.log" > /dev/null
   rc=$?
   echo "done rc=$rc lane=$LANE eval_dir=$EVAL_DIR end=$(date -u +%FT%TZ)" > "$STATUS/${TASK}__${DR}"
