@@ -524,5 +524,13 @@
   "python-envs.defaultPackageManager": "ms-python.python:pip",
   "trae.tab.enableRename": false,
   "trae.tab.enableAutoImport": false,
-  "cmake.configureOnOpen": false
+  "cmake.configureOnOpen": false,
+  "files.associations": {
+    "*.json": "jsonc",
+    "*.ipp": "cpp",
+    "*.tcc": "cpp",
+    "vector": "cpp",
+    "rope": "cpp"
+  },
+  "python.terminal.useEnvFile": true
 }

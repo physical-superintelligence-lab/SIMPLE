@@ -11,7 +11,9 @@
 #   ./simple.sh python [-e K=V]... SCRIPT [args]
 #                                     run SCRIPT with SIMPLE's Python from /workspace/simple; a host
 #                                     path under $WORKSPACE becomes its /workspace/user/... path,
-#                                     and a repo-relative path such as scripts/x.py works as is
+#                                     and a repo-relative path such as scripts/x.py works as is;
+#                                     the host's $DISPLAY is passed in, and a local X server is
+#                                     told to accept the container's root user, so GUIs can open
 #   ./simple.sh exec CMD [args]       run any command in /workspace/simple
 #   ./simple.sh download [--list|--verify] [--force] [args]
 #                                     pre-download the eval assets into $DATA_DIR (default ./data);
@@ -48,7 +50,7 @@ else
   echo "warning: $ENV_FILE not found (copy .env.sample); using defaults" >&2
 fi
 
-DATE="${DATE:-latest}"
+DATE="${DATE:-20261027}"
 CONTAINER="${CONTAINER:-simple}"
 WORKSPACE="${WORKSPACE:-workspace}"
 [[ "$WORKSPACE" == /* ]] || WORKSPACE="$SCRIPT_DIR/$WORKSPACE"
@@ -126,6 +128,16 @@ cmd_start() {
   echo "started $CONTAINER (image simple:$DATE, GPU $gpus, $WORKSPACE_DIR -> /workspace/user)"
 }
 
+# The container's DISPLAY is frozen at `start`, so pass the current one, empty if there is none.
+# It runs as root, which the X server refuses until allowed; the grant lasts until X restarts.
+display_env() {
+  local display="${DISPLAY:-}"
+  if [[ "$display" == :* ]] && command -v xhost >/dev/null; then
+    xhost +SI:localuser:root >/dev/null 2>&1 || echo "warning: xhost failed on $display; GUIs may not open" >&2
+  fi
+  DISPLAY_ENV=(-e "DISPLAY=$display")
+}
+
 cmd_python() {
   local extra=()
   while [[ $# -gt 0 ]]; do
@@ -139,7 +151,8 @@ cmd_python() {
   local args=()
   if [[ "$1" == -* ]]; then args=("$@")   # python -m / -c ...: pass through
   else args=("$(to_container "$1")" "${@:2}"); fi
-  run_in_container "${TTY[@]}" -w /workspace/simple "${extra[@]}" \
+  display_env
+  run_in_container "${TTY[@]}" -w /workspace/simple "${DISPLAY_ENV[@]}" "${extra[@]}" \
     "$CONTAINER" /workspace/simple/.venv/bin/python "${args[@]}"
 }
 

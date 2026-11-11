@@ -8,8 +8,8 @@ from typing import Dict, Tuple
 import carb
 import carb.settings
 import numpy as np
-import omni.isaac.core.utils.prims as isaacsim_prims
-import omni.isaac.core.utils.stage as isaacsim_stage
+import isaacsim.core.utils.prims as isaacsim_prims
+import isaacsim.core.utils.stage as isaacsim_stage
 import omni.kit.commands
 import omni.kit.primitive.mesh
 import omni.replicator.core as rep
@@ -17,15 +17,17 @@ import omni.usd
 import transforms3d as t3d
 from curobo.types.state import JointState
 from isaacsim.util.debug_draw import _debug_draw
-from omni.isaac.core.objects import GroundPlane, cuboid, sphere
-from omni.isaac.core.prims import GeometryPrim, RigidPrim, XFormPrim
-from omni.isaac.core.robots.robot import Robot as IsaacRobot
+from isaacsim.core.api.objects import GroundPlane, cuboid, sphere
+from isaacsim.core.api.robots.robot import Robot as IsaacRobot
+from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim
+from isaacsim.core.prims import SingleRigidPrim as RigidPrim
+from isaacsim.core.prims import SingleXFormPrim as XFormPrim
 
 from isaacsim.core.prims import SingleArticulation
-from omni.isaac.core.utils.prims import get_prim_at_path
-from omni.isaac.core.world.world import World
+from isaacsim.core.utils.prims import get_prim_at_path
+from isaacsim.core.api.world.world import World
 # from omni.isaac.core.materials import VisualMaterial
-from omni.isaac.sensor import Camera as IssacCamera
+from isaacsim.sensors.camera import Camera as IssacCamera
 from omni.kit.material.library import create_mdl_material
 from pxr import Gf, Sdf, Semantics, Tf, Usd, UsdGeom, UsdPhysics, UsdShade
 from scipy.spatial.transform import Rotation
@@ -64,8 +66,8 @@ from simple.utils import env_flag, resolve_data_path
 # RTX subframes for a render that follows a gap: when the MuJoCo state advanced by more than one
 # control step since the last Isaac render (e.g. the eval's --isaac-render=on-query renders once per
 # policy query, ~24 control steps apart). More than 1 lets the RTX temporal history settle on the new
-# state, closer to every-step rendering but slower: 16 cut the closed-loop eval from ~25 to ~9 steps/s
-# (see docs/plan_eval_render_on_query.md). Renders without a gap always use 1.
+# state, closer to every-step rendering but slower: 16 cut the closed-loop eval from ~25 to ~9 steps/s.
+# Renders without a gap always use 1.
 _SPARSE_RENDER_RT_SUBFRAMES = 1
 
 
@@ -107,7 +109,7 @@ def compute_obb(bbox_cache: UsdGeom.BBoxCache, prim_path: str) -> Tuple[np.ndarr
 
     .. code-block:: python
 
-        >>> import omni.isaac.core.utils.bounds as bounds_utils
+        >>> import isaacsim.core.utils.bounds as bounds_utils
         >>>
         >>> # 1 stage unit length cube centered at (0.0, 0.0, 0.0)
         >>> cache = bounds_utils.create_bbox_cache()
@@ -177,7 +179,7 @@ def get_obb_corners(centroid: np.ndarray, axes: np.ndarray, half_extent: np.ndar
 
     .. code-block:: python
 
-        >>> import omni.isaac.core.utils.bounds as bounds_utils
+        >>> import isaacsim.core.utils.bounds as bounds_utils
         >>>
         >>> cache = bounds_utils.create_bbox_cache()
         >>> centroid, axes, half_extent = bounds_utils.compute_obb(cache, prim_path="/World/Cube")
@@ -259,7 +261,9 @@ class IsaacSimSimulator(Simulator):
             "/exts/isaacsim.core.throttling/enable_async",
             not disable_throttling_async,
         )
-        rep.settings.set_render_rtx_realtime()
+        # Kit 110's real-time mode is the RTX real-time path tracer, which is denoised by DLSS;
+        # the default FXAA leaves every frame as raw path-traced noise.
+        rep.settings.set_render_rtx_realtime(antialiasing="DLSS")
         # rep.orchestrator.set_capture_on_play(False) # Data will be captured manually using step
         # carb.settings.get_settings().set_bool("/omni/replicator/captureMotionBlur", 0)
         # carb.settings.get_settings().set_bool("/rtx/post/motionblur/enabled", 0)   
@@ -369,7 +373,10 @@ class IsaacSimSimulator(Simulator):
                 data_dir = resolve_data_path(scene.data_dir)
 
             env_url = os.path.abspath(f"{data_dir}/{scene.name}.usd")
-            isaacsim_stage.add_reference_to_stage(usd_path=env_url, prim_path=scene_prim_path)
+            # Plain USD reference, bypassing the metrics assembler that add_reference_to_stage routes
+            # divergent-unit files through: some HSSD scenes are in centimeters, and scene.conf["scale"]
+            # already converts them, so the assembler's extra 0.01 scale would shrink the room 100x.
+            self.world.stage.DefinePrim(scene_prim_path, "Xform").GetReferences().AddReference(env_url)
             scene_prim = self.world.stage.GetPrimAtPath(scene_prim_path)
 
             surface_prim = self.world.stage.GetPrimAtPath(surface_prim_path)
@@ -381,13 +388,13 @@ class IsaacSimSimulator(Simulator):
 
             if not scene_prim.GetAttribute("xformOp:translate"):
                 UsdGeom.Xformable(scene_prim).AddTranslateOp() # type: ignore
-            if not scene_prim.GetAttribute("xformOp:rotateXYZ"):
-                UsdGeom.Xformable(scene_prim).AddRotateXYZOp() # type: ignore
+            if not scene_prim.GetAttribute("xformOp:orient"):
+                UsdGeom.Xformable(scene_prim).AddOrientOp() # type: ignore
             if not scene_prim.GetAttribute("xformOp:scale"):
                 UsdGeom.Xformable(scene_prim).AddScaleOp() # type: ignore
 
             # scene: HssdSuite = self.task.layout.scene
-            scene_prim.GetAttribute("xformOp:rotateXYZ").Set(tuple(scene.center_orientation))
+            self.__set_scene_orientation(scene_prim, scene.center_orientation)
 
             scale = scene.conf["scale"]
             scene_prim.GetAttribute("xformOp:scale").Set((scale, scale, scale))
@@ -404,7 +411,7 @@ class IsaacSimSimulator(Simulator):
             scale = scene.conf["scale"]
             scene_prim.GetAttribute("xformOp:scale").Set((scale, scale, scale))
             scene_prim.GetAttribute("xformOp:translate").Set((0,0,0))
-            scene_prim.GetAttribute("xformOp:rotateXYZ").Set(tuple(scene.center_orientation))
+            self.__set_scene_orientation(scene_prim, scene.center_orientation)
             surface_obb = self.calc_surface_center(surface_prim)
 
             if has_surface2:
@@ -611,15 +618,23 @@ class IsaacSimSimulator(Simulator):
         object_usd_path = getattr(object_info.asset, "usd_path", None)
         if object_usd_path:
             object_usd_path = os.path.abspath(resolve_data_path(object_usd_path, auto_download=True))
-            isaacsim_stage.add_reference_to_stage(usd_path=object_usd_path, prim_path=object_prim_path)
+            # Plain USD reference, bypassing the metrics assembler that add_reference_to_stage
+            # routes divergent-unit files through: the object USDs claim Y-up / centimeters, but
+            # their geometry is Z-up meters (as in MuJoCo), so its rotateX + 0.01 scale correction
+            # would tip every object over and shrink it 100x.
+            self.world.stage.DefinePrim(object_prim_path, "Xform").GetReferences().AddReference(object_usd_path)
 
             obj_xform = XFormPrim(prim_path=object_prim_path)
             geom_prim_path = f'{object_prim_path}/Meshes'
             obj_geom = GeometryPrim(prim_path=geom_prim_path)
             obj_rigid = RigidPrim(prim_path=geom_prim_path)
             obj_rigid.disable_rigid_body_physics()
-            obj_collision_geom = GeometryPrim(f"{geom_prim_path}/collision")
-            obj_collision_geom.set_collision_enabled(False)
+            # MuJoCo simulates the objects; IsaacSim only renders them. Remove the collision schemas
+            # instead of just disabling collision, so PhysX does not parse the collision mesh at all
+            # (the basket's OBJ-referenced one has no points of its own and logs an error).
+            obj_collision_prim = self.world.stage.GetPrimAtPath(f"{geom_prim_path}/collision")
+            obj_collision_prim.RemoveAPI(UsdPhysics.MeshCollisionAPI)
+            obj_collision_prim.RemoveAPI(UsdPhysics.CollisionAPI)
         elif hasattr(object_info.asset, "size"):
             # Primitive assets such as simple.assets.primitive.Cube are valid in
             # MuJoCo but do not carry a USD file. Create an IsaacSim visual
@@ -931,7 +946,7 @@ class IsaacSimSimulator(Simulator):
         )
         self.articulated_objects[obj_name].set_enabled_self_collisions(False)
 
-        from omni.isaac.core.prims import GeometryPrim
+        from isaacsim.core.prims import SingleGeometryPrim as GeometryPrim
         from pxr import Usd
 
         articulation_prim = self.articulated_objects[obj_name].prim.GetParent()
@@ -1097,8 +1112,38 @@ class IsaacSimSimulator(Simulator):
             render_products[cam_name] = raw_rgb
         return render_products
     
+    def __set_scene_orientation(self, scene_prim: Usd.Prim, center_orientation) -> None:
+        """Author the scene's ``center_orientation`` as its ``xformOp:orient``.
+
+        ``center_orientation`` is a rotateXYZ (degrees) of the raw, Y-up HSSD USD. Isaac Sim's
+        metrics assembler already turns that file Z-up on reference, with a
+        ``xformOp:*:unitsResolve`` op that sits inside ``xformOp:orient``; factor it out so it is
+        not applied twice.
+        """
+        euler = np.asarray(center_orientation, dtype=np.float64).copy()
+        # Isaac Sim 6.2's RTX loses the GPU device (VK_ERROR_DEVICE_LOST on the first frame) when
+        # an HSSD scene is turned by an exact quarter turn about Z; 0.01 deg off renders fine.
+        if abs(euler[2] % 180.0 - 90.0) < 1e-6:
+            euler[2] += 1e-2
+        target = Gf.Matrix4d(1.0)
+        for axis, angle in zip((Gf.Vec3d.XAxis(), Gf.Vec3d.YAxis(), Gf.Vec3d.ZAxis()), euler):
+            target = target * Gf.Matrix4d().SetRotate(Gf.Rotation(axis, float(angle)))
+
+        xformable = UsdGeom.Xformable(scene_prim)
+        ops = xformable.GetOrderedXformOps()
+        orient_index = [op.GetOpName() for op in ops].index("xformOp:orient")
+        units_resolve = Gf.Matrix4d(1.0)
+        for op in ops[orient_index + 1:]:
+            if op.GetOpName().endswith(":unitsResolve") and op.GetOpType() != UsdGeom.XformOp.TypeScale:
+                units_resolve = op.GetOpTransform(Usd.TimeCode.Default()) * units_resolve
+        quat = (units_resolve.GetInverse() * target).ExtractRotationQuat()
+
+        orient_attr = scene_prim.GetAttribute("xformOp:orient")
+        quat_type = Gf.Quatf if orient_attr.GetTypeName() == Sdf.ValueTypeNames.Quatf else Gf.Quatd
+        orient_attr.Set(quat_type(quat.GetReal(), *quat.GetImaginary()))
+
     def calc_surface_center(self, surface_prim):
-        from omni.isaac.core.utils.bounds import (compute_combined_aabb,
+        from isaacsim.core.utils.bounds import (compute_combined_aabb,
                                                   create_bbox_cache)
         bb_cache = create_bbox_cache()
         centroid, axes, half_extent = compute_obb(bb_cache, surface_prim.GetPrimPath())

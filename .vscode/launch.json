@@ -209,7 +209,7 @@
         // "--max-episode-steps=5000",
         // "--data-format=rlds-numpy",
         "--data-format=lerobot",
-        "--data-dir=data/evals/simple/G1WholebodyBendPickMP-v0/level-0",
+        "--data-dir=data/SIMPLE-eval/G1WholebodyBendPickMP-v0/dr-level-0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0/level-1",
         // "--data-dir=data/eval_dr/simple/G1WholebodyTabletopGraspMP-v0/level-2",
         // "--data-dir=data/simple/learn/G1WholebodyTabletopGrasp-v0",
@@ -367,18 +367,19 @@
         // "--max-episode-steps=500", //for g1_bend_pick
         // "--max-episode-steps=800", //for g1_handover
         "--data-format=lerobot",
-        // "--data-dir=data/evals/simple-eval/G1WholebodyBendPickMP-v0/level-0",
-        "--data-dir=data/evals/simple/G1WholebodyHandoverTeleop-v0/level-0"
-        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPickTeleop-v0/level-0",
+        // "--data-dir=data/SIMPLE-eval/G1WholebodyBendPickMP-v0/dr-level-0",
+        "--data-dir=data/SIMPLE-eval/G1WholebodyLocomotionPickBetweenTablesTeleop-v0/dr-level-0",
+        "--max-episode-steps=1000",
+        // "--data-dir=data/SIMPLE-eval/G1WholebodyXMoveBendPickTeleop-v0/dr-level-0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
         // "--data-dir=data/eval_dr/simple/G1WholebodyBendPickMP-v0",
-        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPick-v0/level-0",
+        // "--data-dir=data/SIMPLE-eval/G1WholebodyXMoveBendPick-v0/dr-level-0",
         // "--data-dir=data/evals/simple/G1WholebodyXMovePick-v0/dr-level-0",
         // "--data-dir=data/replay_decoupled_wbc/simple/G1WholebodyXMovePick-v0/level-0",
         // "--data-dir=data/eval/simple/G1WholebodyXMovePick-v0/level-0",
         // "--data-dir=data/G1WholebodyBendPick-v1",
         // "--data-dir=data/G1WholebodyHandoverSonic-v0",
-        // "--data-dir=data/evals/simple-eval/G1WholebodyXMoveBendPickTeleop-v0/level-2",
+        // "--data-dir=data/SIMPLE-eval/G1WholebodyXMoveBendPickTeleop-v0/dr-level-2",
         // "--data-dir=data/G1WholebodyXMovePick-v0",
         // "--data-dir=data/simple/learn/G1WholebodyHandoverSonic-v0",
         // "--data-dir=data/G1WholebodyLocomotionPickBetweenTablesSonic-v0/G1WholebodyLocomotionPickBetweenTablesSonic-v0_postprocess/"
@@ -708,11 +709,11 @@
       ]
     },
     {
-      "name": "postprocess psi0 (sonic)",
+      "name": "postprocess psi0 (decoupled wbc)",
       "type": "debugpy",
       "request": "launch",
       "python": "${workspaceFolder}/.venv/bin/python",
-      "program": "${workspaceFolder}/scripts/postprocess_psi0_sonic.py",
+      "program": "${workspaceFolder}/scripts/postprocess_psi0_decoupled_wbc.py",
       "console": "integratedTerminal",
       "args": [
         // "--sim-root=data/replay_data/replay_decoupled_wbc*/simple/G1WholebodyXMoveBendPickTeleop-v0/level-0/", // handle multi dirs

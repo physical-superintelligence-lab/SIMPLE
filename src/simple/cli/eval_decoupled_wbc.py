@@ -267,12 +267,12 @@ def _run_eval_worker(
             return state_dict, episode
 
     elif data_format == "lerobot":
-        from lerobot.datasets.lerobot_dataset import LeRobotDataset
-
-        from simple.datasets.lerobot import get_episode_lerobot
+        # LeRobotParquetDataset, not lerobot's LeRobotDataset: the latter can't read
+        # with datasets>=4 (torch.stack on a Column), and eval only needs env configs.
+        from simple.datasets.lerobot import LeRobotParquetDataset, get_episode_lerobot
 
         print("repoid+root", env_id, data_dir)
-        dataset = LeRobotDataset(repo_id=env_id, root=data_dir, video_backend="pyav")
+        dataset = LeRobotParquetDataset(data_dir)
         dataset_size = dataset.num_episodes
         render_hz = dataset.meta.fps
         print(f"loaded dataset with {dataset_size} episodes.")

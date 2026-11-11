@@ -2,6 +2,12 @@
 # SPDX-License-Identifier: MIT
 
 __version__ = "0.1.0"
+
+# Exit with upgrade instructions in a pre-upgrade environment (Python 3.10 / Isaac Sim 4.5 / MuJoCo 3.3).
+from simple._env_check import check_environment as _check_environment
+
+_check_environment()
+
 __all__ = ["__version__", "EvalConfig", "EvalEpisodeResult", "EvalResult", "EnvRunner", "evaluate_policy", "run_with_tui"]
 
 

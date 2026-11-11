@@ -65,7 +65,7 @@ It is a `simple` simulation environment supports:
 
 ## System Requirements
 
-SIMPLE is built on top of `IsaacSim 4.5` and `MuJoCo 3.3`, and requires an RTX-class NVIDIA GPU on Ubuntu 22.04.
+This branch (`isaacsim-6.2-mujoco-3.12`) is built on top of `IsaacSim 6.2` (with `IsaacLab 3.0`) and `MuJoCo 3.12` on Python 3.12, and requires an RTX-class NVIDIA GPU with host driver >= 570.169 (the Isaac Sim 6.x images are Ubuntu 24.04). The `main` branch stays on `IsaacSim 4.5` and `MuJoCo 3.3`.
 
 > 📖 **See the full hardware and software requirements at [psi-lab.ai/SIMPLE/docs](https://psi-lab.ai/SIMPLE/docs/).**
 
@@ -129,7 +129,7 @@ UV_HTTP_TIMEOUT=3000 GIT_LFS_SKIP_SMUDGE=1 uv sync --all-groups --index-strategy
 > uv reads it as a second, legacy copy of the package. Delete it and re-run the sync:
 >
 > ```
-> rm -f .venv/lib/python3.10/site-packages/lerobot-*.egg-info
+> rm -f .venv/lib/python3.12/site-packages/lerobot-*.egg-info
 > ```
 
 Install CuRobo
@@ -192,12 +192,12 @@ docker pull ghcr.io/physical-superintelligence-lab/psi0:latest
 docker tag  ghcr.io/physical-superintelligence-lab/psi0:latest psi:train
 
 # SIMPLE client image
-docker pull ghcr.io/physical-superintelligence-lab/simple:latest
-docker tag  ghcr.io/physical-superintelligence-lab/simple:latest simple:latest
+docker pull ghcr.io/physical-superintelligence-lab/simple:20261027
+docker tag  ghcr.io/physical-superintelligence-lab/simple:20261027 simple:20261027
 ```
 
 The retags matter: each `docker-compose.yml` refers to its image by a bare local
-tag (`psi:${PSI_TAG:-train}` and `simple:${DATE:-latest}`), so **neither `docker
+tag (`psi:${PSI_TAG:-train}` and `simple:${DATE:-20261027}`), so **neither `docker
 compose run` below pulls from ghcr on its own** — without the retag the Psi-0
 service cannot resolve its image and the SIMPLE service rebuilds from source
 instead.
@@ -222,7 +222,7 @@ docker compose run --rm serve-psi0-sonic-http \
 
 Wait for `Server listens on 0.0.0.0:8014`, then leave it running.
 
-**Terminal B — evaluation client** (`simple:latest`), from the SIMPLE repository root:
+**Terminal B — evaluation client** (`simple:20261027`), from the SIMPLE repository root:
 
 ```bash
 GPUs=1 docker compose run --rm eval-sonic-wbc \

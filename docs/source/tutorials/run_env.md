@@ -7,8 +7,11 @@ Run with default parameters:
 ```bash
 python scripts/test_env.py
 ```
-By default, a video result will be recoded under `./data/output/test_env`.
+Pass `--record` to save a video under `./data/output/test_env`.
 You can open this folder to check the simulation results.
+
+The script runs headless with WebRTC streaming by default. Pass `--no-headless` to open the Isaac Sim
+GUI (WebRTC is then off unless you add `--webrtc`).
 
 If you want to video be played using a `libx264` compatitable player. e.g., `VSCode`, please install `ffmpeg`
 ```bash

@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
 from simple.agents.pico_decoupled_agent import PicoDecoupledAgent
 from simple.cli._decoupled_wbc_recording import (
+    create_gr00t_exporter,
     set_ego_view_feature_shape,
     validate_existing_ego_view_feature_shape,
 )
@@ -54,7 +55,6 @@ def _init_exporter(
     ego_view_shape=None,
 ):
     """Create a Gr00tDataExporter for LeRobot-format recording."""
-    from decoupled_wbc.data.exporter import Gr00tDataExporter
     from decoupled_wbc.data.utils import get_dataset_features, get_modality_config
 
     features = get_dataset_features(robot_model)
@@ -77,7 +77,7 @@ def _init_exporter(
             "names": obj_names_flat,
         }
 
-    exporter = Gr00tDataExporter.create(
+    exporter = create_gr00t_exporter(
         save_root=save_dir,
         fps=50,
         features=features,

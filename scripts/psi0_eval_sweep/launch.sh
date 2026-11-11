@@ -28,7 +28,7 @@
 #   EXTRA_EVAL_ARGS  appended to every eval client command
 #   EVAL_SRC         eval set, mounted read-only into the container (default: /hfm/data/simple/SIMPLE-eval)
 #   PSI_DIR          psi repo, holds .venv-psi (default: /hfm/songlin/psi)
-#   IMAGE_DATE       docker image tag, i.e. simple:$IMAGE_DATE (default: 260829)
+#   IMAGE_DATE       docker image tag, i.e. simple:$IMAGE_DATE (default: 20261027)
 #   ISAAC_RENDER     see launch_psi0_eval_pair.sh (default: on-query)
 #   STAMP            log folder name under logs/ (default: <time>-<NAME>-ckpt<CKPT_STEP>)
 #   DRY_RUN          1: print the jobs and lanes, start nothing
@@ -43,7 +43,7 @@ ROOT_DIR=$(cd "$HERE/../.." && pwd)
 RUN_DIR=${RUN_DIR%/}
 PSI_DIR=${PSI_DIR:-/hfm/songlin/psi}
 EVAL_SRC=${EVAL_SRC:-/hfm/data/simple/SIMPLE-eval}
-IMAGE_DATE=${IMAGE_DATE:-260829}
+IMAGE_DATE=${IMAGE_DATE:-20261027}
 ISAAC_RENDER=${ISAAC_RENDER:-on-query}
 TASK_FILTER=${TASK_FILTER:--v0\$}
 LEVELS=${LEVELS:-dr-level-0 dr-level-1 dr-level-2 dr-level-hard}

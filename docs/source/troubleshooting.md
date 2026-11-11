@@ -218,13 +218,13 @@
 
     **Solution**
     ```
-    uv sync --group lerobot --index-strategy unsafe-best-match
+    uv sync --extra lerobot --index-strategy unsafe-best-match
     ```
+    (`lerobot` is an optional extra since the Isaac Sim 6.2 upgrade; it used to be a dependency group.)
 
 9. 2025-10-18 22:38:03 [33,607ms] [Error] [omni.kit.app._impl] [py stderr]: TypeError: array.__init__() got an unexpected keyword argument 'owner'
     
     **Solution**
-    Downgrade warp-lang
-    ```
-    uv pip install "warp-lang==1.7.0" --index-strategy unsafe-best-match
-    ```
+    This was an Isaac Sim 4.5 issue (fixed by downgrading to `warp-lang==1.7.0`). Since the Isaac Sim 6.2
+    upgrade, do **not** downgrade: Isaac Lab 3.0 requires `warp-lang==1.17.0` from the lock. If you hit it
+    now, re-sync the environment (`uv sync --all-groups --index-strategy unsafe-best-match`).

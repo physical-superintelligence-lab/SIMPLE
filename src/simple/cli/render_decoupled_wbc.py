@@ -33,6 +33,7 @@ from tqdm import tqdm
 import tyro
 import simple.envs as _  # import all envs
 from simple.cli._decoupled_wbc_recording import (
+    create_gr00t_exporter,
     set_ego_view_feature_shape,
     validate_existing_ego_view_feature_shape,
 )
@@ -90,7 +91,6 @@ def _init_replay_exporter(
     from decoupled_wbc.control.robot_model.instantiation.g1 import (
         instantiate_g1_robot_model,
     )
-    from decoupled_wbc.data.exporter import Gr00tDataExporter
     from decoupled_wbc.data.utils import get_dataset_features, get_modality_config
 
     if source_features is not None:
@@ -132,7 +132,7 @@ def _init_replay_exporter(
                 "names": obj_names_flat,
             }
 
-    exporter = Gr00tDataExporter.create(
+    exporter = create_gr00t_exporter(
         save_root=save_dir,
         fps=fps,
         features=features,

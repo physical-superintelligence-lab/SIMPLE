@@ -97,7 +97,7 @@ class BaseDualSim(gym.Env):
                 # enabled at startup by create_simulation_app().
                 _SIMULATION_APP.set_setting('/app/window/drawMouse', True)
             except ImportError:
-                from omni.isaac.core.utils.extensions import enable_extension
+                from isaacsim.core.utils.extensions import enable_extension
                 # Isaac Sim 4.2.0 behavior
                 _SIMULATION_APP.set_setting('/app/window/drawMouse', True)
                 _SIMULATION_APP.set_setting('/app/livestream/proto', 'ws')

@@ -6,8 +6,14 @@ If you just want to run SIMPLE without building, pull the prebuilt minimal
 image from DockerHub:
 
 ```
-docker pull ghcr.io/physical-superintelligence-lab/simple:latest
+docker pull ghcr.io/physical-superintelligence-lab/simple:20261027
+docker tag ghcr.io/physical-superintelligence-lab/simple:20261027 simple:20261027
 ```
+
+The `docker tag` is what lets `docker compose` find it: `docker-compose.yml` refers to the image as
+`simple:${DATE:-20261027}`. The image is Isaac Sim 6.2 / MuJoCo 3.12 / Python 3.12 and needs an NVIDIA
+driver >= 570.169. Isaac Sim 4.5 images (`simple:20260830`, `simple:260829` and older) can't run this branch; use the `main`
+branch for those.
 
 Available tags and image history: https://github.com/physical-superintelligence-lab/SIMPLE/pkgs/container/simple
 

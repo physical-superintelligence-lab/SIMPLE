@@ -25,7 +25,7 @@
 #   OUT             output root under data/ (default data/replays/dwbc-merged-<stamp>)
 #   GPUS            GPU list for docker.sh (default 0,1,2,3,4,5,6,7)
 #   SHARDS_PER_GPU  default 2
-#   DATE            docker image tag simple:$DATE (default ghcr-20260830)
+#   DATE            docker image tag simple:$DATE (default 20261027)
 #   SUMMARY_ONLY=1  skip replays, only summarize OUT
 set -uo pipefail
 
@@ -36,7 +36,7 @@ DATA=${DATA:-data/SIMPLE-decoupled-wbc}
 OUT=${OUT:-data/replays/dwbc-merged-$(date +%y%m%d%H%M)}
 GPUS=${GPUS:-0,1,2,3,4,5,6,7}
 SHARDS_PER_GPU=${SHARDS_PER_GPU:-2}
-export DATE=${DATE:-ghcr-20260830}
+export DATE=${DATE:-20261027}
 SUMMARY_ONLY=${SUMMARY_ONLY:-0}
 FILTERS=("$@")
 

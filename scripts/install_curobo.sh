@@ -65,10 +65,17 @@ if [[ -n "${IN_NIX_SHELL:-}" ]]; then
     exit 1
   fi
 else
-  # Docker environment: skip nix-specific checks, but ensure TORCH_CUDA_ARCH_LIST is set
+  # Outside nix (e.g. Docker): prefer the local GPU's compute capability; fall back to
+  # 8.0+PTX when no GPU is visible (e.g. during `docker build`).
   if [[ -z "${TORCH_CUDA_ARCH_LIST:-}" ]]; then
-    echo "[install_curobo] TORCH_CUDA_ARCH_LIST not set, using default 8.0+PTX"
-    export TORCH_CUDA_ARCH_LIST="8.0+PTX"
+    detected_arch="$("$VENV_PYTHON" -c 'import torch; print("%d.%d" % torch.cuda.get_device_capability())' 2>/dev/null || true)"
+    if [[ -n "$detected_arch" ]]; then
+      echo "[install_curobo] TORCH_CUDA_ARCH_LIST not set, using detected GPU arch $detected_arch"
+      export TORCH_CUDA_ARCH_LIST="$detected_arch"
+    else
+      echo "[install_curobo] TORCH_CUDA_ARCH_LIST not set, using default 8.0+PTX"
+      export TORCH_CUDA_ARCH_LIST="8.0+PTX"
+    fi
   fi
 fi
 
@@ -83,10 +90,16 @@ fi
 echo "[install_curobo] using TORCH_CUDA_ARCH_LIST=$TORCH_CUDA_ARCH_LIST"
 echo "[install_curobo] using Python environment at: $VENV_PYTHON"
 
+# --no-build-isolation builds against the venv's torch, so curobo's build requirements must
+# already be installed there. setuptools-scm>=10 imports vcs-versioning, which is not part of
+# the project lock.
+echo "[install_curobo] installing build requirements"
+uv pip install --python "$VENV_PYTHON" setuptools "setuptools-scm>=6.2" vcs-versioning wheel ninja
+
 uv pip install --python "$VENV_PYTHON" --no-build-isolation 'third_party/curobo[isaacsim]'
 
-echo "[install_curobo] pinning warp-lang"
-uv pip install --python "$VENV_PYTHON" "warp-lang==1.7.0" --index-strategy unsafe-best-match
+# No warp-lang re-pin: curobo only needs warp-lang>=0.9.0, and isaaclab 3.0.0 requires the
+# warp-lang==1.17.0 already installed from the lock.
 
 echo "[install_curobo] verifying curobo CUDA extensions"
 "$VENV_PYTHON" - <<'PY'

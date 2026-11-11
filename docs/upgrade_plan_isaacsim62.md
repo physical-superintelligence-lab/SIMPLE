@@ -72,3 +72,81 @@ changes only, no task or behavior changes.
 - physics: MuJoCo 3.12 may change contacts, stabilization and replay success (steps 3 and 4 catch it)
 - the image ships its own `gear_sonic` / `decoupled_wbc` builds; our `src/` must work with them (the
   smoke test catches interface drift)
+
+## Port log (branch `upgrade`)
+
+Ported from `/hfm/songlin/simple-migrate` (`origin/migrate` @ `15119f6`) onto `main` @ `f705a62`.
+Only package / API hunks were taken; every other migrate change stays out.
+
+### Taken
+
+| Source | Files | Why |
+|---|---|---|
+| `556a460` | `pyproject.toml`, `uv.lock`, `.python-version` | Python 3.12, Isaac Sim 6.2 + Isaac Lab 3.0, MuJoCo 3.12, torch 2.11, numpy>=2 (main never changed these since `e8a4e7e`, so taken whole) |
+| `8b38f39` / `1326dd3` | `third_party/curobo` -> `b12518e` | warp 1.17 API (`wp.device_from_torch`) |
+| `ed8a64f` | 15 task files + `cli/control.py` (64 call sites, incl. 2 main-only ones) | MuJoCo 3.12: `MjModel.body()` rejects a shape-(1,) array -> `bodyid.item()`. Done as a mechanical sed; the LocomotionPickBetweenTables success-check rewrite in the same commit is **not** taken |
+| `8b38f39` | `engines/mujoco.py` | MuJoCo 3.12: `MjSpec.attach(..., prefix="")` (default prefix became `/`); restore 3.3.x CCD defaults (`ccd_iterations=50`, multi-CCD off) |
+| `8b38f39` | `engines/isaacsim.py` | `omni.isaac.*` -> `isaacsim.*` imports (`Single*Prim`, `isaacsim.sensors.camera`); RTX real-time with DLSS; scene `xformOp:orient` with unitsResolve factored out + quarter-turn GPU-crash nudge; object USDs as plain references; object collision schemas removed |
+| `685b5ec` (isaacsim hunk only) | `engines/isaacsim.py` | scene USD as a plain reference (6.x metrics assembler would rescale cm scenes 100x) |
+| `8b38f39` | `envs/base_dual_env.py` | `isaacsim.core.utils.extensions` import |
+| `8b38f39` | `cli/_decoupled_wbc_recording.py` + 5 recorders | `create_gr00t_exporter`: numpy>=2.5 rejects `float()` on shape-(1,) features |
+| `3e12155` | `examples/multi_arm_reacher.py` | Isaac Sim 6.2 imports + new URDF importer (main never changed this file) |
+| `3e12155` | `scripts/install_curobo.sh` | GPU-arch autodetect, explicit build requirements, no `warp-lang==1.7.0` re-pin (nix branch kept) |
+| `a2c4ee8`, `ea91af4`, `b8d3b6c` | `Dockerfile`; `scripts/install_curobo_docker.sh` deleted | 6.2.0 / Ubuntu 24.04 base image; Dockerfile now uses `install_curobo.sh` |
+| `a2c4ee8` | `docker-compose.yml` | `ISAAC_SIM_VERSION` build arg; `--no-sync` replay service; Kit cache mounted at both the `python3.10` (old 4.5 images, host `.isaac-cache/kit` as before) and `python3.12` (6.2 images, host `.isaac-cache/kit-py312`) venv paths, so no setting is needed for either image |
+
+### Left out (not API changes)
+
+- `ed8a64f` LocomotionPickBetweenTables success check; `10ffaba` / `b9f1cff` success_criteria / reward rounding; all per-task replay fixes (`aba0130` .. `5db2776`, `ce8ec98`, `9854050`, `e331836`, `b7af5ed`, `3c4b0b6`, `0315b1a`)
+- `8b38f39` agent refactors (`use_policy_action` constructor arg, `ReplayDecoupledAgent` pad 10->60, `warm_start`, `get_initial_body_q`), `G1Sonic.set_standing_pose`, logging-only changes in `video_writer.py` / `video_recorder.py`, the `replay_decoupled_wbc.py` refactor
+- `2032964` AMO stance spawn / history priming, `LeRobotParquetDataset` (see test notes), `588cf65`, `ab0878b` viewer fixes
+- `685b5ec` `natural_sorted` collision meshes (changes the compiled MuJoCo model; would confound the replay comparison), `ae09a7d` robot colliders off in Isaac, `3c512f2` table material reuse — render-only bug fixes, candidates once the upgrade is validated
+- `third_party/decoupled_wbc` bump and its host bind mount: the host submodule is not checked out; the image's baked copy is used
+- `a5ff2a0` cleanup (nix removal etc.), docs
+
+### Test 1 result: MuJoCo replay of the merged SIMPLE-decoupled-wbc dataset (2026-11-02)
+
+`scripts/replay_dwbc_merged.sh` (8 GPUs x 3 shards), old image `38a674039f41` (now tagged `simple:20260830`; was `simple:latest` / `ghcr-20260830`; main) ->
+`data/replays/dwbc-merged-2611020514`; new image `bc55dc07dc01` (now `simple:latest`; was `simple:migrate`; this branch) -> `data/replays/dwbc-merged-upgrade`.
+
+| Task | Old | New | Δ | lost | gained |
+|---|---|---|---|---|---|
+| BendHandoverTeleop | 77/96 | 79/96 | +2 | 3 | 5 |
+| BendPickAndPlaceOnSofaMP | 75/75 | 73/75 | -2 | 2 | 0 |
+| BendPickAndPlaceTeleop | 46/48 | 45/48 | -1 | 2 | 1 |
+| BendPickMP | 83/91 | 83/91 | +0 | 3 | 3 |
+| BendPickTeleop | 91/97 | 92/97 | +1 | 0 | 1 |
+| CloseDoorTeleop | 99/99 | 99/99 | +0 | 0 | 0 |
+| HandoverTeleop | 86/100 | 89/100 | +3 | 2 | 5 |
+| LocomotionPickBetweenTablesTeleop | 85/99 | 78/99 | -7 | 9 | 2 |
+| OpenFaucetTeleop | 74/99 | 71/99 | -3 | 3 | 0 |
+| OpenOvenTeleop | 73/99 | 73/99 | +0 | 3 | 3 |
+| OpenTrashCanTeleop | 74/99 | 73/99 | -1 | 4 | 3 |
+| PickAndBendPlaceMP | 49/49 | 47/49 | -2 | 2 | 0 |
+| PickAndPlaceAndHugContainerTeleop | 60/94 | 63/94 | +3 | 2 | 5 |
+| PushOfficeChairTeleop | 77/99 | 77/99 | +0 | 6 | 6 |
+| TabletopGraspMP | 94/98 | 91/98 | -3 | 3 | 0 |
+| TabletopHandoverMP | 76/76 | 75/76 | -1 | 1 | 0 |
+| XMovePickTeleop | 98/99 | 98/99 | +0 | 0 | 0 |
+| **Total** | **1317/1517 (86.8%)** | **1306/1517 (86.1%)** | **-11** | | |
+
+Run-to-run noise, from repeating the 2-task smoke on each image: MP replays (`simple.cli.replay`, AMO)
+are deterministic on a given image (BendPickMP identical per shard on both images); teleop replays
+(`replay_decoupled_wbc`) are not (BendPickAndPlaceTeleop: 7/24 shards differ between two old-image runs,
+43 vs 46 of 48).
+
+- **MP tasks: -8 of 389, all caused by the upgrade** (deterministic). Lost episodes: OnSofaMP 107, 161;
+  BendPickMP 258, 298, 302 (gained 277, 284, 291); PickAndBendPlaceMP 1014, 1049; TabletopGraspMP 1260,
+  1269, 1311; TabletopHandoverMP 1405. Likely the remaining MuJoCo 3.12 difference the migrate notes list as
+  uncompensated (mesh polygon data), not yet confirmed.
+- **Teleop tasks: -3 of 1128 overall, within noise.** LocomotionPickBetweenTablesTeleop (-7 in the full
+  run) was re-run twice per image (old image with `main`'s code from a worktree, new image with this branch):
+
+  | | full run | rerun 1 | rerun 2 | mean |
+  |---|---|---|---|---|
+  | old (`simple:20260830`, main) | 85/99 | 80/99 | 82/99 | 82.3 |
+  | new (`simple:latest`, upgrade) | 78/99 | 81/99 | 80/99 | 79.7 |
+
+  The ranges overlap and no episode passes in all three old runs while failing in all three new ones
+  (25 episodes flip between runs at random), so the -7 was mostly noise. A small downward shift (~2-3
+  episodes) can't be ruled out with three runs each.

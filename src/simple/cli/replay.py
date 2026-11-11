@@ -45,9 +45,10 @@ def main(
     upsample_factor = 1 # default
     # Load dataset
     if data_format == "lerobot":
-        from lerobot.datasets.lerobot_dataset import LeRobotDataset
-        from simple.datasets.lerobot import get_episode_lerobot as get_episode
-        dataset = LeRobotDataset(repo_id=env_id, root=data_dir, video_backend="pyav")
+        # LeRobotParquetDataset, not lerobot's LeRobotDataset: the latter can't read
+        # with datasets>=4 (torch.stack on a Column), and the replay needs no images.
+        from simple.datasets.lerobot import LeRobotParquetDataset, get_episode_lerobot as get_episode
+        dataset = LeRobotParquetDataset(data_dir)
         num_episodes = min(num_episodes, dataset.num_episodes - episode_start)
         dataset_fps = dataset.meta.fps
         if render_hz is None:

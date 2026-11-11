@@ -159,8 +159,8 @@ def check_success(target_object_name: str, mujoco_env: MujocoSimulator): # physi
     for i_contact in range(mj_physics_data.ncon):
         g1=mj_physics_model.geom(mj_physics_data.contact[i_contact].geom1)
         g2=mj_physics_model.geom(mj_physics_data.contact[i_contact].geom2)
-        body1=mj_physics_model.body(g1.bodyid).name
-        body2=mj_physics_model.body(g2.bodyid).name
+        body1=mj_physics_model.body(g1.bodyid.item()).name
+        body2=mj_physics_model.body(g2.bodyid.item()).name
 
         # all_contacts.append((name_geom_1, name_geom_2))
         if "table" in body1 and target_object_name in body2 or \

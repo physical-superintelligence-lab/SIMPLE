@@ -54,7 +54,7 @@ args = parser.parse_args()
 ############################################################
 
 # Third Party
-from omni.isaac.kit import SimulationApp
+from isaacsim import SimulationApp
 
 simulation_app = SimulationApp(
     {
@@ -66,47 +66,30 @@ simulation_app = SimulationApp(
 # Third Party
 import carb
 import numpy as np
-from matplotlib import cm
-from omni.isaac.core import World
-from omni.isaac.core.objects import cuboid
-from omni.isaac.core.robots import Robot
-from pxr import UsdPhysics
+import omni.usd
+from isaacsim.core.api import World
+from isaacsim.core.api.objects import cuboid
+from isaacsim.core.api.robots import Robot
+from isaacsim.core.utils.extensions import enable_extension
+from isaacsim.core.utils.stage import add_reference_to_stage
 
 from curobo.util.logger import log_warn
 from curobo.util.usd_helper import set_prim_transform
 
-ISAAC_SIM_23 = False
-ISAAC_SIM_45 = False
-try:
-    # Third Party
-    from omni.isaac.urdf import _urdf  # isaacsim 2022.2
-except ImportError:
-    # Third Party
-    try:
-        from omni.importer.urdf import _urdf  # isaac sim 2023.1 or above
-    except ImportError:
-        from isaacsim.asset.importer.urdf import _urdf  # isaac sim 4.5+
-
-        ISAAC_SIM_45 = True
-    ISAAC_SIM_23 = True
-
-try:
-    # import for older isaacsim installations
-    from omni.isaac.core.materials import OmniPBR
-except ImportError:
-    # import for isaac sim 4.5+
-    from isaacsim.core.api.materials import OmniPBR
+# Isaac Sim 6.x replaced the `_urdf` interface with URDFImporter (built on urdf-usd-converter).
+enable_extension("isaacsim.asset.importer.urdf")
+simulation_app.update()
+from isaacsim.asset.importer.urdf import URDFImporter, URDFImporterConfig
 
 
+import tempfile
 from typing import Optional, Dict
-from omni.isaac.core.utils.extensions import enable_extension
-from curobo.util_file import get_assets_path, get_filename, get_path_of_dir, join_path
+from curobo.util_file import get_assets_path, join_path
 
 def add_extensions(simulation_app, headless_mode: Optional[str] = None):
     ext_list = [
         "omni.kit.asset_converter",
         "omni.kit.tool.asset_importer",
-        "omni.isaac.asset_browser",
     ]
     if headless_mode is not None:
         log_warn("Running in headless mode: " + headless_mode)
@@ -119,104 +102,47 @@ def add_extensions(simulation_app, headless_mode: Optional[str] = None):
 def add_robot_to_scene(
     robot_config: Dict,
     my_world: World,
-    load_from_usd: bool = False,
-    subroot: str = "",
     robot_name: str = "robot",
     position: np.array = np.array([0, 0, 0]),
     initialize_world: bool = True,
 ):
-
-    urdf_interface = _urdf.acquire_urdf_interface()
-    # Set the settings in the import config
-    import_config = _urdf.ImportConfig()
-    import_config.merge_fixed_joints = False
-    import_config.convex_decomp = False
-    import_config.fix_base = True
-    import_config.make_default_prim = True
-    import_config.self_collision = False
-    import_config.create_physics_scene = True
-    import_config.import_inertia_tensor = False
-    import_config.default_drive_strength = 100 #1047.19751
-    import_config.default_position_drive_damping = 20 # 52.35988
-    import_config.default_drive_type = _urdf.UrdfJointTargetType.JOINT_DRIVE_POSITION
-    import_config.distance_scale = 1
-    import_config.density = 0.0
-
     asset_path = get_assets_path()
     if (
         "external_asset_path" in robot_config["kinematics"]
         and robot_config["kinematics"]["external_asset_path"] is not None
     ):
         asset_path = robot_config["kinematics"]["external_asset_path"]
-
-    # urdf_path:
-    # meshes_path:
-    # meshes path should be a subset of urdf_path
     full_path = join_path(asset_path, robot_config["kinematics"]["urdf_path"])
-    # full path contains the path to urdf
-    # Get meshes path
-    robot_path = get_path_of_dir(full_path)
-    filename = get_filename(full_path)
-    if ISAAC_SIM_45:
-        from isaacsim.core.utils.extensions import get_extension_path_from_name
-        import omni.kit.commands
-        import omni.usd
 
-        # Retrieve the path of the URDF file from the extension
-        extension_path = get_extension_path_from_name("isaacsim.asset.importer.urdf")
-        root_path = robot_path
-        file_name = filename
-
-        # Parse the robot's URDF file to generate a robot model
-
-        dest_path = join_path(
-            root_path, get_filename(file_name, remove_extension=True) + "_temp.usd"
-        )
-
-        result, robot_path = omni.kit.commands.execute(
-            "URDFParseAndImportFile",
-            urdf_path="{}/{}".format(root_path, file_name),
-            import_config=import_config,
-            dest_path=dest_path,
-        )
-        prim_path = omni.usd.get_stage_next_free_path(
-            my_world.scene.stage,
-            str(my_world.scene.stage.GetDefaultPrim().GetPath()) + robot_path,
-            False,
-        )
-        robot_prim = my_world.scene.stage.OverridePrim(prim_path)
-        robot_prim.GetReferences().AddReference(dest_path)
-        robot_path = prim_path
-    else:
-
-        imported_robot = urdf_interface.parse_urdf(robot_path, filename, import_config)
-        dest_path = subroot
-
-        robot_path = urdf_interface.import_robot(
-            robot_path,
-            filename,
-            imported_robot,
-            import_config,
-            dest_path,
-        )
-
-    base_link_name = robot_config["kinematics"]["base_link"]
-
-    robot_p = Robot(
-        prim_path=robot_path + "/" + base_link_name,
-        name=robot_name,
+    import_config = URDFImporterConfig(
+        urdf_path=full_path,
+        usd_path=tempfile.mkdtemp(prefix="curobo_urdf_"),
+        fix_base=True,
+        # Without merging, the importer puts an articulation root on each arm's base link and
+        # multi-arm robots split into one articulation per arm.
+        merge_fixed_joints=True,
+        allow_self_collision=False,
+        # The old _urdf importer authored these gains per degree (USD angular drive units); the
+        # new importer takes them per radian, so convert to keep the same drive behavior.
+        override_joint_stiffness=float(np.rad2deg(100.0)),  # 1047.19751
+        override_joint_damping=float(np.rad2deg(20.0)),  # 52.35988
     )
+    usd_path = URDFImporter(import_config).import_urdf()
 
-    robot_prim = robot_p.prim
-    stage = robot_prim.GetStage()
-    linkp = stage.GetPrimAtPath(robot_path)
-    set_prim_transform(linkp, [position[0], position[1], position[2], 1, 0, 0, 0])
+    stage = my_world.scene.stage
+    robot_path = omni.usd.get_stage_next_free_path(
+        stage, str(stage.GetDefaultPrim().GetPath()) + "/" + robot_name, False
+    )
+    add_reference_to_stage(usd_path=usd_path, prim_path=robot_path)
+    robot_prim = stage.GetPrimAtPath(robot_path)
+    # The imported asset keeps its physics in a variant; nothing is simulated unless one is selected.
+    robot_prim.GetVariantSet("Physics").SetVariantSelection("physx")
+    set_prim_transform(robot_prim, [position[0], position[1], position[2], 1, 0, 0, 0])
 
-    robot = my_world.scene.add(robot_p)
+    robot = my_world.scene.add(Robot(prim_path=robot_path, name=robot_name))
     if initialize_world:
-        if ISAAC_SIM_45:
-            my_world.initialize_physics()
-            robot.initialize()
+        my_world.initialize_physics()
+        robot.initialize()
 
     # import omni.isaac.core.utils.stage as isaacsim_stage
     # isaacsim_stage.add_reference_to_stage(
@@ -233,11 +159,10 @@ def add_robot_to_scene(
     return robot, robot_path
 
 # from helper import add_extensions, add_robot_to_scene
-from omni.isaac.core import World
-from omni.isaac.core.objects import cuboid, sphere
+from isaacsim.core.api.objects import sphere
 
 ########### OV #################
-from omni.isaac.core.utils.types import ArticulationAction
+from isaacsim.core.utils.types import ArticulationAction
 
 # CuRobo
 from curobo.cuda_robot_model.cuda_robot_model import CudaRobotModel
@@ -311,16 +236,14 @@ def main():
                 robot_cfg["kinematics"][key] = abs_path
 
         robot_prim_path = f"/World/{args.robot}"
-        import omni.isaac.core.utils.stage as isaacsim_stage
-        isaacsim_stage.add_reference_to_stage(
+        add_reference_to_stage(
             usd_path=robot_cfg["kinematics"]["external_asset_path"] + f"/{args.robot}.usd",
             prim_path=robot_prim_path,
         )
-        
+
         robot = Robot(prim_path=robot_prim_path)
-        if ISAAC_SIM_45:
-            my_world.initialize_physics()
-            robot.initialize()
+        my_world.initialize_physics()
+        robot.initialize()
 
     j_names = robot_cfg["kinematics"]["cspace"]["joint_names"]
     default_config = robot_cfg["kinematics"]["cspace"]["retract_config"]

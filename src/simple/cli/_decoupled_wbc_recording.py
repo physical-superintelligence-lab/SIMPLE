@@ -55,6 +55,27 @@ def validate_existing_ego_view_feature_shape(save_dir: str | Path, ego_view_shap
         )
 
 
+def create_gr00t_exporter(**create_kwargs):
+    """``Gr00tDataExporter.create`` with shape-(1,) features saved as scalars.
+
+    LeRobot stores shape-(1,) features as scalar hf ``Value`` columns but buffers
+    them as (1,) arrays; numpy>=2.5 refuses ``float()`` on those, so
+    ``save_episode`` fails.  Flatten (N, 1) -> (N,) just for the parquet table
+    (episode stats still see the (N, 1) arrays, as before).
+    """
+    from decoupled_wbc.data.exporter import Gr00tDataExporter
+
+    class _Exporter(Gr00tDataExporter):
+        def _save_episode_table(self, episode_buffer: dict, episode_index: int) -> None:
+            episode_buffer = dict(episode_buffer)
+            for key, ft in self.features.items():
+                if ft["dtype"] not in ("image", "video") and tuple(ft["shape"]) == (1,):
+                    episode_buffer[key] = episode_buffer[key].reshape(-1)
+            super()._save_episode_table(episode_buffer, episode_index)
+
+    return _Exporter.create(**create_kwargs)
+
+
 # SONIC whole-body "token": the 64-dim encoder output / decoder input that
 # drives the 29 body joints.  WBC teleop records it (+ the 14 hand joints) as the
 # LeRobot `action` instead of the 43 decoded joint targets.  Fixed at 64 by every

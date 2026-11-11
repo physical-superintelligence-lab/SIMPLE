@@ -361,8 +361,8 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             contact = mj_physics_data.contact[i_contact]
             g1 = mj_physics_model.geom(contact.geom1)
             g2 = mj_physics_model.geom(contact.geom2)
-            body1 = mj_physics_model.body(g1.bodyid).name
-            body2 = mj_physics_model.body(g2.bodyid).name
+            body1 = mj_physics_model.body(g1.bodyid.item()).name
+            body2 = mj_physics_model.body(g2.bodyid.item()).name
 
             # Check if target is in contact with table2
             # table2_geom is the name used in scene.py for table2
@@ -391,8 +391,8 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             contact = mj_physics_data.contact[i_contact]
             g1 = mj_physics_model.geom(contact.geom1)
             g2 = mj_physics_model.geom(contact.geom2)
-            body1 = mj_physics_model.body(g1.bodyid).name
-            body2 = mj_physics_model.body(g2.bodyid).name
+            body1 = mj_physics_model.body(g1.bodyid.item()).name
+            body2 = mj_physics_model.body(g2.bodyid.item()).name
 
             if target_name in body1:
                 other = body2
@@ -418,8 +418,8 @@ class G1WholebodyPickAndBendPlaceMP(Task):
             contact = mj_physics_data.contact[i_contact]
             g1 = mj_physics_model.geom(contact.geom1)
             g2 = mj_physics_model.geom(contact.geom2)
-            body1 = mj_physics_model.body(g1.bodyid).name
-            body2 = mj_physics_model.body(g2.bodyid).name
+            body1 = mj_physics_model.body(g1.bodyid.item()).name
+            body2 = mj_physics_model.body(g2.bodyid.item()).name
 
             # Check if target and container are in contact
             if (target_name in body1 and "hand" in body2) or \

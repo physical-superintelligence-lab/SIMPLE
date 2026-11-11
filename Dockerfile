@@ -1,7 +1,8 @@
-ARG ISAAC_SIM_VERSION=4.5.0 
+ARG ISAAC_SIM_VERSION=6.2.0
 
 ARG CUDA_VERSION=12.8.0
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu22.04 AS cuda
+# Must match the isaac-sim image's Ubuntu release (6.2.0 is 24.04).
+FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu24.04 AS cuda
 # Trim here, not after the COPY below: deleting in a later layer leaves the bytes
 # in the earlier one and shrinks nothing that gets pushed.
 #   *.a        ~3.4 GB of static libs -- everything here links CUDA dynamically
@@ -14,9 +15,17 @@ RUN find /usr/local/cuda-* -name '*.a' -delete && \
            /usr/local/cuda-*/doc \
            /usr/local/cuda-*/samples
 
-ARG ISAAC_SIM_VERSION=4.5.0
+ARG ISAAC_SIM_VERSION=6.2.0
 FROM nvcr.io/nvidia/isaac-sim:${ISAAC_SIM_VERSION} AS isaac-sim
 LABEL maintainer="Songlin Wei"
+
+# The isaac-sim 6.x image ends as the unprivileged `isaac-sim` user; everything
+# below (apt, the shared venv under /workspace) is installed as root.
+USER root
+# Inherited from the base image: it greps /isaac-sim's Kit logs, which this image
+# never writes (Isaac Sim runs from the pip wheel in the venv), so it would
+# always report the container unhealthy.
+HEALTHCHECK NONE
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG CUDA_VERSION=12.8
@@ -37,22 +46,15 @@ ENV CUDA_HOME=/usr/local/cuda-${CUDA_VERSION}
 # RUN sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list && \
 #     sed -i s@/security.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
 
-# fix libstdc++.so.6 version issue 
-# strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep 3.4.32
+# Ubuntu 24.04 ships Python 3.12 (what pyproject.toml requires; uv picks it up,
+# and python3-dev provides the headers for the curobo / xrobotoolkit builds) and
+# a libstdc++ new enough for Isaac Sim 6.x, so the old toolchain PPA is gone.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg dirmngr \
     git curl wget vim ca-certificates build-essential ninja-build cmake libgmp-dev libgmp10 ffmpeg \
-    python3 python3-pip python3-dev pybind11-dev software-properties-common \
-    && curl -fsSL 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x60C317803A41BA51845E371A1E9377A2BA9EF27F' \
-       | gpg --dearmor -o /etc/apt/trusted.gpg.d/ubuntu-toolchain-r.gpg \
-    && echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ubuntu-toolchain-r-test.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends libstdc++6 \
+    python3 python3-dev pybind11-dev software-properties-common \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install everything as root for shared usage
-USER root
 WORKDIR /workspace
 
 ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST:-"8.0+PTX"}
@@ -72,7 +74,7 @@ VOLUME ["/workspace/.uv-cache"]
 
 # --- Copy dependency files (cache key for venv) ---
 WORKDIR /workspace/simple
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md license.md ./
 
 # --- Copy third-party packages (filtered by .dockerignore) ---
 COPY third_party third_party
@@ -83,24 +85,25 @@ ENV UV_HTTP_RETRIES=10
 ENV SETUPTOOLS_SCM_PRETEND_VERSION=0.7.7
 ENV OMNI_KIT_ACCEPT_EULA=Y
 
+#     `lerobot` is an optional extra now (the dependency group was removed).
+#     --no-install-project: src/ is not copied yet; `simple` is installed
+#     editable further down.
 RUN --mount=type=cache,target=/workspace/.uv-cache \
-    GIT_LFS_SKIP_SMUDGE=1 uv sync --group lerobot --index-strategy unsafe-best-match && \
+    GIT_LFS_SKIP_SMUDGE=1 uv sync --frozen --no-install-project --extra lerobot && \
     rm -rf /tmp/* /var/tmp/*
 
-# --- Copy install script (separate from cuRobo files) ---
-#     Use install_curobo_docker.sh — the docker-build variant of install_curobo.sh
-#     that is stripped of nix-shell machinery and gates GPU-dependent checks behind
-#     env vars (docker build runs without a GPU attached). install_curobo.sh
-#     remains unchanged for bare-host (README Option 1) and nix (Option 2) flows.
-COPY scripts/install_curobo_docker.sh scripts/
-
-# --- Fix curobo + warp-lang installations (with cache for smaller image) ---
-#     Skip host NVIDIA runtime assertion and GPU-dependent verification because
-#     docker build runs without a GPU attached — runtime tests happen later.
-ENV SIMPLE_SKIP_NVIDIA_RUNTIME_CHECK=1
-ENV SIMPLE_SKIP_CUROBO_VERIFY=1
+# --- Build cuRobo against the venv's torch ---
+#     install_curobo.sh uses TORCH_CUDA_ARCH_LIST (set above from the build arg). No warp-lang re-pin any
+#     more: isaaclab 3.0.0 needs the warp-lang==1.17.0 from the lock.
+#     Peak memory ~ MAX_JOBS x NVCC_THREADS concurrent cicc/ptxas processes; curobo's
+#     setup.py hardcodes --threads=8, so a non-empty NVCC_THREADS overrides it (nvcc keeps
+#     the last value). Lower both for many-arch release builds on small hosts.
+ARG MAX_JOBS=4
+ARG NVCC_THREADS=
+COPY scripts/install_curobo.sh scripts/
 RUN --mount=type=cache,target=/workspace/.uv-cache \
-    ./scripts/install_curobo_docker.sh && \
+    MAX_JOBS="${MAX_JOBS}" NVCC_APPEND_FLAGS="${NVCC_THREADS:+--threads=${NVCC_THREADS}}" \
+    ./scripts/install_curobo.sh && \
     rm -rf /tmp/* /var/tmp/*
 
 # --- Copy source code before cuRobo build to avoid overwriting built artifacts later ---
@@ -132,20 +135,30 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # --- Install the Sonic / decoupled-WBC stack ---
+#     The vendored packages carry stale pins (numpy==1.26.4, scipy==1.15.3,
+#     cyclonedds==0.10.2) that pyproject.toml's override-dependencies replace in
+#     the lock, but `uv pip` does not apply those overrides. The minimal path
+#     therefore installs them --no-deps and pulls their runtime deps constrained
+#     to the locked versions, so numpy/torch/mujoco stay what isaaclab expects.
 ARG SIMPLE_FULL_INSTALL
 RUN --mount=type=cache,target=/workspace/.uv-cache \
     if [ "${SIMPLE_FULL_INSTALL}" = "1" ]; then \
         echo "[sonic-install] SIMPLE_FULL_INSTALL=1 — installing full sonic group" && \
-        GIT_LFS_SKIP_SMUDGE=1 uv sync --group sonic --index-strategy unsafe-best-match ; \
+        GIT_LFS_SKIP_SMUDGE=1 uv sync --frozen --inexact --extra lerobot --group sonic ; \
     else \
         echo "[sonic-install] SIMPLE_FULL_INSTALL=0 — installing minimal sonic subset" && \
+        uv export --frozen --no-hashes --no-header --no-annotate --no-emit-project \
+            --no-emit-local --extra lerobot --group sonic \
+            | grep -v ' @ ' > /tmp/sonic-constraints.txt && \
         uv pip install --python /workspace/simple/.venv/bin/python \
-            --no-build-isolation \
+            --no-build-isolation --no-deps \
             -e third_party/gear_sonic \
             -e third_party/decoupled_wbc \
-            -e third_party/unitree_sdk2_python \
+            -e third_party/unitree_sdk2_python && \
+        uv pip install --python /workspace/simple/.venv/bin/python \
+            -c /tmp/sonic-constraints.txt \
             tyro pin pin-pink pyyaml onnxruntime loguru termcolor qpsolvers \
-            pyzmq msgpack-numpy ; \
+            pyzmq msgpack-numpy cyclonedds opencv-python ; \
     fi && \
     rm -rf /tmp/* /var/tmp/*
 
@@ -193,6 +206,8 @@ RUN if [ "${SIMPLE_BUILD_SONIC_WBC}" = "1" ] && [ "${SIMPLE_DOWNLOAD_SONIC_CKPT}
     rm -rf /root/.cache/huggingface /tmp/* /var/tmp/*
 
 # --- SONIC controller binary (CMake + TensorRT/onnxruntime, no GPU needed) ---
+#     SONIC_BUILD_JOBS caps make/cmake parallelism (empty = nproc).
+ARG SONIC_BUILD_JOBS=
 RUN --mount=type=cache,target=/workspace/.uv-cache \
     if [ "${SIMPLE_BUILD_SONIC_WBC}" != "1" ]; then \
         echo "[sonic-wbc] SIMPLE_BUILD_SONIC_WBC=${SIMPLE_BUILD_SONIC_WBC} — skipping controller build" ; \
@@ -200,7 +215,7 @@ RUN --mount=type=cache,target=/workspace/.uv-cache \
         echo "[sonic-wbc] WARNING: gear_sonic_deploy missing from the build context —" && \
         echo "[sonic-wbc]          controller not built; see the submodule hint above." ; \
     else \
-        HOME=/root bash scripts/build_sonic_controller.sh && \
+        HOME=/root SONIC_BUILD_JOBS="${SONIC_BUILD_JOBS}" bash scripts/build_sonic_controller.sh && \
         rm -rf /root/tools/zeromq-4.3.5 \
                /root/tools/eigen-3.4.0 \
                /root/tools/googletest-1.14.0 \

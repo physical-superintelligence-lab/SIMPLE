@@ -50,7 +50,7 @@ esac
 RUN_DIR=${RUN_DIR:-${DEFAULT_RUN:+.runs/hf/psi0/simple-checkpoints/$DEFAULT_RUN}}
 [[ -n "$RUN_DIR" ]] || { echo "error: no default checkpoint for $TASK, set RUN_DIR" >&2; exit 1; }
 CKPT_STEP=${CKPT_STEP:-40000}
-IMAGE_DATE=${IMAGE_DATE:-260829}
+IMAGE_DATE=${IMAGE_DATE:-20261027}
 ISAAC_RENDER=${ISAAC_RENDER:-on-query}
 TMUX_TARGET=${TMUX_TARGET:-}
 CLIENT_ONLY=${CLIENT_ONLY:-0}

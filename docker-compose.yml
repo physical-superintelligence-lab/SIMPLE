@@ -36,14 +36,21 @@ x-default-isaacsim-volumes: &default-isaacsim-volumes
   # containers; Kit guards its caches with lock files.  Delete
   # ${ISAAC_CACHE_DIR:-./.isaac-cache} to force a cold start.
   #   kit:     shader caches (rtx/gl), DerivedDataCache, generated OmniGraph nodes
-  #            (Isaac Sim runs from the pip wheel, so Kit's cache lives in the venv;
-  #            the python3.10 path must follow the image's Python)
+  #            (Isaac Sim runs from the pip wheel, so Kit's cache lives in the venv,
+  #            under the image's Python version. Both paths are mounted, so pre-upgrade
+  #            Isaac Sim 4.5 / Python 3.10 images and 6.2 / Python 3.12 images both work;
+  #            each reads only its own, and the two Kit versions don't share a cache)
   #   ov:      texture cache
   #   compute: CUDA JIT cache
   #   warp:    Warp kernel cache
   - type: bind
     source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/kit
     target: /workspace/simple/.venv/lib/python3.10/site-packages/omni/cache
+    bind:
+      create_host_path: true
+  - type: bind
+    source: ${ISAAC_CACHE_DIR:-./.isaac-cache}/kit-py312
+    target: /workspace/simple/.venv/lib/python3.12/site-packages/omni/cache
     bind:
       create_host_path: true
   - type: bind
@@ -68,7 +75,7 @@ x-default-isaacsim-volumes: &default-isaacsim-volumes
 # `docker compose build isaac-sim`.
 x-isaac-sim: &isaac-sim
   # user: ${MY_UID}:${MY_GID}
-  image: simple:${DATE:-latest}
+  image: simple:${DATE:-20261027}
   pull_policy: never
   network_mode: "host"
   # privileged: true # conflicts with runtime: nvidia
@@ -97,6 +104,9 @@ services:
       dockerfile: Dockerfile
       network: host
       args:
+        # nvcr.io/nvidia/isaac-sim base tag; must match isaacsim in pyproject.toml.
+        # 6.x images are Ubuntu 24.04 and need host driver >= 570.169.
+        - ISAAC_SIM_VERSION=${ISAAC_SIM_VERSION:-6.2.0}
         - TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST:-8.0+PTX}
         - TIMEZONE=${TIMEZONE:-UTC}
         # 0 = minimal (default), 1 = full (decoupled_wbc[full] — real-robot / GUI teleop)
@@ -122,7 +132,10 @@ services:
 
   replay:
     <<: *isaac-sim
-    command: uv run replay --headless
+    # --no-sync: a plain `uv run` would exact-sync the venv to the lock and
+    # uninstall the pip-installed curobo / sonic packages.
+    entrypoint: ["uv", "run", "--no-sync", "replay"]
+    command: ["--headless"]
 
   eval:
     <<: *isaac-sim
@@ -140,7 +153,7 @@ services:
     command: []
 
   gpu-test:
-    image: simple:${DATE:-latest}
+    image: simple:${DATE:-20261027}
     pull_policy: never
     command: /workspace/simple/.venv/bin/python -c "import torch; print(torch.cuda.is_available()); print(torch.cuda.device_count())"
     environment:

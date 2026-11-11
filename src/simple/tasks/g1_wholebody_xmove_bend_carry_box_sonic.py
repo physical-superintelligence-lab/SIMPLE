@@ -271,8 +271,8 @@ class G1WholebodyXMoveBendCarryBoxTaskSonic(Task):
         mj_model = mujoco_env.mjModel
         for i_contact in range(mj_data.ncon):
             contact = mj_data.contact[i_contact]
-            body1 = mj_model.body(mj_model.geom(contact.geom1).bodyid).name
-            body2 = mj_model.body(mj_model.geom(contact.geom2).bodyid).name
+            body1 = mj_model.body(mj_model.geom(contact.geom1).bodyid.item()).name
+            body2 = mj_model.body(mj_model.geom(contact.geom2).bodyid.item()).name
             if (target_name in body1 and name_substr in body2) or (
                 target_name in body2 and name_substr in body1
             ):
@@ -290,8 +290,8 @@ class G1WholebodyXMoveBendCarryBoxTaskSonic(Task):
         mj_model = mujoco_env.mjModel
         for i_contact in range(mj_data.ncon):
             contact = mj_data.contact[i_contact]
-            body1 = mj_model.body(mj_model.geom(contact.geom1).bodyid).name
-            body2 = mj_model.body(mj_model.geom(contact.geom2).bodyid).name
+            body1 = mj_model.body(mj_model.geom(contact.geom1).bodyid.item()).name
+            body2 = mj_model.body(mj_model.geom(contact.geom2).bodyid.item()).name
             is_box_table = (target_name in body1 and "table" in body2) or (
                 target_name in body2 and "table" in body1
             )

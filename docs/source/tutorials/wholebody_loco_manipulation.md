@@ -104,15 +104,16 @@ The published image already contains Isaac Sim, the SIMPLE package, and a
 **prebuilt SONIC whole-body controller**, so there is nothing to compile:
 
 ```bash
-docker pull ghcr.io/physical-superintelligence-lab/simple:latest
-docker tag ghcr.io/physical-superintelligence-lab/simple:latest simple:latest
+docker pull ghcr.io/physical-superintelligence-lab/simple:20261027
+docker tag ghcr.io/physical-superintelligence-lab/simple:20261027 simple:20261027
 ```
 
 The `docker tag` is what lets `docker compose` find it — `docker-compose.yml`
-refers to the image as `simple:${DATE:-latest}`.
+refers to the image as `simple:${DATE:-20261027}`.
 
 Requirements: Docker with the NVIDIA Container Toolkit (`runtime: nvidia`), and
-an NVIDIA driver **at least as new as** the image's CUDA toolkit release. The
+an NVIDIA driver **at least as new as** the image's CUDA toolkit release
+(and >= 570.169 for Isaac Sim 6.2). The
 image is large; allow room for it.
 
 ```{note}

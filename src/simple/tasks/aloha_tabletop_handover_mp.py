@@ -303,8 +303,8 @@ class AlohaTabletopHandoverTaskMP(Task):
             contact = mj_physics_data.contact[i_contact]
             g1 = mj_physics_model.geom(contact.geom1)
             g2 = mj_physics_model.geom(contact.geom2)
-            body1 = mj_physics_model.body(g1.bodyid).name
-            body2 = mj_physics_model.body(g2.bodyid).name
+            body1 = mj_physics_model.body(g1.bodyid.item()).name
+            body2 = mj_physics_model.body(g2.bodyid.item()).name
 
             # Check if target and gripper are in contact
             if (target_name in body1 and gripper_name in body2) or \

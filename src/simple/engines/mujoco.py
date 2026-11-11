@@ -134,6 +134,11 @@ class MujocoSimulator(Simulator):
         mjSpec.option.integrator = mujoco.mjtIntegrator.mjINT_IMPLICITFAST
         mjSpec.option.cone = mujoco.mjtCone.mjCONE_ELLIPTIC
         mjSpec.option.noslip_iterations = 2
+        # Keep MuJoCo 3.3.x collision defaults: newer versions turn multi-point CCD on
+        # and lower ccd_iterations to 35, which makes grasped mesh objects bounce out of the hand.
+        mjSpec.option.ccd_iterations = 50
+        if hasattr(mujoco.mjtDisableBit, "mjDSBL_MULTICCD"):
+            mjSpec.option.disableflags |= mujoco.mjtDisableBit.mjDSBL_MULTICCD
         
         mj_worldbody = mjSpec.worldbody
         
@@ -413,7 +418,7 @@ class MujocoSimulator(Simulator):
 
 
         frame = mjWorld.add_frame(pos=actor.pose.position, quat=actor.pose.quaternion)
-        mjSpec.attach(articulated_object_mjcf, frame=frame)
+        mjSpec.attach(articulated_object_mjcf, prefix="", frame=frame)
         self.articulated_object_mjcf = articulated_object_mjcf
 
     # def _build_articulated_object(self, mjSpec, mjWorld, actor: ArticulatedObjectActor):
@@ -451,7 +456,7 @@ class MujocoSimulator(Simulator):
 
     #     # Finally, attach the perfectly balanced object to the main world frame
     #     frame = mjWorld.add_frame(pos=actor.pose.position, quat=actor.pose.quaternion)
-    #     mjSpec.attach(articulated_object_mjcf, frame=frame)
+    #     mjSpec.attach(articulated_object_mjcf, prefix="", frame=frame)
         
     #     self.articulated_object_mjcf = articulated_object_mjcf
 
@@ -504,7 +509,7 @@ class MujocoSimulator(Simulator):
 
         self.robot_z = actor.pose.position[2]
         frame=mjWorld.add_frame(pos=actor.pose.position,quat=actor.pose.quaternion) 
-        mjSpec.attach(robot_mjcf,frame=frame)
+        mjSpec.attach(robot_mjcf, prefix="", frame=frame)
 
         self.robot_mjcf = robot_mjcf
 
