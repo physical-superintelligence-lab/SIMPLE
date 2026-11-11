@@ -23,6 +23,8 @@ Contributors: [Songlin Wei](https://songlin.github.io/)\*, [Zhenhao Ni](https://
 
 
 ## 📢 News & Updates
++ [x] [2026-11-11] SIMPLE now runs on `IsaacSim 6.2` (with `IsaacLab 3.0`) + `MuJoCo 3.12` on Python 3.12, on the [`isaacsim-6.2-mujoco-3.12`](https://github.com/physical-superintelligence-lab/SIMPLE/tree/isaacsim-6.2-mujoco-3.12) branch (docker image `simple:20261027`). The `main` branch stays on `IsaacSim 4.5` + `MuJoCo 3.3`.
++ [x] [2026-11-11] We release Psi0 checkpoints finetuned on the decoupled-WBC Teleop and MP tasks: [Psi0-SIMPLE-decoupled-wbc-Teleop](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE-decoupled-wbc-Teleop) (12 tasks) and [Psi0-SIMPLE-decoupled-wbc-MP](https://huggingface.co/USC-PSI-Lab/Psi0-SIMPLE-decoupled-wbc-MP) (5 tasks).
 + [x] [2026-11-09] Stability and evaluation fixes for decoupled-WBC tasks and Psi0 eval tooling (PR #33). See [Release Notes](#-release-notes).
 + [x] [2026-11-02] We release the [Psi0 multi-task checkpoint](https://huggingface.co/collections/USC-PSI-Lab/simple) for the dataset `SIMPLE-decoupled-wbc`.
 + [x] [2026-11-01] We released the 17 decoupled wbc tasks as two separate datasets, [SIMPLE-decoupled-wbc-Teleop](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-Teleop) and [SIMPLE-decoupled-wbc-MP](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-MP), and updated the eval episodes [SIMPLE-decouple-wbc-eval](https://huggingface.co/datasets/USC-PSI-Lab/SIMPLE-decoupled-wbc-eval).
