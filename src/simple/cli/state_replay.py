@@ -67,12 +67,11 @@ Usage (inside the sim container, MuJoCo only, no GPU rendering needed)
       --data-dir=data/simple/G1WholebodyBendPickTeleop-v0 \\
       --save-dir=data/simple-raw-states
 
-  # sharded over 8 GPUs with docker.sh (each shard writes its own episodes;
-  # copy the data/ dirs together afterwards, episode indices never collide)
-  bash docker.sh simple.cli.state_replay \\
-      simple/G1WholebodyBendPickTeleop-v0 \\
+  # a slice of the episodes (e.g. to split a task over several runs; each run
+  # writes only its own episodes, so the outputs can be copied together)
+  ./simple.sh python -m simple.cli.state_replay simple/G1WholebodyBendPickTeleop-v0 \\
       --data-dir=data/simple/G1WholebodyBendPickTeleop-v0 \\
-      --save-dir=data/simple-raw-states --num-gpus 8 --total-episodes 97
+      --save-dir=data/simple-raw-states --episode-start 50 --num-episodes 47
 """
 
 from __future__ import annotations
